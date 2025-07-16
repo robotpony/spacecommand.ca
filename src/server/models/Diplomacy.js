@@ -1,4 +1,20 @@
+/**
+ * Diplomacy model representing relations between players
+ * Manages proposals, agreements, trade routes, and trust levels
+ */
 class Diplomacy {
+  /**
+   * Creates a new Diplomacy instance
+   * @param {Object} data - Diplomacy initialization data
+   * @param {string} data.id - Unique diplomacy identifier
+   * @param {string} data.fromPlayerId - Source player ID
+   * @param {string} data.toPlayerId - Target player ID
+   * @param {string} data.relationship - Current relationship type
+   * @param {number} data.trustLevel - Trust level (-100 to 100)
+   * @param {Array} data.proposals - Array of diplomatic proposals
+   * @param {Array} data.agreements - Array of active agreements
+   * @param {Array} data.tradeRoutes - Array of trade routes
+   */
   constructor(data = {}) {
     this.id = data.id || null;
     this.fromPlayerId = data.fromPlayerId || null;
@@ -69,6 +85,12 @@ class Diplomacy {
     cancelled: 'Cancelled'
   };
 
+  /**
+   * Creates a new diplomatic proposal
+   * @param {string} type - Proposal type (alliance, trade_agreement, etc.)
+   * @param {Object} terms - Proposal terms and conditions
+   * @returns {Object} Created proposal object
+   */
   createProposal(type, terms = {}) {
     const proposalType = Diplomacy.PROPOSAL_TYPES[type];
     if (!proposalType) {
@@ -93,6 +115,13 @@ class Diplomacy {
     return proposal;
   }
 
+  /**
+   * Responds to a diplomatic proposal
+   * @param {string} proposalId - ID of proposal to respond to
+   * @param {string} response - Response type (accept, reject, counter)
+   * @param {Object} counterTerms - Counter-proposal terms if applicable
+   * @returns {Object} Updated proposal object
+   */
   respondToProposal(proposalId, response, counterTerms = null) {
     const proposal = this.proposals.find(p => p.id === proposalId);
     if (!proposal) {
@@ -205,6 +234,10 @@ class Diplomacy {
     this.updatedAt = new Date();
   }
 
+  /**
+   * Adjusts relationship trust level
+   * @param {number} change - Amount to change trust level
+   */
   adjustRelationship(change) {
     this.trustLevel = Math.max(-100, Math.min(100, this.trustLevel + change));
     
@@ -226,6 +259,11 @@ class Diplomacy {
     this.updatedAt = new Date();
   }
 
+  /**
+   * Establishes a new trade route
+   * @param {Object} terms - Trade route terms and conditions
+   * @returns {Object} Created trade route object
+   */
   establishTradeRoute(terms) {
     const tradeRoute = {
       id: this.generateId(),

@@ -1,4 +1,21 @@
+/**
+ * Planet model representing a colonized world
+ * Manages population, buildings, production, and specialization
+ */
 class Planet {
+  /**
+   * Creates a new Planet instance
+   * @param {Object} data - Planet initialization data
+   * @param {string} data.id - Unique planet identifier
+   * @param {string} data.empireId - Owning empire ID
+   * @param {string} data.name - Planet name
+   * @param {Object} data.position - 3D coordinates {x, y, z}
+   * @param {string} data.size - Planet size (small, medium, large)
+   * @param {string} data.type - Planet type (terrestrial, desert, ocean, etc.)
+   * @param {string} data.specialization - Economic specialization
+   * @param {number} data.population - Current population
+   * @param {Array} data.buildings - Array of building objects
+   */
   constructor(data = {}) {
     this.id = data.id || null;
     this.empireId = data.empireId || null;
@@ -67,6 +84,11 @@ class Planet {
     gas_giant: { name: 'Gas Giant', habitabilityBonus: 0.0, energyBonus: 2.0 }
   };
 
+  /**
+   * Sets the planet's economic specialization
+   * @param {string} specialization - New specialization type
+   * @throws {Error} If specialization is invalid
+   */
   setSpecialization(specialization) {
     if (!Planet.SPECIALIZATIONS[specialization]) {
       throw new Error(`Invalid specialization: ${specialization}`);
@@ -77,6 +99,9 @@ class Planet {
     this.updatedAt = new Date();
   }
 
+  /**
+   * Recalculates production based on population, specialization, and buildings
+   */
   updateProduction() {
     const baseProduction = {
       minerals: this.population * 0.5,
@@ -119,6 +144,10 @@ class Planet {
     });
   }
 
+  /**
+   * Adds a building to the planet
+   * @param {Object} building - Building object to add
+   */
   addBuilding(building) {
     this.buildings.push(building);
     this.updateProduction();
@@ -160,6 +189,10 @@ class Planet {
     }
   }
 
+  /**
+   * Calculates total defensive strength
+   * @returns {number} Combined defense value
+   */
   getDefenseStrength() {
     return this.defenses.shields + this.defenses.armor + this.defenses.weapons;
   }

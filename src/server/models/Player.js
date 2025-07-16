@@ -1,4 +1,20 @@
+/**
+ * Player model representing a game player
+ * Manages authentication, sessions, profile, settings, and permissions
+ */
 class Player {
+  /**
+   * Creates a new Player instance
+   * @param {Object} data - Player initialization data
+   * @param {string} data.id - Unique player identifier
+   * @param {string} data.username - Player username
+   * @param {string} data.email - Player email address
+   * @param {string} data.passwordHash - Hashed password
+   * @param {string} data.empireId - Associated empire ID
+   * @param {Object} data.profile - Player profile information
+   * @param {Object} data.settings - Player preferences
+   * @param {Object} data.permissions - Player permissions
+   */
   constructor(data = {}) {
     this.id = data.id || null;
     this.username = data.username || '';
@@ -39,6 +55,10 @@ class Player {
     this.updatedAt = data.updatedAt || new Date();
   }
 
+  /**
+   * Generates a secure session token
+   * @returns {string} Random session token
+   */
   static generateSessionToken() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let token = '';
@@ -62,6 +82,10 @@ class Player {
     return testHash === storedHash;
   }
 
+  /**
+   * Sets player password with secure hashing
+   * @param {string} password - Plain text password
+   */
   setPassword(password) {
     this.passwordHash = Player.hashPassword(password);
     this.updatedAt = new Date();
@@ -71,6 +95,10 @@ class Player {
     return Player.verifyPassword(password, this.passwordHash);
   }
 
+  /**
+   * Creates a new session for the player
+   * @returns {string} Session token
+   */
   createSession() {
     this.sessionToken = Player.generateSessionToken();
     this.sessionExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -80,6 +108,10 @@ class Player {
     return this.sessionToken;
   }
 
+  /**
+   * Validates current session token and expiry
+   * @returns {boolean} True if session is valid
+   */
   validateSession() {
     if (!this.sessionToken || !this.sessionExpiry) {
       return false;
@@ -149,6 +181,11 @@ class Player {
     }
   }
 
+  /**
+   * Checks if player has a specific permission
+   * @param {string} permission - Permission to check
+   * @returns {boolean} True if player has permission
+   */
   hasPermission(permission) {
     return this.permissions[permission] === true;
   }

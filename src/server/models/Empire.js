@@ -1,4 +1,21 @@
+/**
+ * Empire model representing a player's galactic empire
+ * Manages resources, production, planets, fleets, and technology
+ */
 class Empire {
+  /**
+   * Creates a new Empire instance
+   * @param {Object} data - Empire initialization data
+   * @param {string} data.id - Unique empire identifier
+   * @param {string} data.playerId - Associated player ID
+   * @param {string} data.name - Empire name
+   * @param {Object} data.resources - Resource quantities
+   * @param {Object} data.resourceProduction - Resource production rates
+   * @param {Array} data.planets - Array of planet objects
+   * @param {Array} data.fleets - Array of fleet objects
+   * @param {Object} data.technology - Technology levels
+   * @param {Object} data.diplomacy - Diplomatic relations
+   */
   constructor(data = {}) {
     this.id = data.id || null;
     this.playerId = data.playerId || null;
@@ -25,6 +42,10 @@ class Empire {
     this.updatedAt = data.updatedAt || new Date();
   }
 
+  /**
+   * Processes resource production for one turn
+   * Adds production values to current resources
+   */
   processResourceProduction() {
     for (const resource in this.resourceProduction) {
       this.resources[resource] += this.resourceProduction[resource];
@@ -32,6 +53,11 @@ class Empire {
     this.updatedAt = new Date();
   }
 
+  /**
+   * Attempts to spend resources on a purchase
+   * @param {Object} cost - Resource costs {minerals: number, energy: number, etc.}
+   * @returns {boolean} True if resources were successfully spent
+   */
   spendResources(cost) {
     for (const resource in cost) {
       if (this.resources[resource] < cost[resource]) {
@@ -46,6 +72,11 @@ class Empire {
     return true;
   }
 
+  /**
+   * Checks if empire can afford a given cost
+   * @param {Object} cost - Resource costs to check
+   * @returns {boolean} True if empire can afford the cost
+   */
   canAfford(cost) {
     for (const resource in cost) {
       if (this.resources[resource] < cost[resource]) {
@@ -55,6 +86,10 @@ class Empire {
     return true;
   }
 
+  /**
+   * Calculates total resource production including planet bonuses
+   * @returns {Object} Total production rates for all resources
+   */
   getTotalProduction() {
     const totalProduction = { ...this.resourceProduction };
     
@@ -87,6 +122,10 @@ class Empire {
     this.updatedAt = new Date();
   }
 
+  /**
+   * Converts empire to JSON representation
+   * @returns {Object} JSON representation of empire
+   */
   toJSON() {
     return {
       id: this.id,

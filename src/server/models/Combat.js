@@ -1,4 +1,20 @@
+/**
+ * Combat model representing a battle between fleets
+ * Manages combat resolution, damage calculation, and battle outcomes
+ */
 class Combat {
+  /**
+   * Creates a new Combat instance
+   * @param {Object} data - Combat initialization data
+   * @param {string} data.id - Unique combat identifier
+   * @param {string} data.attackerId - Attacking player ID
+   * @param {string} data.defenderId - Defending player ID
+   * @param {Object} data.attackerFleet - Attacking fleet object
+   * @param {Object} data.defenderFleet - Defending fleet object
+   * @param {Object} data.location - Battle location coordinates
+   * @param {string} data.type - Combat type (fleet, planetary, etc.)
+   * @param {string} data.status - Combat status (pending, active, completed)
+   */
   constructor(data = {}) {
     this.id = data.id || null;
     this.attackerId = data.attackerId || null;
@@ -30,6 +46,12 @@ class Combat {
     aborted: 'Aborted'
   };
 
+  /**
+   * Calculates hit chance based on fleet stats
+   * @param {Object} attacker - Attacking fleet
+   * @param {Object} defender - Defending fleet
+   * @returns {number} Hit chance (0.1-0.9)
+   */
   static calculateHitChance(attacker, defender) {
     const attackerSkill = attacker.experience || 0;
     const defenderSkill = defender.experience || 0;
@@ -55,6 +77,10 @@ class Combat {
     this.updatedAt = new Date();
   }
 
+  /**
+   * Resolves the entire combat encounter
+   * @returns {Object} Combat result with winner and survivors
+   */
   resolveCombat() {
     if (this.status !== 'active') {
       this.initiateCombat();
@@ -77,6 +103,11 @@ class Combat {
     return this.result;
   }
 
+  /**
+   * Executes a single round of combat
+   * @param {number} roundNumber - Current round number
+   * @returns {Object} Round results with actions and damage
+   */
   executeRound(roundNumber) {
     const round = {
       number: roundNumber,
@@ -121,6 +152,11 @@ class Combat {
     return round;
   }
 
+  /**
+   * Calculates total fleet combat power
+   * @param {Object} fleet - Fleet to calculate power for
+   * @returns {number} Total fleet power
+   */
   calculateFleetPower(fleet) {
     if (!fleet || !fleet.ships) return 0;
     

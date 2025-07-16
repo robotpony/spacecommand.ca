@@ -1,4 +1,21 @@
+/**
+ * Fleet model representing a group of ships
+ * Manages ship composition, movement, combat, and fleet operations
+ */
 class Fleet {
+  /**
+   * Creates a new Fleet instance
+   * @param {Object} data - Fleet initialization data
+   * @param {string} data.id - Unique fleet identifier
+   * @param {string} data.empireId - Owning empire ID
+   * @param {string} data.name - Fleet name
+   * @param {Object} data.position - 3D coordinates {x, y, z}
+   * @param {Object} data.destination - Target coordinates
+   * @param {string} data.status - Fleet status (idle, moving, attacking, etc.)
+   * @param {Array} data.ships - Array of ship objects
+   * @param {number} data.experience - Fleet experience level
+   * @param {number} data.morale - Fleet morale (0-100)
+   */
   constructor(data = {}) {
     this.id = data.id || null;
     this.empireId = data.empireId || null;
@@ -72,6 +89,11 @@ class Fleet {
     docked: 'Docked'
   };
 
+  /**
+   * Adds ships to the fleet
+   * @param {string} shipType - Type of ship to add
+   * @param {number} quantity - Number of ships to add
+   */
   addShip(shipType, quantity = 1) {
     const existingShip = this.ships.find(s => s.type === shipType);
     
@@ -120,6 +142,10 @@ class Fleet {
     this.speed = shipCount > 0 ? Math.floor(totalSpeed / shipCount) : 1;
   }
 
+  /**
+   * Calculates total fleet attack power
+   * @returns {number} Combined attack value
+   */
   getTotalAttack() {
     return this.ships.reduce((total, ship) => {
       const shipType = Fleet.SHIP_TYPES[ship.type];
@@ -156,6 +182,10 @@ class Fleet {
     return this.ships.reduce((total, ship) => total + ship.quantity, 0);
   }
 
+  /**
+   * Orders fleet to move to a destination
+   * @param {Object} destination - Target coordinates {x, y, z}
+   */
   moveTo(destination) {
     this.destination = destination;
     this.status = 'moving';
@@ -201,6 +231,11 @@ class Fleet {
     this.updatedAt = new Date();
   }
 
+  /**
+   * Splits fleet into a new fleet with specified ships
+   * @param {Array} shipTypes - Array of {type, quantity} objects
+   * @returns {Fleet} New fleet with split ships
+   */
   split(shipTypes) {
     const newFleet = new Fleet({
       empireId: this.empireId,
