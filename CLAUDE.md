@@ -30,6 +30,17 @@ This is a simulation runner called `statsim` that executes game simulations with
 - The game is spread between various web pages and a simulated REPL terminal on the page that provides the player with a simulated ship experience
 - The game uses limits of web, RESTful, and online gameplay to its advantage
 
+## Code Documentation Rules
+
+- All classes and models MUST have JSDoc comments describing their purpose
+- All public methods MUST have JSDoc comments with parameter and return type documentation
+- Use `@param {type} name - description` for parameters
+- Use `@returns {type} description` for return values
+- Use `@throws {Error} description` for methods that can throw errors
+- Include usage examples in JSDoc for complex methods when helpful
+- Document static constants and their possible values
+- Keep documentation concise but comprehensive - focus on what the code does, not how it does it
+
 
 ## Phases
 
