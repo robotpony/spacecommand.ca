@@ -8,6 +8,7 @@ const Empire = require('../models/Empire');
 const Fleet = require('../models/Fleet');
 const { ValidationError, NotFoundError, ConflictError, InsufficientResourcesError } = require('../middleware/errorHandler');
 const { requireActionPoints, consumeActionPoints } = require('../middleware/gameState');
+const { requireOwnEmpire, requireOwnFleet } = require('../middleware/resourceAuth');
 
 const router = express.Router();
 
@@ -96,7 +97,7 @@ router.get('/', [
  */
 router.get('/:id', [
   param('id').isUUID().withMessage('Invalid fleet ID format')
-], async (req, res, next) => {
+], requireOwnFleet(), async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -108,15 +109,8 @@ router.get('/:id', [
       });
     }
 
-    const empire = await Empire.findByPlayerId(req.user.id);
-    if (!empire) {
-      throw new NotFoundError('Empire not found');
-    }
-
-    const fleet = empire.fleets.find(f => f.id === req.params.id);
-    if (!fleet) {
-      throw new NotFoundError('Fleet not found or not owned');
-    }
+    // Fleet and empire are already validated and attached by requireOwnFleet middleware
+    const fleet = req.userFleet;
 
     res.set({
       'ETag': `"${fleet.id}-${fleet.updatedAt.getTime()}"`,

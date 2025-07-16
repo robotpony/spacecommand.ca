@@ -119,20 +119,23 @@ function requireActionPoints(requiredPoints = 1) {
       }
 
       const gameState = await getCurrentGameState();
-      const actionPoints = await getUserActionPoints(req.user.id, gameState.currentTurn);
       
-      if (actionPoints < requiredPoints) {
+      // Atomically check and reserve action points using database transaction
+      const reservationResult = await reserveActionPoints(req.user.id, gameState.currentTurn, requiredPoints);
+      
+      if (!reservationResult.success) {
         return res.status(429).json({ 
           message: 'Insufficient action points',
           details: {
             required: requiredPoints,
-            available: actionPoints,
+            available: reservationResult.available,
             resetTime: gameState.phaseTimeRemaining
           }
         });
       }
 
-      // Store required points in request for later consumption
+      // Store reservation ID and game state for later confirmation
+      req.actionPointReservationId = reservationResult.reservationId;
       req.actionPointsRequired = requiredPoints;
       req.gameState = gameState;
       
@@ -145,26 +148,139 @@ function requireActionPoints(requiredPoints = 1) {
 }
 
 /**
- * Consume action points after successful action
+ * Atomically reserves action points for a user
+ * @param {string} userId - User ID
+ * @param {number} turnNumber - Current turn number
+ * @param {number} requiredPoints - Number of action points to reserve
+ * @returns {Promise<Object>} Reservation result
+ */
+async function reserveActionPoints(userId, turnNumber, requiredPoints) {
+  const db = require('../config/database');
+  
+  return await db.transaction(async (client) => {
+    try {
+      // Get current action points usage with row lock to prevent race conditions
+      const result = await client.query(
+        'SELECT COALESCE(SUM(action_points), 0) as used_points FROM player_actions WHERE player_id = $1 AND turn_number = $2 FOR UPDATE',
+        [userId, turnNumber]
+      );
+      
+      const usedPoints = parseInt(result.rows[0].used_points) || 0;
+      const maxPoints = 10;
+      const availablePoints = maxPoints - usedPoints;
+      
+      if (availablePoints < requiredPoints) {
+        return {
+          success: false,
+          available: availablePoints,
+          required: requiredPoints
+        };
+      }
+      
+      // Create a temporary reservation record
+      const reservationId = require('crypto').randomUUID();
+      await client.query(
+        'INSERT INTO action_point_reservations (id, player_id, turn_number, reserved_points, created_at, expires_at) VALUES ($1, $2, $3, $4, $5, $6)',
+        [reservationId, userId, turnNumber, requiredPoints, new Date(), new Date(Date.now() + 30000)] // 30 second expiry
+      );
+      
+      return {
+        success: true,
+        reservationId,
+        available: availablePoints,
+        reserved: requiredPoints
+      };
+    } catch (error) {
+      console.error('Error reserving action points:', error);
+      throw error;
+    }
+  });
+}
+
+/**
+ * Confirms action point consumption after successful action
  * @param {Object} req - Express request object
  * @param {string} actionType - Type of action performed
  */
 async function consumeActionPoints(req, actionType) {
   try {
-    if (!req.user || !req.actionPointsRequired || !req.gameState) {
+    if (!req.user || !req.actionPointReservationId || !req.gameState) {
       return;
     }
 
     const db = require('../config/database');
     
-    // Record the action
-    await db.query(
-      'INSERT INTO player_actions (player_id, turn_number, action_type, action_points, timestamp) VALUES ($1, $2, $3, $4, $5)',
-      [req.user.id, req.gameState.currentTurn, actionType, req.actionPointsRequired, new Date()]
-    );
+    await db.transaction(async (client) => {
+      // Get the reservation
+      const reservationResult = await client.query(
+        'SELECT * FROM action_point_reservations WHERE id = $1 AND player_id = $2',
+        [req.actionPointReservationId, req.user.id]
+      );
+      
+      if (reservationResult.rows.length === 0) {
+        throw new Error('Action point reservation not found');
+      }
+      
+      const reservation = reservationResult.rows[0];
+      
+      // Check if reservation hasn't expired
+      if (new Date() > reservation.expires_at) {
+        throw new Error('Action point reservation expired');
+      }
+      
+      // Record the actual action
+      await client.query(
+        'INSERT INTO player_actions (player_id, turn_number, action_type, action_points, timestamp, reservation_id) VALUES ($1, $2, $3, $4, $5, $6)',
+        [req.user.id, req.gameState.currentTurn, actionType, reservation.reserved_points, new Date(), req.actionPointReservationId]
+      );
+      
+      // Delete the reservation
+      await client.query(
+        'DELETE FROM action_point_reservations WHERE id = $1',
+        [req.actionPointReservationId]
+      );
+    });
   } catch (error) {
     console.error('Error consuming action points:', error);
-    // Don't fail the request if action point consumption fails
+    // Try to clean up the reservation
+    await releaseActionPointReservation(req.actionPointReservationId);
+  }
+}
+
+/**
+ * Releases an action point reservation (for cleanup)
+ * @param {string} reservationId - Reservation ID to release
+ */
+async function releaseActionPointReservation(reservationId) {
+  try {
+    if (!reservationId) return;
+    
+    const db = require('../config/database');
+    await db.query(
+      'DELETE FROM action_point_reservations WHERE id = $1',
+      [reservationId]
+    );
+  } catch (error) {
+    console.error('Error releasing action point reservation:', error);
+  }
+}
+
+/**
+ * Cleanup expired action point reservations (should be run periodically)
+ */
+async function cleanupExpiredReservations() {
+  try {
+    const db = require('../config/database');
+    const result = await db.query(
+      'DELETE FROM action_point_reservations WHERE expires_at < $1',
+      [new Date()]
+    );
+    
+    if (result.rowCount > 0) {
+      console.log(`Cleaned up ${result.rowCount} expired action point reservations`);
+    }
+  } catch (error) {
+    console.error('Error cleaning up expired reservations:', error);
   }
 }
 
@@ -173,5 +289,7 @@ module.exports = {
   getCurrentGameState,
   getUserActionPoints,
   requireActionPoints,
-  consumeActionPoints
+  consumeActionPoints,
+  releaseActionPointReservation,
+  cleanupExpiredReservations
 };

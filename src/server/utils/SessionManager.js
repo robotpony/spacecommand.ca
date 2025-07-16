@@ -11,6 +11,9 @@ class SessionManager {
     this.redis = null;
     this.sessionDuration = 24 * 60 * 60 * 1000; // 24 hours
     this.cleanupInterval = 60 * 60 * 1000; // 1 hour
+    this.cleanupTimer = null;
+    this.isShuttingDown = false;
+    this.tokenCounter = 0;
   }
 
   /**
@@ -19,18 +22,96 @@ class SessionManager {
   async initialize() {
     this.redis = database.getRedisClient();
     
-    // Start cleanup interval
-    setInterval(() => {
-      this.cleanupExpiredSessions();
+    // Start cleanup interval with proper error handling
+    this.cleanupTimer = setInterval(async () => {
+      try {
+        if (!this.isShuttingDown) {
+          await this.cleanupExpiredSessions();
+        }
+      } catch (error) {
+        console.error('Error during session cleanup:', error);
+      }
     }, this.cleanupInterval);
+
+    // Setup graceful shutdown handlers
+    this._setupShutdownHandlers();
   }
 
   /**
-   * Generate a secure session token
+   * Setup graceful shutdown handlers to prevent memory leaks
+   * @private
+   */
+  _setupShutdownHandlers() {
+    const gracefulShutdown = async (signal) => {
+      console.log(`Received ${signal}, shutting down SessionManager gracefully...`);
+      await this.shutdown();
+      process.exit(0);
+    };
+
+    // Handle various shutdown signals
+    process.once('SIGINT', gracefulShutdown);
+    process.once('SIGTERM', gracefulShutdown);
+    process.once('SIGUSR2', gracefulShutdown); // nodemon restart
+  }
+
+  /**
+   * Shutdown session manager and cleanup resources
+   */
+  async shutdown() {
+    this.isShuttingDown = true;
+    
+    // Clear the cleanup interval to prevent memory leak
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+      console.log('Stopped session cleanup timer');
+    }
+
+    // Perform final cleanup
+    try {
+      await this.cleanupExpiredSessions();
+      console.log('Performed final session cleanup');
+    } catch (error) {
+      console.error('Error during final session cleanup:', error);
+    }
+
+    // Close Redis connection if needed
+    if (this.redis && typeof this.redis.quit === 'function') {
+      try {
+        await this.redis.quit();
+        console.log('Closed Redis connection');
+      } catch (error) {
+        console.error('Error closing Redis connection:', error);
+      }
+    }
+  }
+
+  /**
+   * Generate a secure session token with additional entropy
    * @returns {string} Random session token
    */
   generateToken() {
-    return crypto.randomBytes(32).toString('hex');
+    // Include timestamp and process-specific data for additional entropy
+    const timestamp = Date.now().toString(36);
+    const random = crypto.randomBytes(32).toString('hex');
+    const processId = process.pid.toString(36);
+    const counter = this._getTokenCounter().toString(36);
+    
+    // Combine all entropy sources and hash for consistent length
+    const combined = `${timestamp}.${processId}.${counter}.${random}`;
+    return crypto.createHash('sha256').update(combined).digest('hex');
+  }
+
+  /**
+   * Get and increment token counter for additional uniqueness
+   * @returns {number} Current counter value
+   * @private
+   */
+  _getTokenCounter() {
+    if (!this.tokenCounter) {
+      this.tokenCounter = 0;
+    }
+    return ++this.tokenCounter;
   }
 
   /**

@@ -8,6 +8,7 @@ const Empire = require('../models/Empire');
 const Planet = require('../models/Planet');
 const { ValidationError, NotFoundError, ConflictError, InsufficientResourcesError } = require('../middleware/errorHandler');
 const { requireActionPoints, consumeActionPoints } = require('../middleware/gameState');
+const { requireOwnEmpire, requireOwnPlanet } = require('../middleware/resourceAuth');
 
 const router = express.Router();
 
@@ -15,12 +16,10 @@ const router = express.Router();
  * GET /api/empire
  * Get current empire status and overview
  */
-router.get('/empire', async (req, res, next) => {
+router.get('/empire', requireOwnEmpire, async (req, res, next) => {
   try {
-    const empire = await Empire.findByPlayerId(req.user.id);
-    if (!empire) {
-      throw new NotFoundError('Empire not found');
-    }
+    // Empire is already validated and attached by requireOwnEmpire middleware
+    const empire = req.userEmpire;
 
     // Calculate current resource totals including production
     const resourceSummary = empire.calculateCurrentResources();
@@ -167,7 +166,7 @@ router.get('/planets', [
  */
 router.get('/planets/:id', [
   param('id').isUUID().withMessage('Invalid planet ID format')
-], async (req, res, next) => {
+], requireOwnPlanet(), async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -179,15 +178,8 @@ router.get('/planets/:id', [
       });
     }
 
-    const empire = await Empire.findByPlayerId(req.user.id);
-    if (!empire) {
-      throw new NotFoundError('Empire not found');
-    }
-
-    const planet = empire.planets.find(p => p.id === req.params.id);
-    if (!planet) {
-      throw new NotFoundError('Planet not found or not owned');
-    }
+    // Planet and empire are already validated and attached by requireOwnPlanet middleware
+    const planet = req.userPlanet;
 
     res.set({
       'ETag': `"${planet.id}-${planet.updatedAt.getTime()}"`,
@@ -224,7 +216,7 @@ router.put('/planets/:id/specialization', requireActionPoints(2), [
   body('specialization')
     .isIn(['mining', 'energy', 'agricultural', 'research', 'industrial', 'fortress', 'balanced'])
     .withMessage('Invalid specialization type')
-], async (req, res, next) => {
+], requireOwnPlanet(), async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -237,15 +229,9 @@ router.put('/planets/:id/specialization', requireActionPoints(2), [
     }
 
     const { specialization } = req.body;
-    const empire = await Empire.findByPlayerId(req.user.id);
-    if (!empire) {
-      throw new NotFoundError('Empire not found');
-    }
-
-    const planet = empire.planets.find(p => p.id === req.params.id);
-    if (!planet) {
-      throw new NotFoundError('Planet not found or not owned');
-    }
+    // Empire and planet are already validated and attached by middleware
+    const empire = req.userEmpire;
+    const planet = req.userPlanet;
 
     if (planet.specialization === specialization) {
       throw new ConflictError('Planet already has that specialization');

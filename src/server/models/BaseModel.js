@@ -11,8 +11,48 @@ class BaseModel {
    * @param {string} tableName - Database table name
    */
   constructor(tableName) {
-    this.tableName = tableName;
+    this.tableName = this._validateTableName(tableName);
     this.db = database;
+  }
+
+  /**
+   * Validates table name against allowlist to prevent SQL injection
+   * @param {string} tableName - Table name to validate
+   * @returns {string} Validated table name
+   * @throws {Error} If table name is not in allowlist
+   * @private
+   */
+  _validateTableName(tableName) {
+    const allowedTables = [
+      'players',
+      'empires', 
+      'planets',
+      'fleets',
+      'combat_records',
+      'diplomacy_relations',
+      'game_sessions',
+      'game_state',
+      'player_actions',
+      'trade_routes',
+      'sectors',
+      'exploration_missions',
+      'diplomatic_proposals',
+      'agreements',
+      'messages',
+      'events',
+      'leaderboards'
+    ];
+
+    if (!allowedTables.includes(tableName)) {
+      throw new Error(`Invalid table name: ${tableName}. Table not in allowlist.`);
+    }
+
+    // Additional validation: ensure table name contains only alphanumeric characters and underscores
+    if (!/^[a-z_][a-z0-9_]*$/i.test(tableName)) {
+      throw new Error(`Invalid table name format: ${tableName}. Must contain only letters, numbers, and underscores.`);
+    }
+
+    return tableName;
   }
 
   /**
@@ -25,11 +65,13 @@ class BaseModel {
     const dbClient = client || this.db;
     
     const columns = Object.keys(data);
+    // Validate all column names to prevent SQL injection
+    const validatedColumns = columns.map(col => this._validateColumnName(col));
     const values = Object.values(data);
-    const placeholders = columns.map((_, index) => `$${index + 1}`);
+    const placeholders = validatedColumns.map((_, index) => `$${index + 1}`);
     
     const query = `
-      INSERT INTO ${this.tableName} (${columns.join(', ')})
+      INSERT INTO ${this.tableName} (${validatedColumns.join(', ')})
       VALUES (${placeholders.join(', ')})
       RETURNING *
     `;
@@ -92,8 +134,10 @@ class BaseModel {
     const dbClient = client || this.db;
     
     const columns = Object.keys(data);
+    // Validate all column names to prevent SQL injection
+    const validatedColumns = columns.map(col => this._validateColumnName(col));
     const values = Object.values(data);
-    const setClause = columns.map((col, index) => `${col} = $${index + 2}`).join(', ');
+    const setClause = validatedColumns.map((col, index) => `${col} = $${index + 2}`).join(', ');
     
     const query = `
       UPDATE ${this.tableName}
@@ -118,8 +162,10 @@ class BaseModel {
     
     const whereClause = this._buildWhereClause(conditions);
     const columns = Object.keys(data);
+    // Validate all column names to prevent SQL injection
+    const validatedColumns = columns.map(col => this._validateColumnName(col));
     const values = Object.values(data);
-    const setClause = columns.map((col, index) => 
+    const setClause = validatedColumns.map((col, index) => 
       `${col} = $${index + whereClause.values.length + 1}`
     ).join(', ');
     
@@ -221,19 +267,23 @@ class BaseModel {
     const values = [];
     
     keys.forEach((key, index) => {
+      // Validate column name to prevent SQL injection
+      const sanitizedKey = this._validateColumnName(key);
       const value = conditions[key];
       
       if (value === null) {
-        clauses.push(`${key} IS NULL`);
+        clauses.push(`${sanitizedKey} IS NULL`);
       } else if (Array.isArray(value)) {
         const placeholders = value.map((_, i) => `$${values.length + i + 1}`);
-        clauses.push(`${key} IN (${placeholders.join(', ')})`);
+        clauses.push(`${sanitizedKey} IN (${placeholders.join(', ')})`);
         values.push(...value);
       } else if (typeof value === 'object' && value.operator) {
-        clauses.push(`${key} ${value.operator} $${values.length + 1}`);
+        // Validate operator to prevent SQL injection
+        const sanitizedOperator = this._validateOperator(value.operator);
+        clauses.push(`${sanitizedKey} ${sanitizedOperator} $${values.length + 1}`);
         values.push(value.value);
       } else {
-        clauses.push(`${key} = $${values.length + 1}`);
+        clauses.push(`${sanitizedKey} = $${values.length + 1}`);
         values.push(value);
       }
     });
@@ -242,6 +292,57 @@ class BaseModel {
       clause: `WHERE ${clauses.join(' AND ')}`,
       values
     };
+  }
+
+  /**
+   * Validates column name to prevent SQL injection
+   * @param {string} columnName - Column name to validate
+   * @returns {string} Validated column name
+   * @throws {Error} If column name is invalid
+   * @private
+   */
+  _validateColumnName(columnName) {
+    // Allow only alphanumeric characters, underscores, and dots (for table.column)
+    if (!/^[a-z_][a-z0-9_.]*$/i.test(columnName)) {
+      throw new Error(`Invalid column name: ${columnName}. Must contain only letters, numbers, underscores, and dots.`);
+    }
+
+    // Prevent SQL keywords and dangerous patterns
+    const dangerousPatterns = [
+      /\b(DROP|DELETE|UPDATE|INSERT|CREATE|ALTER|EXEC|UNION|SELECT)\b/i,
+      /[';--]/,
+      /\/\*|\*\//
+    ];
+
+    for (const pattern of dangerousPatterns) {
+      if (pattern.test(columnName)) {
+        throw new Error(`Invalid column name: ${columnName}. Contains dangerous SQL patterns.`);
+      }
+    }
+
+    return columnName;
+  }
+
+  /**
+   * Validates SQL operator to prevent SQL injection
+   * @param {string} operator - SQL operator to validate
+   * @returns {string} Validated operator
+   * @throws {Error} If operator is invalid
+   * @private
+   */
+  _validateOperator(operator) {
+    const allowedOperators = [
+      '=', '!=', '<>', '<', '>', '<=', '>=',
+      'LIKE', 'ILIKE', 'NOT LIKE', 'NOT ILIKE',
+      'IS', 'IS NOT', 'IN', 'NOT IN',
+      'BETWEEN', 'NOT BETWEEN'
+    ];
+
+    if (!allowedOperators.includes(operator.toUpperCase())) {
+      throw new Error(`Invalid SQL operator: ${operator}. Not in allowlist.`);
+    }
+
+    return operator;
   }
 
   /**
