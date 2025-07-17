@@ -39,7 +39,11 @@ const generalLimiter = rateLimit({
   max: 60, // 60 requests per minute per IP
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: 'Too many requests, please try again later' }
+  message: { message: 'Too many requests, please try again later' },
+  skip: (req) => {
+    // Skip rate limiting for health checks
+    return req.path === '/health';
+  }
 });
 
 const authLimiter = rateLimit({
@@ -47,7 +51,16 @@ const authLimiter = rateLimit({
   max: 5, // 5 auth requests per minute per IP
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: 'Too many authentication attempts, please try again later' }
+  message: { message: 'Too many authentication attempts, please try again later' },
+  skipSuccessfulRequests: true // Don't count successful requests
+});
+
+const passwordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3, // 3 password change attempts per 15 minutes per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many password change attempts, please try again later' }
 });
 
 const combatLimiter = rateLimit({
@@ -58,10 +71,26 @@ const combatLimiter = rateLimit({
   message: { message: 'Too many combat actions, please try again later' }
 });
 
+const diplomacyLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 20, // 20 diplomatic actions per minute per user
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many diplomatic actions, please try again later' }
+});
+
+const heavyOperationLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // 5 heavy operations per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many intensive operations, please try again later' }
+});
+
 // Body parsing and compression
 app.use(compression());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '1mb' })); // Reduced from 10mb to prevent DoS
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Global middleware
 app.use('/api', generalLimiter);
@@ -76,16 +105,17 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API routes
+// API routes with enhanced rate limiting
 app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth/change-password', passwordLimiter); // Additional protection for password changes
 app.use('/api/empire', authenticateToken, empireRoutes);
 app.use('/api/planets', authenticateToken, empireRoutes);
 app.use('/api/resources', authenticateToken, empireRoutes);
 app.use('/api/fleets', authenticateToken, fleetRoutes);
 app.use('/api/combat', authenticateToken, combatLimiter, combatRoutes);
-app.use('/api/diplomacy', authenticateToken, diplomacyRoutes);
-app.use('/api/sectors', authenticateToken, territoryRoutes);
-app.use('/api/colonize', authenticateToken, territoryRoutes);
+app.use('/api/diplomacy', authenticateToken, diplomacyLimiter, diplomacyRoutes);
+app.use('/api/sectors', authenticateToken, heavyOperationLimiter, territoryRoutes);
+app.use('/api/colonize', authenticateToken, heavyOperationLimiter, territoryRoutes);
 app.use('/api/trade-routes', authenticateToken, territoryRoutes);
 app.use('/api/game', authenticateToken, gameRoutes);
 

@@ -58,14 +58,44 @@ function errorHandler(err, req, res, next) {
   // Send error response
   const response = { message };
   
-  // Only include details in development or if they're safe to expose
-  if (Object.keys(details).length > 0) {
+  // Only include details if they're safe to expose (never include sensitive info)
+  if (Object.keys(details).length > 0 && status < 500) {
+    // Only include details for client errors (4xx), not server errors (5xx)
     response.details = details;
   }
 
-  // Include stack trace in development
-  if (process.env.NODE_ENV === 'development' && err.stack) {
-    response.stack = err.stack;
+  // Never include stack traces in production
+  // Log sensitive information instead
+  if (process.env.NODE_ENV === 'development') {
+    // In development, log full error details but don't send in response
+    console.error('Development Error Details:', {
+      message: err.message,
+      stack: err.stack,
+      url: req.url,
+      method: req.method,
+      user: req.user?.id,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Include error ID for debugging without exposing sensitive data
+    response.errorId = Date.now().toString(36);
+  } else {
+    // In production, log errors for monitoring but return minimal info
+    const errorId = Date.now().toString(36);
+    console.error('Production Error:', {
+      errorId,
+      message: err.message,
+      url: req.url,
+      method: req.method,
+      user: req.user?.id,
+      timestamp: new Date().toISOString()
+    });
+    
+    // For server errors, return generic message and error ID
+    if (status >= 500) {
+      response.message = 'Internal server error';
+      response.errorId = errorId;
+    }
   }
 
   res.status(status).json(response);
