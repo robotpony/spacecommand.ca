@@ -10,8 +10,10 @@
 require('dotenv').config();
 const path = require('path');
 
-// Import the main Express application
-const app = require('../src/server/app');
+// Import the main Express application and initialization function
+const { app, initializeServices } = require('../src/server/app');
+const database = require('../src/server/config/database');
+const migrationRunner = require('../src/server/config/migration-runner');
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -42,43 +44,89 @@ if (NODE_ENV === 'development') {
 }
 
 /**
- * Start the server
+ * Initialize database and run migrations
  */
-function startServer() {
-  const server = app.listen(PORT, () => {
-    console.log(`🚀 SpaceCommand server running on port ${PORT}`);
-    console.log(`📊 Environment: ${NODE_ENV}`);
-    console.log(`🌐 API Base URL: http://localhost:${PORT}/api`);
+async function initializeDatabase() {
+  try {
+    console.log('📡 Initializing database connection...');
+    await database.initialize();
+    console.log('✓ Database connection established');
     
-    if (NODE_ENV === 'development') {
-      console.log(`🎮 Client URL: http://localhost:${PORT}`);
-      console.log(`💊 Health Check: http://localhost:${PORT}/health`);
+    console.log('🔄 Running database migrations...');
+    await migrationRunner.runMigrations();
+    console.log('✓ Database migrations completed');
+    
+    // Check if we need to run seeds
+    const seedCheck = await database.query('SELECT COUNT(*) FROM players');
+    if (seedCheck.rows[0].count === '0') {
+      console.log('🌱 Running database seeds...');
+      const seedRunner = require('../src/server/config/seed-runner');
+      await seedRunner.runSeeds();
+      console.log('✓ Database seeds completed');
     }
-  });
-  
-  // Graceful shutdown handling
-  process.on('SIGTERM', () => {
-    console.log('🛑 SIGTERM received, shutting down gracefully');
-    server.close(() => {
-      console.log('✅ Server closed');
-      process.exit(0);
+    
+    console.log('✓ Database initialization complete');
+  } catch (error) {
+    console.error('✗ Database initialization failed:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Start the server with full initialization
+ */
+async function startServer() {
+  try {
+    // Initialize database first
+    await initializeDatabase();
+    
+    // Initialize application services
+    await initializeServices();
+    
+    // Start the HTTP server
+    const server = app.listen(PORT, () => {
+      console.log(`🚀 SpaceCommand server running on port ${PORT}`);
+      console.log(`📊 Environment: ${NODE_ENV}`);
+      console.log(`🌐 API Base URL: http://localhost:${PORT}/api`);
+      
+      if (NODE_ENV === 'development') {
+        console.log(`🎮 Client URL: http://localhost:${PORT}`);
+        console.log(`💊 Health Check: http://localhost:${PORT}/health`);
+      }
     });
-  });
-  
-  process.on('SIGINT', () => {
-    console.log('🛑 SIGINT received, shutting down gracefully');
-    server.close(() => {
-      console.log('✅ Server closed');
-      process.exit(0);
-    });
-  });
-  
-  return server;
+    
+    // Graceful shutdown handling
+    const gracefulShutdown = async (signal) => {
+      console.log(`🛑 ${signal} received, shutting down gracefully`);
+      server.close(async () => {
+        try {
+          await database.close();
+          console.log('✅ Database connections closed');
+          console.log('✅ Server shutdown complete');
+          process.exit(0);
+        } catch (error) {
+          console.error('✗ Error during shutdown:', error.message);
+          process.exit(1);
+        }
+      });
+    };
+    
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    
+    return server;
+  } catch (error) {
+    console.error('✗ Server startup failed:', error.message);
+    process.exit(1);
+  }
 }
 
 // Start the server if this file is run directly
 if (require.main === module) {
-  startServer();
+  startServer().catch(error => {
+    console.error('✗ Failed to start server:', error.message);
+    process.exit(1);
+  });
 }
 
-module.exports = app;
+module.exports = { app, startServer, initializeDatabase };

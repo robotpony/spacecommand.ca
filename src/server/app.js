@@ -8,6 +8,10 @@ const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const { body, validationResult } = require('express-validator');
 
+// Import configuration and utilities
+const { validateEnvironmentConfig } = require('./config/environment');
+const sessionManager = require('./utils/SessionManager');
+
 // Import route modules
 const authRoutes = require('./routes/auth');
 const empireRoutes = require('./routes/empire');
@@ -130,4 +134,25 @@ app.use('*', (req, res) => {
 // Global error handler
 app.use(errorHandler);
 
-module.exports = app;
+/**
+ * Initialize application services
+ * @returns {Promise<void>}
+ */
+async function initializeServices() {
+  try {
+    // Validate environment configuration
+    validateEnvironmentConfig();
+    
+    // Initialize session manager
+    await sessionManager.initialize();
+    console.log('✓ SessionManager initialized');
+    
+    console.log('✓ All services initialized successfully');
+  } catch (error) {
+    console.error('✗ Failed to initialize services:', error.message);
+    throw error;
+  }
+}
+
+// Export app and initialization function
+module.exports = { app, initializeServices };

@@ -32,6 +32,7 @@ class BaseModel {
       'diplomacy_relations',
       'game_sessions',
       'game_state',
+      'action_point_reservations',
       'player_actions',
       'trade_routes',
       'sectors',

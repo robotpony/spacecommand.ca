@@ -6,25 +6,36 @@
 const environments = {
   development: {
     database: {
-      host: 'localhost',
-      port: 5432,
-      database: 'spacecommand_dev',
-      user: 'postgres',
-      password: 'password',
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT) || 5432,
+      database: process.env.DB_NAME || 'spacecommand_dev',
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || 'password',
       ssl: false
     },
     redis: {
-      host: 'localhost',
-      port: 6379,
-      password: null
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT) || 6379,
+      password: process.env.REDIS_PASSWORD || null
     },
     session: {
-      secret: 'dev-session-secret-key',
+      secret: process.env.SESSION_SECRET || 'dev-session-secret-key',
       duration: 24 * 60 * 60 * 1000, // 24 hours
       cleanup: 60 * 60 * 1000 // 1 hour
     },
+    jwt: {
+      secret: process.env.JWT_SECRET || 'dev-jwt-secret-key',
+      expiresIn: process.env.JWT_EXPIRES_IN || '24h'
+    },
+    game: {
+      turnDuration: process.env.TURN_DURATION || '24h',
+      maxPlayers: parseInt(process.env.MAX_PLAYERS) || 1000,
+      maxEmpiresPerPlayer: parseInt(process.env.MAX_EMPIRES_PER_PLAYER) || 3,
+      actionPointsPerTurn: parseInt(process.env.ACTION_POINTS_PER_TURN) || 100,
+      startingResources: parseInt(process.env.STARTING_RESOURCES) || 1000
+    },
     logging: {
-      level: 'debug',
+      level: process.env.LOG_LEVEL || 'debug',
       queries: true,
       requests: true
     }
@@ -60,7 +71,7 @@ const environments = {
   production: {
     database: {
       host: process.env.DB_HOST,
-      port: process.env.DB_PORT || 5432,
+      port: parseInt(process.env.DB_PORT) || 5432,
       database: process.env.DB_NAME,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
@@ -68,7 +79,7 @@ const environments = {
     },
     redis: {
       host: process.env.REDIS_HOST,
-      port: process.env.REDIS_PORT || 6379,
+      port: parseInt(process.env.REDIS_PORT) || 6379,
       password: process.env.REDIS_PASSWORD
     },
     session: {
@@ -76,8 +87,19 @@ const environments = {
       duration: 24 * 60 * 60 * 1000, // 24 hours
       cleanup: 60 * 60 * 1000 // 1 hour
     },
+    jwt: {
+      secret: process.env.JWT_SECRET,
+      expiresIn: process.env.JWT_EXPIRES_IN || '24h'
+    },
+    game: {
+      turnDuration: process.env.TURN_DURATION || '24h',
+      maxPlayers: parseInt(process.env.MAX_PLAYERS) || 1000,
+      maxEmpiresPerPlayer: parseInt(process.env.MAX_EMPIRES_PER_PLAYER) || 3,
+      actionPointsPerTurn: parseInt(process.env.ACTION_POINTS_PER_TURN) || 100,
+      startingResources: parseInt(process.env.STARTING_RESOURCES) || 1000
+    },
     logging: {
-      level: 'info',
+      level: process.env.LOG_LEVEL || 'info',
       queries: false,
       requests: true
     }
@@ -121,7 +143,8 @@ function validateProductionConfig() {
     'DB_USER',
     'DB_PASSWORD',
     'REDIS_HOST',
-    'SESSION_SECRET'
+    'SESSION_SECRET',
+    'JWT_SECRET'
   ];
 
   const missing = required.filter(key => !process.env[key]);
@@ -131,7 +154,40 @@ function validateProductionConfig() {
   }
 }
 
+/**
+ * Validate environment variables for any environment
+ * @throws {Error} If critical variables are missing or invalid
+ */
+function validateEnvironmentConfig() {
+  const warnings = [];
+  
+  // Check JWT secret strength
+  if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
+    warnings.push('JWT_SECRET should be at least 32 characters for security');
+  }
+  
+  // Check SESSION_SECRET strength
+  if (process.env.SESSION_SECRET && process.env.SESSION_SECRET.length < 32) {
+    warnings.push('SESSION_SECRET should be at least 32 characters for security');
+  }
+  
+  // Check numeric values
+  const numericVars = ['DB_PORT', 'REDIS_PORT', 'PORT', 'MAX_PLAYERS', 'ACTION_POINTS_PER_TURN'];
+  numericVars.forEach(varName => {
+    if (process.env[varName] && isNaN(parseInt(process.env[varName]))) {
+      throw new Error(`${varName} must be a valid number`);
+    }
+  });
+  
+  // Log warnings
+  if (warnings.length > 0) {
+    console.warn('Environment configuration warnings:');
+    warnings.forEach(warning => console.warn(`  - ${warning}`));
+  }
+}
+
 module.exports = {
   getConfig,
-  validateProductionConfig
+  validateProductionConfig,
+  validateEnvironmentConfig
 };

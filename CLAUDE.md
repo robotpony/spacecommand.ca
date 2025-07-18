@@ -8,8 +8,8 @@ This is a simulation runner called `statsim` that executes game simulations with
 
 ## Standard Workflow
 
-1. Think through the problem, read the codebase and relavent flies, and write a plan in `tasks/TODO.md`.
-2. The plan should have a list of tasks that you check off as you complete them.
+1. Think through the problem, read the codebase and relavent flies, and write a plan in a task file `tasks/TODO.md`.
+2. The plan should have a list of tasks that you check off as you complete them. Do not provide time estimates, instead provide complexity and risk assessments (e.g., low risk, high risk, low complexity, high complexity and variations).
 3. For new components, outline their design in a new design markdown file, named for the feature.
 3. Before you begin working, check in with me and I will verify your plan and designs.
 4. Then, begin working on the TODO items, marking them off as you go.
