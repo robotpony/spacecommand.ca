@@ -1,0 +1,17 @@
+#!/usr/bin/env node
+
+/**
+ * SpaceCommand Terminal Client Launcher
+ * 
+ * Starts the terminal REPL client for playing SpaceCommand.
+ */
+
+const path = require('path');
+const SpaceCommandREPL = require('../src/client/terminal/main');
+
+// Start the terminal client
+const repl = new SpaceCommandREPL();
+repl.start().catch(error => {
+    console.error('\x1b[31mFailed to start SpaceCommand client:\x1b[0m', error.message);
+    process.exit(1);
+});

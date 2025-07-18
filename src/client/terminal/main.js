@@ -69,7 +69,8 @@ class SpaceCommandREPL {
             input: process.stdin,
             output: process.stdout,
             prompt: '',
-            historySize: 100
+            historySize: 100,
+            completer: this.getCompletions.bind(this)
         });
 
         this.rl.on('line', async (input) => {
@@ -173,6 +174,66 @@ class SpaceCommandREPL {
                     break;
                 case 'status':
                     result = await this.handleStatus();
+                    break;
+                case 'empire':
+                    result = await this.handleEmpireDetails();
+                    break;
+                case 'planets':
+                    result = await this.handlePlanets();
+                    break;
+                case 'resources':
+                    result = await this.handleResources();
+                    break;
+                case 'fleets':
+                    result = await this.handleFleets();
+                    break;
+                case 'fleet':
+                    result = await this.handleFleetDetails(args);
+                    break;
+                case 'create-fleet':
+                    result = await this.handleCreateFleet(args);
+                    break;
+                case 'move':
+                    result = await this.handleMoveFleet(args);
+                    break;
+                case 'scan':
+                    result = await this.handleScan(args);
+                    break;
+                case 'turn':
+                    result = await this.handleTurnStatus();
+                    break;
+                case 'events':
+                    result = await this.handleEvents(args);
+                    break;
+                case 'leaderboard':
+                    result = await this.handleLeaderboard();
+                    break;
+                case 'attack':
+                    result = await this.handleAttack(args);
+                    break;
+                case 'retreat':
+                    result = await this.handleRetreat(args);
+                    break;
+                case 'merge':
+                    result = await this.handleMergeFleets(args);
+                    break;
+                case 'disband':
+                    result = await this.handleDisbandFleet(args);
+                    break;
+                case 'diplomacy':
+                    result = await this.handleDiplomacy(args);
+                    break;
+                case 'explore':
+                    result = await this.handleExplore(args);
+                    break;
+                case 'colonize':
+                    result = await this.handleColonize(args);
+                    break;
+                case 'build':
+                    result = await this.handleBuild(args);
+                    break;
+                case 'research':
+                    result = await this.handleResearch(args);
                     break;
                 default:
                     this.terminal.showError('Unknown command', `"${name}" is not a recognized command`);
@@ -283,6 +344,368 @@ class SpaceCommandREPL {
     }
 
     /**
+     * Handle empire details command
+     */
+    async handleEmpireDetails() {
+        const response = await this.api.getEmpireDetails();
+        this.terminal.displayEmpireDetails(response);
+    }
+
+    /**
+     * Handle planets command
+     */
+    async handlePlanets() {
+        const planets = await this.api.getPlanets();
+        this.terminal.displayPlanets(planets);
+    }
+
+    /**
+     * Handle resources command
+     */
+    async handleResources() {
+        const resources = await this.api.getResources();
+        this.terminal.displayResources(resources);
+    }
+
+    /**
+     * Handle fleets command
+     */
+    async handleFleets() {
+        const fleets = await this.api.getFleets();
+        this.terminal.displayFleets(fleets);
+    }
+
+    /**
+     * Handle fleet details command
+     * @param {Array} args - Command arguments [fleetId]
+     */
+    async handleFleetDetails(args) {
+        if (args.length === 0) {
+            this.terminal.showError('Usage', 'fleet <fleet-id>');
+            return;
+        }
+
+        const fleetId = args[0];
+        const fleet = await this.api.getFleet(fleetId);
+        this.terminal.displayFleetDetails(fleet);
+    }
+
+    /**
+     * Handle create fleet command
+     * @param {Array} args - Command arguments [planetId, shipType, count, ...]
+     */
+    async handleCreateFleet(args) {
+        if (args.length < 3) {
+            this.terminal.showError('Usage', 'create-fleet <planet-id> <ship-type> <count> [ship-type count ...]');
+            this.terminal.showInfo('Ship types: fighter, cruiser, battleship, dreadnought, carrier, support, scout');
+            return;
+        }
+
+        const planetId = args[0];
+        const shipComposition = {};
+
+        // Parse ship type and count pairs
+        for (let i = 1; i < args.length; i += 2) {
+            const shipType = args[i];
+            const count = parseInt(args[i + 1]);
+
+            if (isNaN(count) || count <= 0) {
+                this.terminal.showError('Invalid ship count', `"${args[i + 1]}" is not a valid number`);
+                return;
+            }
+
+            shipComposition[shipType] = count;
+        }
+
+        const response = await this.api.createFleet(planetId, shipComposition);
+        this.terminal.showSuccess(`Fleet created with ID: ${response.id}`);
+        this.terminal.displayFleetDetails(response);
+    }
+
+    /**
+     * Handle move fleet command
+     * @param {Array} args - Command arguments [fleetId, destination]
+     */
+    async handleMoveFleet(args) {
+        if (args.length < 2) {
+            this.terminal.showError('Usage', 'move <fleet-id> <destination>');
+            this.terminal.showInfo('Destination can be coordinates (x,y) or planet ID');
+            return;
+        }
+
+        const fleetId = args[0];
+        const destination = args[1];
+
+        const response = await this.api.moveFleet(fleetId, destination);
+        this.terminal.showSuccess(`Fleet ${fleetId} is moving to ${destination}`);
+        if (response.eta) {
+            this.terminal.showInfo(`Estimated arrival: ${response.eta}`);
+        }
+    }
+
+    /**
+     * Handle scan command
+     * @param {Array} args - Command arguments [sector]
+     */
+    async handleScan(args) {
+        const sector = args[0] || null;
+        const response = await this.api.scanSector(sector);
+        this.terminal.displayScanResults(response);
+    }
+
+    /**
+     * Handle turn status command
+     */
+    async handleTurnStatus() {
+        const response = await this.api.getTurnStatus();
+        this.terminal.displayTurnStatus(response);
+    }
+
+    /**
+     * Handle events command
+     * @param {Array} args - Command arguments [limit]
+     */
+    async handleEvents(args) {
+        const limit = parseInt(args[0]) || 10;
+        const events = await this.api.getEvents(limit);
+        this.terminal.displayEvents(events);
+    }
+
+    /**
+     * Handle leaderboard command
+     */
+    async handleLeaderboard() {
+        const leaderboard = await this.api.getLeaderboard();
+        this.terminal.displayLeaderboard(leaderboard);
+    }
+
+    /**
+     * Handle attack command
+     * @param {Array} args - Command arguments [fleetId, targetId, attackType]
+     */
+    async handleAttack(args) {
+        if (args.length < 2) {
+            this.terminal.showError('Usage', 'attack <fleet-id> <target-id> [attack-type]');
+            this.terminal.showInfo('Attack types: assault (default), raid, bombard');
+            return;
+        }
+
+        const fleetId = args[0];
+        const targetId = args[1];
+        const attackType = args[2] || 'assault';
+
+        const response = await this.api.attackTarget(fleetId, targetId, attackType);
+        this.terminal.showSuccess(`${attackType.charAt(0).toUpperCase() + attackType.slice(1)} initiated!`);
+        
+        if (response.combatId) {
+            this.terminal.showInfo(`Combat ID: ${response.combatId} - Use "combat-log ${response.combatId}" to view details`);
+        }
+    }
+
+    /**
+     * Handle retreat command
+     * @param {Array} args - Command arguments [fleetId]
+     */
+    async handleRetreat(args) {
+        if (args.length === 0) {
+            this.terminal.showError('Usage', 'retreat <fleet-id>');
+            return;
+        }
+
+        const fleetId = args[0];
+        const response = await this.api.retreatFleet(fleetId);
+        this.terminal.showSuccess(`Fleet ${fleetId} is retreating`);
+        
+        if (response.destination) {
+            this.terminal.showInfo(`Retreating to: ${response.destination}`);
+        }
+    }
+
+    /**
+     * Handle merge fleets command
+     * @param {Array} args - Command arguments [sourceFleetId, targetFleetId]
+     */
+    async handleMergeFleets(args) {
+        if (args.length < 2) {
+            this.terminal.showError('Usage', 'merge <source-fleet-id> <target-fleet-id>');
+            return;
+        }
+
+        const sourceFleetId = args[0];
+        const targetFleetId = args[1];
+
+        const response = await this.api.mergeFleets(sourceFleetId, targetFleetId);
+        this.terminal.showSuccess(`Fleet ${sourceFleetId} merged into Fleet ${targetFleetId}`);
+        this.terminal.displayFleetDetails(response);
+    }
+
+    /**
+     * Handle disband fleet command
+     * @param {Array} args - Command arguments [fleetId]
+     */
+    async handleDisbandFleet(args) {
+        if (args.length === 0) {
+            this.terminal.showError('Usage', 'disband <fleet-id>');
+            return;
+        }
+
+        const fleetId = args[0];
+        await this.api.disbandFleet(fleetId);
+        this.terminal.showSuccess(`Fleet ${fleetId} disbanded successfully`);
+    }
+
+    /**
+     * Handle diplomacy command
+     * @param {Array} args - Command arguments [action, ...params]
+     */
+    async handleDiplomacy(args) {
+        if (args.length === 0) {
+            this.terminal.showError('Usage', 'diplomacy <action> [params...]');
+            this.terminal.showInfo('Actions: relations, propose, respond, message');
+            return;
+        }
+
+        const action = args[0];
+        const params = args.slice(1);
+
+        switch (action) {
+            case 'relations':
+                const relations = await this.api.getDiplomaticRelations();
+                this.terminal.displayDiplomaticRelations(relations);
+                break;
+
+            case 'propose':
+                if (params.length < 2) {
+                    this.terminal.showError('Usage', 'diplomacy propose <empire-id> <proposal-type> [terms...]');
+                    return;
+                }
+                const targetEmpireId = params[0];
+                const proposalType = params[1];
+                const terms = params.slice(2);
+                
+                const proposal = await this.api.sendDiplomaticProposal(targetEmpireId, proposalType, { terms });
+                this.terminal.showSuccess('Diplomatic proposal sent');
+                break;
+
+            case 'respond':
+                if (params.length < 2) {
+                    this.terminal.showError('Usage', 'diplomacy respond <proposal-id> <response>');
+                    this.terminal.showInfo('Response: accept, reject, counter');
+                    return;
+                }
+                const proposalId = params[0];
+                const response = params[1];
+                
+                await this.api.respondToDiplomaticProposal(proposalId, response);
+                this.terminal.showSuccess(`Responded "${response}" to proposal ${proposalId}`);
+                break;
+
+            case 'message':
+                if (params.length < 2) {
+                    this.terminal.showError('Usage', 'diplomacy message <empire-id> <message>');
+                    return;
+                }
+                const messageTargetId = params[0];
+                const message = params.slice(1).join(' ');
+                
+                await this.api.sendDiplomaticMessage(messageTargetId, message);
+                this.terminal.showSuccess('Diplomatic message sent');
+                break;
+
+            default:
+                this.terminal.showError('Unknown diplomacy action', `"${action}" is not recognized`);
+        }
+    }
+
+    /**
+     * Handle explore command
+     * @param {Array} args - Command arguments [coordinates, fleetId]
+     */
+    async handleExplore(args) {
+        if (args.length < 2) {
+            this.terminal.showError('Usage', 'explore <coordinates> <fleet-id>');
+            this.terminal.showInfo('Coordinates format: x,y (e.g., 5,10)');
+            return;
+        }
+
+        const coordinates = args[0];
+        const fleetId = args[1];
+
+        const response = await this.api.exploreSector(coordinates, fleetId);
+        this.terminal.showSuccess(`Fleet ${fleetId} exploring sector ${coordinates}`);
+        this.terminal.displayScanResults(response);
+    }
+
+    /**
+     * Handle colonize command
+     * @param {Array} args - Command arguments [planetId, fleetId]
+     */
+    async handleColonize(args) {
+        if (args.length < 2) {
+            this.terminal.showError('Usage', 'colonize <planet-id> <fleet-id>');
+            this.terminal.showInfo('Fleet must contain colony ships');
+            return;
+        }
+
+        const planetId = args[0];
+        const fleetId = args[1];
+
+        const response = await this.api.colonizePlanet(planetId, fleetId);
+        this.terminal.showSuccess(`Planet ${planetId} colonization initiated`);
+        
+        if (response.eta) {
+            this.terminal.showInfo(`Colonization ETA: ${response.eta}`);
+        }
+    }
+
+    /**
+     * Handle build command
+     * @param {Array} args - Command arguments [planetId, buildingType]
+     */
+    async handleBuild(args) {
+        if (args.length < 2) {
+            this.terminal.showError('Usage', 'build <planet-id> <building-type>');
+            this.terminal.showInfo('Building types: mine, factory, lab, farm, shipyard, defense');
+            return;
+        }
+
+        const planetId = args[0];
+        const buildingType = args[1];
+
+        const response = await this.api.buildStructure(planetId, buildingType);
+        this.terminal.showSuccess(`${buildingType} construction started on planet ${planetId}`);
+        
+        if (response.completionTime) {
+            this.terminal.showInfo(`Completion: ${response.completionTime}`);
+        }
+    }
+
+    /**
+     * Handle research command
+     * @param {Array} args - Command arguments [technologyId or 'list']
+     */
+    async handleResearch(args) {
+        if (args.length === 0) {
+            this.terminal.showError('Usage', 'research <technology-id> OR research list');
+            return;
+        }
+
+        if (args[0] === 'list') {
+            const technologies = await this.api.getAvailableTechnologies();
+            this.terminal.displayAvailableTechnologies(technologies);
+            return;
+        }
+
+        const technologyId = args[0];
+        const response = await this.api.researchTechnology(technologyId);
+        this.terminal.showSuccess(`Research started: ${response.name || technologyId}`);
+        
+        if (response.completionTime) {
+            this.terminal.showInfo(`Research completion: ${response.completionTime}`);
+        }
+    }
+
+    /**
      * Show command help
      * @param {string} commandName - Specific command to show help for
      */
@@ -333,6 +756,35 @@ class SpaceCommandREPL {
         } else {
             this.terminal.showError('Network error', error.message);
         }
+    }
+
+    /**
+     * Get command completions for autocomplete
+     * @param {string} line - Current input line
+     * @returns {Array} Array of [completions, line]
+     */
+    getCompletions(line) {
+        const commands = [
+            // Authentication commands
+            'login', 'logout', 'register', 'whoami',
+            // Empire management
+            'status', 'empire', 'planets', 'resources', 'build', 'research',
+            // Fleet operations  
+            'fleets', 'fleet', 'create-fleet', 'move', 'merge', 'disband',
+            // Combat operations
+            'attack', 'retreat', 'scan',
+            // Exploration
+            'explore', 'colonize',
+            // Diplomacy
+            'diplomacy',
+            // Game info
+            'turn', 'events', 'leaderboard',
+            // Utility
+            'help', 'history', 'clear', 'quit', 'exit'
+        ];
+
+        const hits = commands.filter(cmd => cmd.startsWith(line));
+        return [hits.length ? hits : commands, line];
     }
 
     /**

@@ -369,6 +369,257 @@ class ApiClient {
     }
 
     /**
+     * Attack another fleet or planet
+     * @param {string} fleetId - Attacking fleet ID
+     * @param {string} targetId - Target fleet or planet ID
+     * @param {string} attackType - Type of attack (assault, raid, bombard)
+     * @returns {Object} Attack response
+     */
+    async attackTarget(fleetId, targetId, attackType = 'assault') {
+        try {
+            const response = await this.client.post(`/combat/${attackType}`, {
+                fleetId,
+                targetId
+            });
+            return response.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
+     * Get combat log for a specific battle
+     * @param {string} combatId - Combat ID
+     * @returns {Object} Combat log details
+     */
+    async getCombatLog(combatId) {
+        try {
+            const response = await this.client.get(`/combat/${combatId}`);
+            return response.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
+     * Retreat fleet from combat
+     * @param {string} fleetId - Fleet ID
+     * @returns {Object} Retreat response
+     */
+    async retreatFleet(fleetId) {
+        try {
+            const response = await this.client.post(`/fleets/${fleetId}/retreat`);
+            return response.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
+     * Merge fleets together
+     * @param {string} sourceFleetId - Source fleet ID
+     * @param {string} targetFleetId - Target fleet ID
+     * @returns {Object} Merge response
+     */
+    async mergeFleets(sourceFleetId, targetFleetId) {
+        try {
+            const response = await this.client.post(`/fleets/${targetFleetId}/merge`, {
+                sourceFleetId
+            });
+            return response.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
+     * Disband a fleet
+     * @param {string} fleetId - Fleet ID to disband
+     * @returns {Object} Disband response
+     */
+    async disbandFleet(fleetId) {
+        try {
+            const response = await this.client.delete(`/fleets/${fleetId}`);
+            return response.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
+     * Get diplomatic relations
+     * @returns {Array} Diplomatic relations
+     */
+    async getDiplomaticRelations() {
+        try {
+            const response = await this.client.get('/diplomacy/relations');
+            return response.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
+     * Send diplomatic proposal
+     * @param {string} targetEmpireId - Target empire ID
+     * @param {string} proposalType - Type of proposal (trade, alliance, etc.)
+     * @param {Object} terms - Proposal terms
+     * @returns {Object} Proposal response
+     */
+    async sendDiplomaticProposal(targetEmpireId, proposalType, terms) {
+        try {
+            const response = await this.client.post('/diplomacy/proposals', {
+                targetEmpireId,
+                proposalType,
+                terms
+            });
+            return response.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
+     * Respond to diplomatic proposal
+     * @param {string} proposalId - Proposal ID
+     * @param {string} response - Response (accept, reject, counter)
+     * @param {Object} counterTerms - Counter-proposal terms (if applicable)
+     * @returns {Object} Response result
+     */
+    async respondToDiplomaticProposal(proposalId, response, counterTerms = null) {
+        try {
+            const payload = { response };
+            if (counterTerms) {
+                payload.counterTerms = counterTerms;
+            }
+            
+            const result = await this.client.post(`/diplomacy/proposals/${proposalId}/respond`, payload);
+            return result.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
+     * Send diplomatic message
+     * @param {string} targetEmpireId - Target empire ID
+     * @param {string} message - Message content
+     * @returns {Object} Message response
+     */
+    async sendDiplomaticMessage(targetEmpireId, message) {
+        try {
+            const response = await this.client.post('/diplomacy/messages', {
+                targetEmpireId,
+                message
+            });
+            return response.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
+     * Explore new sector
+     * @param {string} coordinates - Sector coordinates to explore
+     * @param {string} fleetId - Fleet ID for exploration
+     * @returns {Object} Exploration results
+     */
+    async exploreSector(coordinates, fleetId) {
+        try {
+            const response = await this.client.post('/territory/explore', {
+                coordinates,
+                fleetId
+            });
+            return response.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
+     * Colonize planet
+     * @param {string} planetId - Planet ID to colonize
+     * @param {string} fleetId - Fleet ID with colony ships
+     * @returns {Object} Colonization response
+     */
+    async colonizePlanet(planetId, fleetId) {
+        try {
+            const response = await this.client.post(`/territory/colonize/${planetId}`, {
+                fleetId
+            });
+            return response.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
+     * Establish trade route
+     * @param {string} sourcePlanetId - Source planet ID
+     * @param {string} targetPlanetId - Target planet ID
+     * @param {Object} tradeGoods - Goods to trade
+     * @returns {Object} Trade route response
+     */
+    async establishTradeRoute(sourcePlanetId, targetPlanetId, tradeGoods) {
+        try {
+            const response = await this.client.post('/territory/trade-routes', {
+                sourcePlanetId,
+                targetPlanetId,
+                tradeGoods
+            });
+            return response.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
+     * Build structure on planet
+     * @param {string} planetId - Planet ID
+     * @param {string} buildingType - Type of building to construct
+     * @returns {Object} Construction response
+     */
+    async buildStructure(planetId, buildingType) {
+        try {
+            const response = await this.client.post(`/empire/planets/${planetId}/build`, {
+                buildingType
+            });
+            return response.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
+     * Research technology
+     * @param {string} technologyId - Technology ID to research
+     * @returns {Object} Research response
+     */
+    async researchTechnology(technologyId) {
+        try {
+            const response = await this.client.post('/empire/research', {
+                technologyId
+            });
+            return response.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
+     * Get available technologies for research
+     * @returns {Array} Available technologies
+     */
+    async getAvailableTechnologies() {
+        try {
+            const response = await this.client.get('/empire/research/available');
+            return response.data;
+        } catch (error) {
+            throw this.formatError(error);
+        }
+    }
+
+    /**
      * Check if client is authenticated
      * @returns {boolean} True if authenticated
      */

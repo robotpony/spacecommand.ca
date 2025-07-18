@@ -7,7 +7,8 @@
     "start": "node bin/server.js",
     "dev": "node bin/server.js",
     "test": "jest",
-    "terminal": "node src/client/terminal/main.js"
+    "terminal": "node bin/terminal-client",
+    "client": "node bin/terminal-client"
   },
   "keywords": [],
   "author": "",
