@@ -2,7 +2,9 @@
  * Fleet model representing a group of ships
  * Manages ship composition, movement, combat, and fleet operations
  */
-class Fleet {
+const BaseModel = require('./BaseModel');
+
+class Fleet extends BaseModel {
   /**
    * Creates a new Fleet instance
    * @param {Object} data - Fleet initialization data
@@ -17,8 +19,10 @@ class Fleet {
    * @param {number} data.morale - Fleet morale (0-100)
    */
   constructor(data = {}) {
+    super('fleets');
+    
     this.id = data.id || null;
-    this.empireId = data.empireId || null;
+    this.empireId = data.empire_id || data.empireId || null;
     this.name = data.name || '';
     this.position = data.position || { x: 0, y: 0, z: 0 };
     this.destination = data.destination || null;
@@ -292,6 +296,17 @@ class Fleet {
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
     };
+  }
+  /**
+   * Find fleets by empire ID
+   * @param {string} empireId - Empire ID
+   * @returns {Promise<Array>} Array of Fleet instances
+   * @static
+   */
+  static async findByEmpireId(empireId) {
+    const model = new Fleet();
+    const results = await model.find({ empire_id: empireId });
+    return results.map(data => new Fleet(data));
   }
 }
 

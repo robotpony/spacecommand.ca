@@ -2,11 +2,21 @@
  * Game state routes for turn management and game status
  */
 const express = require('express');
-const { body, query, validationResult } = require('express-validator');
+const { body, query, param, validationResult } = require('express-validator');
 
 const Empire = require('../models/Empire');
 const { ValidationError, NotFoundError, ConflictError } = require('../middleware/errorHandler');
 const { requireActionPoints, consumeActionPoints, getCurrentGameState } = require('../middleware/gameState');
+
+// Import game logic services
+const TurnManager = require('../services/TurnManager');
+const ResourceCalculator = require('../services/ResourceCalculator');
+const GameBalanceEngine = require('../services/GameBalanceEngine');
+
+// Initialize services
+const turnManager = new TurnManager();
+const resourceCalculator = new ResourceCalculator();
+const gameBalanceEngine = new GameBalanceEngine();
 
 const router = express.Router();
 
@@ -21,43 +31,86 @@ router.get('/status', async (req, res, next) => {
       throw new NotFoundError('Empire not found');
     }
 
-    const gameState = await getCurrentGameState();
-    const playerActions = await getPlayerActions(req.user.id, gameState.currentTurn);
-    const upcomingEvents = await getUpcomingEvents(req.user.id);
-    const globalStats = await getGlobalGameStats();
-
+    // Get current turn information from TurnManager
+    const currentTurn = await turnManager.getCurrentTurn();
+    const actionPointStatus = await turnManager.getActionPointStatus(req.user.id);
+    
+    // Get empire power rating
+    const powerRating = await gameBalanceEngine.calculateEmpirePowerRating(userEmpire.id);
+    
     res.status(200).json({
       turn: {
-        number: gameState.currentTurn,
-        phase: gameState.currentPhase,
-        phaseTimeRemaining: gameState.phaseTimeRemaining,
-        nextPhase: getNextPhase(gameState.currentPhase),
-        turnStartTime: gameState.turnStartTime
+        number: currentTurn.turn_number,
+        phase: currentTurn.phase,
+        time_remaining_ms: currentTurn.time_remaining_ms,
+        start_time: currentTurn.start_time,
+        end_time: currentTurn.end_time,
+        is_processing: currentTurn.is_processing
       },
       player: {
         actionPoints: {
-          remaining: await getUserActionPoints(req.user.id, gameState.currentTurn),
-          maximum: 10,
-          used: playerActions.length
+          remaining: actionPointStatus.points_remaining,
+          maximum: actionPointStatus.points_available,
+          used: actionPointStatus.points_used,
+          last_action: actionPointStatus.last_action,
+          last_action_time: actionPointStatus.last_action_time
         },
-        actionsThisTurn: playerActions.map(action => ({
-          type: action.action_type,
-          timestamp: action.timestamp,
-          actionPoints: action.action_points
-        }))
-      },
-      events: {
-        pending: upcomingEvents.pending,
-        scheduled: upcomingEvents.scheduled,
-        notifications: upcomingEvents.notifications
+        empire: {
+          id: userEmpire.id,
+          name: userEmpire.name,
+          power_rating: powerRating.total_power,
+          power_rank: powerRating.power_rank
+        }
       },
       gameWorld: {
-        totalPlayers: globalStats.activePlayers,
-        totalEmpires: globalStats.activeEmpires,
-        totalSectors: globalStats.explorableSectors,
-        activeConflicts: globalStats.activeBattles,
-        tradeVolume: globalStats.dailyTradeVolume
+        current_turn: currentTurn.turn_number,
+        phase: currentTurn.phase,
+        time_remaining: currentTurn.time_remaining_ms
       }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/game/initialize
+ * Initialize the game (admin only)
+ */
+router.post('/initialize', async (req, res, next) => {
+  try {
+    // Check if user is admin (you'd implement proper admin check)
+    if (req.user.role !== 'admin') {
+      throw new ValidationError('Only administrators can initialize the game');
+    }
+
+    const gameState = await turnManager.initializeGame();
+    
+    res.status(201).json({
+      message: 'Game initialized successfully',
+      initial_turn: gameState
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/game/advance-turn
+ * Manually advance to next turn (admin only)
+ */
+router.post('/advance-turn', async (req, res, next) => {
+  try {
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      throw new ValidationError('Only administrators can advance turns');
+    }
+
+    const newTurn = await turnManager.advanceTurn();
+    
+    res.status(200).json({
+      message: 'Turn advanced successfully',
+      new_turn: newTurn
     });
   } catch (error) {
     next(error);

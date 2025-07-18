@@ -310,7 +310,7 @@ class BaseModel {
     // Prevent SQL keywords and dangerous patterns
     const dangerousPatterns = [
       /\b(DROP|DELETE|UPDATE|INSERT|CREATE|ALTER|EXEC|UNION|SELECT)\b/i,
-      /[';--]/,
+      /[';-]/,
       /\/\*|\*\//
     ];
 

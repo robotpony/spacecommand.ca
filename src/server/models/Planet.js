@@ -2,45 +2,58 @@
  * Planet model representing a colonized world
  * Manages population, buildings, production, and specialization
  */
-class Planet {
+const BaseModel = require('./BaseModel');
+
+class Planet extends BaseModel {
   /**
    * Creates a new Planet instance
-   * @param {Object} data - Planet initialization data
-   * @param {string} data.id - Unique planet identifier
-   * @param {string} data.empireId - Owning empire ID
-   * @param {string} data.name - Planet name
-   * @param {Object} data.position - 3D coordinates {x, y, z}
-   * @param {string} data.size - Planet size (small, medium, large)
-   * @param {string} data.type - Planet type (terrestrial, desert, ocean, etc.)
-   * @param {string} data.specialization - Economic specialization
-   * @param {number} data.population - Current population
-   * @param {Array} data.buildings - Array of building objects
+   * @param {Object} data - Planet data from database
    */
   constructor(data = {}) {
+    super('planets');
+    
+    // Map database columns to model properties
     this.id = data.id || null;
-    this.empireId = data.empireId || null;
+    this.empireId = data.empire_id || data.empireId || null;
     this.name = data.name || '';
-    this.position = data.position || { x: 0, y: 0, z: 0 };
+    this.position = this._parseJSON(data.position) || { x: 0, y: 0, z: 0 };
     this.size = data.size || 'medium';
     this.type = data.type || 'terrestrial';
     this.specialization = data.specialization || 'balanced';
     this.population = data.population || 0;
-    this.maxPopulation = data.maxPopulation || 1000;
-    this.buildings = data.buildings || [];
-    this.production = data.production || {
+    this.maxPopulation = data.max_population || data.maxPopulation || 1000;
+    this.buildings = this._parseJSON(data.buildings) || [];
+    this.production = this._parseJSON(data.production) || {
       minerals: 0,
       energy: 0,
       food: 0,
       research: 0,
       population: 0
     };
-    this.defenses = data.defenses || {
+    this.defenses = this._parseJSON(data.defenses) || {
       shields: 0,
       armor: 0,
       weapons: 0
     };
-    this.createdAt = data.createdAt || new Date();
-    this.updatedAt = data.updatedAt || new Date();
+    this.createdAt = data.created_at || data.createdAt || new Date();
+    this.updatedAt = data.updated_at || data.updatedAt || new Date();
+  }
+
+  /**
+   * Parse JSON data safely
+   * @param {string|Object} data - JSON string or object
+   * @returns {Object} Parsed object or original if already object
+   * @private
+   */
+  _parseJSON(data) {
+    if (!data) return null;
+    if (typeof data === 'object') return data;
+    try {
+      return JSON.parse(data);
+    } catch (error) {
+      console.warn('Failed to parse JSON data:', data);
+      return null;
+    }
   }
 
   static SPECIALIZATIONS = {
@@ -195,6 +208,73 @@ class Planet {
    */
   getDefenseStrength() {
     return this.defenses.shields + this.defenses.armor + this.defenses.weapons;
+  }
+
+  /**
+   * Find planets by empire ID
+   * @param {string} empireId - Empire ID
+   * @returns {Promise<Array>} Array of Planet instances
+   * @static
+   */
+  static async findByEmpireId(empireId) {
+    const model = new Planet();
+    const results = await model.find({ empire_id: empireId });
+    return results.map(data => new Planet(data));
+  }
+
+  /**
+   * Create a new planet in the database
+   * @param {Object} planetData - Planet data
+   * @returns {Promise<Planet>} Created planet instance
+   * @static
+   */
+  static async createPlanet(planetData) {
+    const model = new Planet();
+    const dbData = {
+      empire_id: planetData.empireId,
+      name: planetData.name,
+      position: JSON.stringify(planetData.position || { x: 0, y: 0, z: 0 }),
+      size: planetData.size || 'medium',
+      type: planetData.type || 'terrestrial',
+      specialization: planetData.specialization || 'balanced',
+      population: planetData.population || 0,
+      max_population: planetData.maxPopulation || 1000,
+      buildings: JSON.stringify(planetData.buildings || []),
+      production: JSON.stringify(planetData.production || {}),
+      defenses: JSON.stringify(planetData.defenses || {})
+    };
+    
+    const result = await model.create(dbData);
+    return new Planet(result);
+  }
+
+  /**
+   * Save planet changes to database
+   * @returns {Promise<Planet>} Updated planet instance
+   */
+  async save() {
+    const updateData = {
+      name: this.name,
+      position: JSON.stringify(this.position),
+      size: this.size,
+      type: this.type,
+      specialization: this.specialization,
+      population: this.population,
+      max_population: this.maxPopulation,
+      buildings: JSON.stringify(this.buildings),
+      production: JSON.stringify(this.production),
+      defenses: JSON.stringify(this.defenses)
+    };
+
+    if (this.id) {
+      const result = await this.update(this.id, updateData);
+      if (result) {
+        Object.assign(this, new Planet(result));
+      }
+      return this;
+    } else {
+      throw new Error('Cannot save planet without ID. Use createPlanet() for new planets.');
+    }
   }
 
   toJSON() {

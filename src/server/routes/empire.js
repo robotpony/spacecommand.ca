@@ -10,6 +10,10 @@ const { ValidationError, NotFoundError, ConflictError, InsufficientResourcesErro
 const { requireActionPoints, consumeActionPoints } = require('../middleware/gameState');
 const { requireOwnEmpire, requireOwnPlanet } = require('../middleware/resourceAuth');
 
+// Import resource calculator
+const ResourceCalculator = require('../services/ResourceCalculator');
+const resourceCalculator = new ResourceCalculator();
+
 const router = express.Router();
 
 /**
@@ -21,26 +25,45 @@ router.get('/empire', requireOwnEmpire, async (req, res, next) => {
     // Empire is already validated and attached by requireOwnEmpire middleware
     const empire = req.userEmpire;
 
-    // Calculate current resource totals including production
-    const resourceSummary = empire.calculateCurrentResources();
+    // Get detailed resource calculations from ResourceCalculator
+    const [production, consumption, netResources] = await Promise.all([
+      resourceCalculator.calculateProduction(empire.id),
+      resourceCalculator.calculateConsumption(empire.id),
+      resourceCalculator.calculateNetResources(empire.id)
+    ]);
     
     res.set({
-      'ETag': `"${empire.id}-${empire.updatedAt.getTime()}"`,
-      'Last-Modified': empire.updatedAt.toUTCString()
+      'ETag': `"${empire.id}-${empire.updated_at}"`,
+      'Last-Modified': new Date(empire.updated_at).toUTCString()
     });
 
     res.status(200).json({
       id: empire.id,
       name: empire.name,
-      resources: resourceSummary.current,
-      resourceProduction: resourceSummary.production,
-      resourceConsumption: resourceSummary.consumption,
-      netProduction: resourceSummary.net,
-      planets: empire.planets.length,
-      fleets: empire.fleets.length,
-      technology: empire.technology,
-      createdAt: empire.createdAt,
-      updatedAt: empire.updatedAt
+      resources: {
+        metal: empire.metal || 0,
+        energy: empire.energy || 0,
+        food: empire.food || 0,
+        research: empire.research || 0
+      },
+      production: {
+        total: production.total_production,
+        breakdown: production.breakdown,
+        calculated_at: production.calculated_at
+      },
+      consumption: {
+        total: consumption.total_consumption,
+        breakdown: consumption.breakdown,
+        calculated_at: consumption.calculated_at
+      },
+      net_resources: {
+        net_change: netResources.net_change,
+        efficiency: netResources.efficiency,
+        is_sustainable: netResources.is_sustainable
+      },
+      last_resource_update: empire.last_resource_update,
+      created_at: empire.created_at,
+      updated_at: empire.updated_at
     });
   } catch (error) {
     next(error);
