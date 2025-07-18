@@ -12,6 +12,14 @@ const { body, validationResult } = require('express-validator');
 const { validateEnvironmentConfig } = require('./config/environment');
 const sessionManager = require('./utils/SessionManager');
 
+// Import services
+const ResourceCalculator = require('./services/ResourceCalculator');
+const TurnManager = require('./services/TurnManager');
+const CombatResolver = require('./services/CombatResolver');
+const DiplomacyProcessor = require('./services/DiplomacyProcessor');
+const TerritoryExpansion = require('./services/TerritoryExpansion');
+const GameBalanceEngine = require('./services/GameBalanceEngine');
+
 // Import route modules
 const authRoutes = require('./routes/auth');
 const empireRoutes = require('./routes/empire');
@@ -134,6 +142,9 @@ app.use('*', (req, res) => {
 // Global error handler
 app.use(errorHandler);
 
+// Global service instances
+let services = {};
+
 /**
  * Initialize application services
  * @returns {Promise<void>}
@@ -147,6 +158,25 @@ async function initializeServices() {
     await sessionManager.initialize();
     console.log('✓ SessionManager initialized');
     
+    // Initialize game services
+    services.resourceCalculator = new ResourceCalculator();
+    console.log('✓ ResourceCalculator initialized');
+    
+    services.turnManager = new TurnManager();
+    console.log('✓ TurnManager initialized');
+    
+    services.combatResolver = new CombatResolver();
+    console.log('✓ CombatResolver initialized');
+    
+    services.diplomacyProcessor = new DiplomacyProcessor();
+    console.log('✓ DiplomacyProcessor initialized');
+    
+    services.territoryExpansion = new TerritoryExpansion();
+    console.log('✓ TerritoryExpansion initialized');
+    
+    services.gameBalanceEngine = new GameBalanceEngine();
+    console.log('✓ GameBalanceEngine initialized');
+    
     console.log('✓ All services initialized successfully');
   } catch (error) {
     console.error('✗ Failed to initialize services:', error.message);
@@ -154,5 +184,13 @@ async function initializeServices() {
   }
 }
 
+/**
+ * Get initialized service instances
+ * @returns {Object} Service instances
+ */
+function getServices() {
+  return services;
+}
+
 // Export app and initialization function
-module.exports = { app, initializeServices };
+module.exports = { app, initializeServices, getServices };
