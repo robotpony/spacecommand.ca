@@ -3,12 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SpaceCommand.ca</title>
+    <title>SpaceCommand.ca - Web Terminal</title>
+    <meta name="description" content="SpaceCommand.ca - Web-based space strategy game terminal interface">
+    <meta name="keywords" content="space, strategy, game, terminal, command line">
+    
+    <!-- Reset default styles and set terminal styling -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+            font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+            background-color: #000000;
+            color: #00ff00;
+            overflow: hidden;
+        }
+        
+        #root {
+            height: 100vh;
+            width: 100vw;
+        }
+    </style>
+    
+    <!-- Terminal styles -->
+    <link rel="stylesheet" href="web-terminal/styles.css">
 </head>
 <body>
     <div id="root"></div>
+    
+    <!-- React libraries -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="app.js"></script>
+    
+    <!-- Shared modules (loaded as modules) -->
+    <script type="module">
+        // Import shared modules and make them globally available
+        import { CommandParser, ParseError } from './shared/CommandParser.js';
+        import { ApiClient, ApiError } from './shared/ApiClient.js';
+        import { SessionManager } from './shared/SessionManager.js';
+        import { WebTerminal } from './web-terminal/WebTerminal.js';
+        
+        // Make modules globally available for the main app
+        window.SpaceCommand = {
+            CommandParser,
+            ParseError,
+            ApiClient,
+            ApiError,
+            SessionManager,
+            WebTerminal
+        };
+        
+        // Notify that modules are loaded
+        window.dispatchEvent(new CustomEvent('spacecommand-modules-loaded'));
+    </script>
+    
+    <!-- Main application -->
+    <script src="app.js" defer></script>
+    
+    <!-- Error handling -->
+    <script>
+        window.addEventListener('error', function(e) {
+            console.error('Application error:', e.error);
+            
+            // Show basic error message if React fails to load
+            if (!window.React || !window.ReactDOM) {
+                document.body.innerHTML = `
+                    <div style="
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100vh;
+                        font-family: 'Courier New', monospace;
+                        background: #000;
+                        color: #ff0000;
+                        text-align: center;
+                        padding: 20px;
+                    ">
+                        <h1>SYSTEM ERROR</h1>
+                        <p>Failed to load SpaceCommand terminal interface.</p>
+                        <p style="color: #aaa; font-size: 12px; margin-top: 20px;">
+                            Check browser console for details.
+                        </p>
+                        <button onclick="window.location.reload()" style="
+                            margin-top: 20px;
+                            padding: 10px 20px;
+                            background: #333;
+                            border: 1px solid #ff0000;
+                            color: #ff0000;
+                            font-family: inherit;
+                            cursor: pointer;
+                        ">RETRY</button>
+                    </div>
+                `;
+            }
+        });
+        
+        // Handle module loading
+        window.addEventListener('spacecommand-modules-loaded', function() {
+            console.log('SpaceCommand modules loaded successfully');
+        });
+    </script>
 </body>
 </html>

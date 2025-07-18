@@ -1,0 +1,329 @@
+/* Web Terminal Styles - Retro Terminal Aesthetic */
+
+.web-terminal {
+    background-color: #000000;
+    color: #00ff00;
+    font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    line-height: 1.4;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 10px;
+    position: relative;
+}
+
+/* Terminal loading state */
+.terminal-loading {
+    background-color: #000000;
+    color: #00ff00;
+    font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+/* Terminal output area */
+.terminal-output {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    scrollbar-width: thin;
+    scrollbar-color: #00ff00 #000000;
+}
+
+/* Webkit scrollbar styling */
+.terminal-output::-webkit-scrollbar {
+    width: 8px;
+}
+
+.terminal-output::-webkit-scrollbar-track {
+    background: #000000;
+}
+
+.terminal-output::-webkit-scrollbar-thumb {
+    background: #00ff00;
+    border-radius: 4px;
+}
+
+.terminal-output::-webkit-scrollbar-thumb:hover {
+    background: #00cc00;
+}
+
+/* Output line styles */
+.output-line {
+    margin: 0;
+    padding: 1px 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Output type specific styles */
+.output-command {
+    color: #ffffff;
+    font-weight: normal;
+}
+
+.output-success {
+    color: #00ff00;
+}
+
+.output-error {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+.output-warning {
+    color: #ffaa00;
+}
+
+.output-info {
+    color: #00aaff;
+}
+
+.output-data {
+    color: #ffff00;
+}
+
+.output-help {
+    color: #aaaaaa;
+}
+
+.output-banner {
+    color: #00ffff;
+    font-weight: bold;
+    text-shadow: 0 0 5px #00ffff;
+}
+
+/* Terminal input area */
+.terminal-input-form {
+    display: flex;
+    align-items: center;
+    border-top: 1px solid #333333;
+    padding-top: 5px;
+    flex-shrink: 0;
+}
+
+.terminal-prompt {
+    color: #00ff00;
+    margin-right: 5px;
+    font-weight: bold;
+    flex-shrink: 0;
+    text-shadow: 0 0 3px #00ff00;
+}
+
+.terminal-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    caret-color: #00ff00;
+    padding: 0;
+    margin: 0;
+}
+
+.terminal-input:disabled {
+    opacity: 0.6;
+}
+
+/* Cursor blinking animation */
+.terminal-input:focus {
+    animation: cursor-blink 1s infinite;
+}
+
+@keyframes cursor-blink {
+    0%, 50% { border-right: 1px solid #00ff00; }
+    51%, 100% { border-right: 1px solid transparent; }
+}
+
+/* Terminal screen glow effect */
+.web-terminal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(ellipse at center, transparent 0%, rgba(0, 255, 0, 0.02) 50%, transparent 100%),
+        linear-gradient(transparent 50%, rgba(0, 255, 0, 0.03) 50%);
+    background-size: 100% 100%, 100% 2px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.web-terminal > * {
+    position: relative;
+    z-index: 2;
+}
+
+/* Scanlines effect (optional) */
+.web-terminal::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 255, 0, 0.03) 2px,
+        rgba(0, 255, 0, 0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .web-terminal {
+        font-size: 12px;
+        padding: 5px;
+    }
+    
+    .terminal-input-form {
+        padding-top: 3px;
+    }
+    
+    /* Hide scanlines on mobile for performance */
+    .web-terminal::after {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .web-terminal {
+        font-size: 11px;
+        padding: 3px;
+    }
+    
+    .terminal-output {
+        margin-bottom: 5px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .web-terminal {
+        background-color: #000000;
+        color: #ffffff;
+    }
+    
+    .terminal-prompt {
+        color: #ffffff;
+        text-shadow: none;
+    }
+    
+    .output-success {
+        color: #ffffff;
+        text-decoration: underline;
+    }
+    
+    .output-error {
+        color: #ffffff;
+        font-weight: bold;
+        text-decoration: underline wavy;
+    }
+    
+    /* Remove glow effects in high contrast mode */
+    .web-terminal::before,
+    .web-terminal::after {
+        display: none;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .terminal-input:focus {
+        animation: none;
+        border-right: 1px solid #00ff00;
+    }
+    
+    .web-terminal::before,
+    .web-terminal::after {
+        display: none;
+    }
+    
+    .output-banner {
+        text-shadow: none;
+    }
+    
+    .terminal-prompt {
+        text-shadow: none;
+    }
+}
+
+/* Focus management */
+.web-terminal:focus-within .terminal-input {
+    border-right: 1px solid #00ff00;
+}
+
+/* Selection styling */
+.web-terminal *::selection {
+    background-color: #00ff00;
+    color: #000000;
+}
+
+.web-terminal *::-moz-selection {
+    background-color: #00ff00;
+    color: #000000;
+}
+
+/* Print styles */
+@media print {
+    .web-terminal {
+        background: white !important;
+        color: black !important;
+        font-size: 10px;
+    }
+    
+    .web-terminal::before,
+    .web-terminal::after {
+        display: none;
+    }
+    
+    .output-success { color: black !important; }
+    .output-error { color: black !important; }
+    .output-warning { color: black !important; }
+    .output-info { color: black !important; }
+    .output-data { color: black !important; }
+    .output-help { color: black !important; }
+    .output-banner { color: black !important; }
+}
+
+/* Dark mode support (for browsers that override) */
+@media (prefers-color-scheme: dark) {
+    .web-terminal {
+        background-color: #000000;
+        color: #00ff00;
+    }
+}
+
+/* Animation for terminal startup */
+.web-terminal {
+    animation: terminal-startup 0.5s ease-out;
+}
+
+@keyframes terminal-startup {
+    0% {
+        opacity: 0;
+        transform: scale(1.05);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

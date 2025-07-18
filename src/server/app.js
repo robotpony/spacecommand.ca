@@ -108,12 +108,34 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/api', generalLimiter);
 app.use(gameStateMiddleware);
 
+// Serve static files for web client
+app.use(express.static('src/client', {
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, path) => {
+    // Set proper MIME types for ES6 modules
+    if (path.endsWith('.js')) {
+      res.set('Content-Type', 'application/javascript');
+    }
+  }
+}));
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'healthy', 
     timestamp: new Date().toISOString(),
     version: process.env.npm_package_version || '1.0.0'
+  });
+});
+
+// API health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version || '1.0.0',
+    api: true
   });
 });
 
