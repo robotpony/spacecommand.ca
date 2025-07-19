@@ -12,48 +12,56 @@ class CombatResolver {
     this.fleetModel = new BaseModel('fleets');
     this.empireModel = new BaseModel('empires');
     
-    // Ship combat statistics
+    // Ship combat statistics - rebalanced for strategic depth
     this.SHIP_STATS = {
       scout: { 
-        attack: 1, defense: 1, health: 10, speed: 8, cost: 50,
+        attack: 2, defense: 1, health: 8, speed: 9, cost: 50,
         weapon_type: 'light', armor_type: 'light'
       },
       fighter: { 
-        attack: 3, defense: 2, health: 25, speed: 7, cost: 100,
+        attack: 4, defense: 2, health: 20, speed: 8, cost: 100,
         weapon_type: 'light', armor_type: 'light'
       },
       corvette: { 
-        attack: 6, defense: 4, health: 50, speed: 6, cost: 200,
+        attack: 8, defense: 4, health: 40, speed: 7, cost: 200,
         weapon_type: 'medium', armor_type: 'medium'
       },
       destroyer: { 
-        attack: 12, defense: 8, health: 100, speed: 5, cost: 400,
+        attack: 16, defense: 8, health: 80, speed: 6, cost: 400,
         weapon_type: 'medium', armor_type: 'medium'
       },
       cruiser: { 
-        attack: 25, defense: 15, health: 200, speed: 4, cost: 800,
+        attack: 30, defense: 15, health: 150, speed: 5, cost: 800,
         weapon_type: 'heavy', armor_type: 'heavy'
       },
       battleship: { 
-        attack: 50, defense: 30, health: 400, speed: 3, cost: 1600,
+        attack: 55, defense: 28, health: 280, speed: 4, cost: 1600,
         weapon_type: 'heavy', armor_type: 'heavy'
       },
       dreadnought: { 
-        attack: 100, defense: 60, health: 800, speed: 2, cost: 3200,
+        attack: 100, defense: 50, health: 500, speed: 3, cost: 3200,
         weapon_type: 'super_heavy', armor_type: 'super_heavy'
       }
     };
 
-    // Weapon effectiveness against armor types
+    // Weapon effectiveness against armor types - rebalanced for strategic depth
     this.WEAPON_EFFECTIVENESS = {
-      light: { light: 1.0, medium: 0.8, heavy: 0.6, super_heavy: 0.4 },
-      medium: { light: 1.2, medium: 1.0, heavy: 0.8, super_heavy: 0.6 },
-      heavy: { light: 1.4, medium: 1.2, heavy: 1.0, super_heavy: 0.8 },
-      super_heavy: { light: 1.6, medium: 1.4, heavy: 1.2, super_heavy: 1.0 }
+      light: { light: 1.0, medium: 0.9, heavy: 0.8, super_heavy: 0.7 },
+      medium: { light: 1.1, medium: 1.0, heavy: 0.9, super_heavy: 0.8 },
+      heavy: { light: 1.2, medium: 1.1, heavy: 1.0, super_heavy: 0.9 },
+      super_heavy: { light: 1.3, medium: 1.2, heavy: 1.1, super_heavy: 1.0 }
+    };
+
+    // Speed-based evasion bonuses (light ships vs heavy weapons)
+    this.EVASION_BONUS = {
+      light: { vs_heavy: 0.2, vs_super_heavy: 0.3 }, // 20-30% damage reduction
+      medium: { vs_heavy: 0.1, vs_super_heavy: 0.15 }, // 10-15% damage reduction
+      heavy: { vs_heavy: 0.0, vs_super_heavy: 0.05 }, // 0-5% damage reduction
+      super_heavy: { vs_heavy: 0.0, vs_super_heavy: 0.0 } // No evasion
     };
 
     // Combat modifiers
-    this.EXPERIENCE_BONUS = 0.1; // 10% bonus per experience level
+    this.EXPERIENCE_BONUS = 0.002; // 0.2% bonus per experience point (max 20% at 100 exp)
     this.MORALE_MODIFIER = 0.2; // 20% modifier range based on morale
     this.SURPRISE_ATTACK_BONUS = 1.5; // 50% bonus for surprise attacks
     this.DEFENSIVE_BONUS = 1.2; // 20% bonus for defending
@@ -170,8 +178,15 @@ class CombatResolver {
     const effectiveness = this.WEAPON_EFFECTIVENESS[attackerStats.weapon_type][defenderStats.armor_type];
     baseDamage *= effectiveness;
     
-    // Apply defense reduction
-    const defenseReduction = Math.max(0, defenderStats.defense / (defenderStats.defense + 10));
+    // Apply evasion mechanics (light ships vs heavy weapons)
+    const evasionKey = `vs_${attackerStats.weapon_type}`;
+    if (this.EVASION_BONUS[defenderStats.armor_type] && this.EVASION_BONUS[defenderStats.armor_type][evasionKey]) {
+      const evasionReduction = this.EVASION_BONUS[defenderStats.armor_type][evasionKey];
+      baseDamage *= (1 - evasionReduction);
+    }
+    
+    // Apply defense reduction (softened to prevent total immunity)
+    const defenseReduction = Math.max(0, Math.min(0.8, defenderStats.defense / (defenderStats.defense + 15)));
     baseDamage *= (1 - defenseReduction);
     
     // Apply modifiers
@@ -196,7 +211,10 @@ class CombatResolver {
     const variance = 0.8 + (Math.random() * 0.4);
     baseDamage *= variance;
     
-    return Math.max(1, Math.round(baseDamage));
+    // Ensure minimum damage to prevent 0% win scenarios
+    const minimumDamage = Math.max(1, attackerStats.attack * 0.1); // At least 10% of base attack
+    
+    return Math.max(minimumDamage, Math.round(baseDamage));
   }
 
   /**

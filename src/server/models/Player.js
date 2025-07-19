@@ -7,9 +7,6 @@ const BaseModel = require('./BaseModel');
 const bcrypt = require('bcrypt');
 
 class Player extends BaseModel {
-  constructor() {
-    super('players');
-  }
   /**
    * Creates a new Player instance
    * @param {Object} data - Player initialization data
@@ -23,6 +20,7 @@ class Player extends BaseModel {
    * @param {Object} data.permissions - Player permissions
    */
   constructor(data = {}) {
+    super('players');
     this.id = data.id || null;
     this.username = data.username || '';
     this.email = data.email || '';
