@@ -9,8 +9,8 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const database = require('../src/server/config/database');
-const migrationRunner = require('../src/server/config/migration-runner');
-const seedRunner = require('../src/server/config/seed-runner');
+const MigrationRunner = require('../src/server/config/migration-runner');
+const SeedRunner = require('../src/server/config/seed-runner');
 const TurnManager = require('../src/server/services/TurnManager');
 const { createClient } = require('redis');
 
@@ -20,18 +20,20 @@ async function initializeGame() {
   try {
     // 1. Test database connection
     console.log('📊 Testing database connection...');
-    await database.testConnection();
+    await database.initialize();
     console.log('✅ Database connection successful\n');
 
     // 2. Run migrations
     console.log('⬆️  Running database migrations...');
+    const migrationRunner = new MigrationRunner();
     const migrationResults = await migrationRunner.runMigrations();
-    console.log(`✅ ${migrationResults.executed.length} migrations executed\n`);
+    console.log(`✅ ${migrationResults.length} migrations executed\n`);
 
     // 3. Run seeds
     console.log('🌱 Running database seeds...');
+    const seedRunner = new SeedRunner();
     const seedResults = await seedRunner.runSeeds();
-    console.log(`✅ ${seedResults.executed.length} seeds executed\n`);
+    console.log(`✅ ${seedResults.length} seeds executed\n`);
 
     // 4. Test Redis connection
     console.log('🔴 Testing Redis connection...');
