@@ -1,7 +1,7 @@
 {
   "name": "spacecommand.ca",
   "version": "1.0.0",
-  "description": "A production-quality web game simulation runner called statsim",
+  "description": "SpaceCommand - A turn-based multiplayer space strategy game with web terminal interface",
   "main": "bin/server.js",
   "scripts": {
     "start": "node bin/server.js",
