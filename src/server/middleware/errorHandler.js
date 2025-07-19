@@ -1,6 +1,7 @@
 /**
  * Global error handling middleware
  */
+const { ERROR_CODES } = require('../utils/responseFormatter');
 
 /**
  * Global error handler middleware
@@ -23,79 +24,83 @@ function errorHandler(err, req, res, next) {
   // Default error
   let status = 500;
   let message = 'Internal server error';
-  let details = {};
+  let code = ERROR_CODES.INTERNAL_ERROR;
+  let details = null;
 
   // Handle specific error types
   if (err.name === 'ValidationError') {
-    status = 400;
-    message = 'Validation failed';
-    details = err.details || {};
+    status = 422;
+    message = err.message || 'Validation failed';
+    code = ERROR_CODES.VALIDATION_ERROR;
+    details = err.details || null;
   } else if (err.name === 'UnauthorizedError') {
     status = 401;
-    message = 'Unauthorized access';
+    message = err.message || 'Authentication required';
+    code = ERROR_CODES.AUTHENTICATION_REQUIRED;
   } else if (err.name === 'ForbiddenError') {
     status = 403;
-    message = 'Forbidden operation';
+    message = err.message || 'Access denied';
+    code = ERROR_CODES.ACCESS_DENIED;
   } else if (err.name === 'NotFoundError') {
     status = 404;
-    message = 'Resource not found';
+    message = err.message || 'Resource not found';
+    code = ERROR_CODES.RESOURCE_NOT_FOUND;
   } else if (err.name === 'ConflictError') {
     status = 409;
-    message = 'Resource conflict';
-    details = err.details || {};
+    message = err.message || 'Resource conflict';
+    code = ERROR_CODES.RESOURCE_CONFLICT;
+    details = err.details || null;
   } else if (err.name === 'InsufficientResourcesError') {
-    status = 402;
-    message = 'Insufficient resources';
-    details = err.details || {};
+    status = 409;
+    message = err.message || 'Insufficient resources';
+    code = ERROR_CODES.INSUFFICIENT_RESOURCES;
+    details = err.details || null;
   } else if (err.code === 'LIMIT_FILE_SIZE') {
     status = 413;
     message = 'File too large';
+    code = 'FILE_TOO_LARGE';
   } else if (err.type === 'entity.parse.failed') {
     status = 400;
     message = 'Invalid JSON format';
+    code = ERROR_CODES.INVALID_FORMAT;
   }
 
-  // Send error response
-  const response = { message };
-  
-  // Only include details if they're safe to expose (never include sensitive info)
-  if (Object.keys(details).length > 0 && status < 500) {
-    // Only include details for client errors (4xx), not server errors (5xx)
-    response.details = details;
+  // Use the standardized error response if res.error is available
+  if (res.error) {
+    return res.error(message, code, details, status);
   }
 
-  // Never include stack traces in production
-  // Log sensitive information instead
+  // Fallback to manual response construction
+  const response = {
+    error: {
+      message,
+      code
+    },
+    meta: {
+      timestamp: new Date().toISOString()
+    }
+  };
+
+  // Only include details if they exist and are safe to expose
+  if (details && status < 500) {
+    response.error.details = details;
+  }
+
+  // Add request ID for tracking
+  const requestId = req.headers['x-request-id'] || req.id || Date.now().toString(36);
+  response.meta.requestId = requestId;
+
+  // In development, add more debugging info
   if (process.env.NODE_ENV === 'development') {
-    // In development, log full error details but don't send in response
     console.error('Development Error Details:', {
       message: err.message,
       stack: err.stack,
       url: req.url,
       method: req.method,
       user: req.user?.id,
+      requestId,
       timestamp: new Date().toISOString()
     });
-    
-    // Include error ID for debugging without exposing sensitive data
-    response.errorId = Date.now().toString(36);
-  } else {
-    // In production, log errors for monitoring but return minimal info
-    const errorId = Date.now().toString(36);
-    console.error('Production Error:', {
-      errorId,
-      message: err.message,
-      url: req.url,
-      method: req.method,
-      user: req.user?.id,
-      timestamp: new Date().toISOString()
-    });
-    
-    // For server errors, return generic message and error ID
-    if (status >= 500) {
-      response.message = 'Internal server error';
-      response.errorId = errorId;
-    }
   }
 
   res.status(status).json(response);

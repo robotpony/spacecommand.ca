@@ -103,12 +103,13 @@ async function register(req, res, next) {
 
     // Return player data and set auth header
     res.set('Authorization', `Bearer ${token}`);
-    res.status(201).json({
+    res.created({
       id: player.id,
       username: player.username,
       email: player.email,
       profile: player.profile,
-      settings: player.settings
+      settings: player.settings,
+      token
     });
 
   } catch (error) {
@@ -175,7 +176,7 @@ async function login(req, res, next) {
 
     // Return player data and set auth header
     res.set('Authorization', `Bearer ${token}`);
-    res.status(200).json({
+    res.success({
       id: player.id,
       username: player.username,
       email: player.email,
@@ -186,7 +187,8 @@ async function login(req, res, next) {
         gamesWon: player.stats.gamesWon,
         totalPlayTime: player.stats.totalPlayTime,
         lastActive: player.stats.lastActive
-      }
+      },
+      token
     });
 
   } catch (error) {
@@ -224,7 +226,7 @@ async function getProfile(req, res, next) {
       throw new UnauthorizedError('Player not found');
     }
 
-    res.status(200).json({
+    res.success({
       id: player.id,
       username: player.username,
       email: player.email,
@@ -280,7 +282,7 @@ async function updateProfile(req, res, next) {
     player.updatedAt = new Date();
     await player.save();
 
-    res.status(200).json({
+    res.success({
       id: player.id,
       username: player.username,
       email: player.email,

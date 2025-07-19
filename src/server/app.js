@@ -33,6 +33,7 @@ const gameRoutes = require('./routes/game');
 const { authenticateToken } = require('./middleware/auth');
 const { errorHandler } = require('./middleware/errorHandler');
 const { gameStateMiddleware } = require('./middleware/gameState');
+const { responseFormatterMiddleware } = require('./utils/responseFormatter');
 
 const app = express();
 
@@ -106,6 +107,7 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Global middleware
 app.use('/api', generalLimiter);
+app.use(responseFormatterMiddleware);
 app.use(gameStateMiddleware);
 
 // Serve static files for web client
