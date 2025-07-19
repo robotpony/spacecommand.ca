@@ -13,7 +13,7 @@ const path = require('path');
 // Import the main Express application and initialization function
 const { app, initializeServices } = require('../src/server/app');
 const database = require('../src/server/config/database');
-const migrationRunner = require('../src/server/config/migration-runner');
+const MigrationRunner = require('../src/server/config/migration-runner');
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -53,6 +53,7 @@ async function initializeDatabase() {
     console.log('✓ Database connection established');
     
     console.log('🔄 Running database migrations...');
+    const migrationRunner = new MigrationRunner();
     await migrationRunner.runMigrations();
     console.log('✓ Database migrations completed');
     

@@ -27,11 +27,20 @@ const migration = {
       ON action_point_reservations(expires_at)
     `);
 
-    // Add reservation_id column to player_actions table to track which reservation was used
-    await db.query(`
-      ALTER TABLE player_actions 
-      ADD COLUMN reservation_id UUID REFERENCES action_point_reservations(id) ON DELETE SET NULL
-    `);
+    // Add reservation_id column to player_actions table to track which reservation was used (if table exists)
+    try {
+      await db.query(`
+        ALTER TABLE player_actions 
+        ADD COLUMN reservation_id UUID REFERENCES action_point_reservations(id) ON DELETE SET NULL
+      `);
+      console.log('✅ Added reservation_id column to player_actions table');
+    } catch (error) {
+      if (error.code === '42P01') {
+        console.log('⚠️  player_actions table does not exist, skipping reservation_id column addition');
+      } else {
+        throw error;
+      }
+    }
 
     console.log('✅ Created action_point_reservations table and indexes');
   },

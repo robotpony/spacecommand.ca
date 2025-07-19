@@ -2,7 +2,14 @@
  * Player model representing a game player
  * Manages authentication, sessions, profile, settings, and permissions
  */
-class Player {
+
+const BaseModel = require('./BaseModel');
+const bcrypt = require('bcrypt');
+
+class Player extends BaseModel {
+  constructor() {
+    super('players');
+  }
   /**
    * Creates a new Player instance
    * @param {Object} data - Player initialization data
@@ -247,6 +254,54 @@ class Player {
     delete json.email;
     delete json.permissions;
     return json;
+  }
+
+  /**
+   * Find a player by username
+   * @param {string} username - Username to search for
+   * @returns {Promise<Object|null>} Player data or null if not found
+   */
+  static async findByUsername(username) {
+    const playerModel = new Player();
+    const result = await playerModel.db.query(
+      'SELECT * FROM players WHERE username = $1',
+      [username]
+    );
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Find a player by email
+   * @param {string} email - Email to search for
+   * @returns {Promise<Object|null>} Player data or null if not found
+   */
+  static async findByEmail(email) {
+    const playerModel = new Player();
+    const result = await playerModel.db.query(
+      'SELECT * FROM players WHERE email = $1',
+      [email]
+    );
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Hash a password using bcrypt
+   * @param {string} password - Plain text password
+   * @returns {string} Hashed password
+   */
+  static hashPassword(password) {
+    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+    return bcrypt.hashSync(password, saltRounds);
+  }
+
+  /**
+   * Verify a password against a hash
+   * @param {string} password - Plain text password
+   * @param {string} hash - Password hash
+   * @returns {Promise<boolean>} True if password matches
+   */
+  static async verifyPassword(password, hash) {
+    return bcrypt.compare(password, hash);
   }
 }
 
