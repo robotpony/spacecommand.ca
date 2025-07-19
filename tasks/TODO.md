@@ -1,137 +1,128 @@
-# Player Authentication REST Interface - Task Plan
+# Phase 4: Game Component Play Testing - Current Tasks
 
 **Project**: SpaceCommand.ca  
-**Focus**: Player Signup and Sign-in REST API Implementation  
-**Date**: 2025-07-18  
+**Current Phase**: Phase 4 - Game Component Play Testing  
+**Date**: 2025-07-19  
+**Status**: Infrastructure Complete - Ready for Testing
 
 ## Overview
 
-This task plan focuses exclusively on implementing a robust REST API for player authentication, including signup, sign-in, session management, and related security features.
+All core development phases (1-3) are complete. The game has full server infrastructure, dual client interfaces (terminal + web), and comprehensive game mechanics. Phase 4 focuses on testing, balancing, and optimizing the implemented game systems.
 
-## Task List
+## Active Tasks - Phase 4
 
-### Phase 1: Authentication API Foundation
-- [ ] **Review existing auth infrastructure** - Analyze current auth.js controller and routes (Low complexity, Low risk)
-- [ ] **Audit Player model for auth requirements** - Ensure all necessary fields exist (Low complexity, Low risk)
-- [ ] **Design REST endpoints specification** - Define all auth-related endpoints with request/response schemas (Medium complexity, Low risk)
+### Balance Testing (High Priority)
+- [ ] **Resource production rate tuning** - Analyze and adjust resource generation rates for optimal gameplay (Medium complexity, Medium risk)
+- [ ] **Combat system balance verification** - Test and balance ship types, weapons, and combat mechanics (High complexity, High risk)
+- [ ] **Economic system stress testing** - Verify resource flows and economic balance under various scenarios (Medium complexity, Medium risk)
+- [ ] **Diplomacy effectiveness evaluation** - Test diplomatic options and trust system mechanics (Medium complexity, Low risk)
+- [ ] **Turn timing optimization** - Fine-tune 24-hour turn cycles and action point allocation (Low complexity, Medium risk)
 
-### Phase 2: Core Authentication Endpoints
-- [ ] **Implement POST /api/auth/signup endpoint** - Player registration with validation (Medium complexity, Medium risk)
-- [ ] **Implement POST /api/auth/signin endpoint** - Player login with JWT token generation (Medium complexity, Medium risk)
-- [ ] **Implement POST /api/auth/signout endpoint** - Session invalidation (Low complexity, Low risk)
-- [ ] **Implement GET /api/auth/me endpoint** - Current user profile retrieval (Low complexity, Low risk)
+### Gameplay Testing (High Priority)
+- [ ] **Single-player game flow verification** - Test complete game progression from empire creation to expansion (Medium complexity, Low risk)
+- [ ] **Multi-player interaction testing** - Verify combat, diplomacy, and trade between multiple players (High complexity, Medium risk)
+- [ ] **Tutorial system development** - Create guided onboarding experience for new players (High complexity, Low risk)
+- [ ] **AI mentor system implementation** - Develop automated assistance for first-time players (High complexity, Medium risk)
+- [ ] **Player progression curve analysis** - Evaluate learning curve and engagement over time (Medium complexity, Low risk)
 
-### Phase 3: Security Implementation
-- [ ] **Add input validation middleware** - Sanitize and validate all auth inputs (Medium complexity, High risk)
-- [ ] **Implement rate limiting** - Prevent brute force attacks on auth endpoints (Medium complexity, Medium risk)
-- [ ] **Add password strength requirements** - Enforce secure password policies (Low complexity, Low risk)
-- [ ] **Implement account lockout protection** - Temporary lockout after failed attempts (Medium complexity, Medium risk)
+### Performance Testing (Medium Priority)
+- [ ] **Database query optimization** - Profile and optimize slow queries under load (Medium complexity, Medium risk)
+- [ ] **API response time testing** - Measure and improve endpoint performance (Low complexity, Low risk)
+- [ ] **Concurrent user load testing** - Test system stability with 50+ concurrent players (Medium complexity, High risk)
+- [ ] **Memory usage optimization** - Profile and fix memory leaks or excessive usage (Medium complexity, Medium risk)
+- [ ] **WebSocket connection stability** - Test real-time features under various network conditions (Low complexity, Medium risk)
 
-### Phase 4: Session Management
-- [ ] **Implement JWT token refresh** - Allow token renewal without re-authentication (Medium complexity, Medium risk)
-- [ ] **Add session tracking** - Track active sessions per user (Medium complexity, Low risk)
-- [ ] **Implement session revocation** - Allow users to invalidate all sessions (Low complexity, Low risk)
-- [ ] **Add device/browser tracking** - Optional session metadata (Low complexity, Low risk)
+## Immediate Next Steps
 
-### Phase 5: Advanced Features
-- [ ] **Password reset flow** - Email-based password recovery (High complexity, Medium risk)
-- [ ] **Email verification** - Confirm email addresses during signup (High complexity, Medium risk)
-- [ ] **Account management endpoints** - Update profile, change password (Medium complexity, Low risk)
-- [ ] **Two-factor authentication setup** - Optional 2FA implementation (High complexity, High risk)
-
-### Phase 6: Testing and Documentation
-- [ ] **Unit tests for auth endpoints** - Comprehensive test coverage (Medium complexity, Low risk)
-- [ ] **Integration tests for auth flow** - End-to-end authentication testing (Medium complexity, Low risk)
-- [ ] **API documentation** - OpenAPI/Swagger documentation for auth endpoints (Low complexity, Low risk)
-- [ ] **Security audit** - Review implementation for vulnerabilities (Medium complexity, High risk)
-
-## Technical Requirements
-
-### REST Endpoint Design
-```
-POST /api/auth/signup
-POST /api/auth/signin  
-POST /api/auth/signout
-GET  /api/auth/me
-POST /api/auth/refresh
-POST /api/auth/forgot-password
-POST /api/auth/reset-password
-PUT  /api/auth/change-password
-POST /api/auth/verify-email
+### 1. Start Game Testing Environment
+```bash
+npm start          # Start main server on localhost:3000
+npm run terminal   # Launch terminal client for testing
+node bin/game-init.js  # Initialize game state if needed
 ```
 
-### Security Standards
-- JWT tokens with secure signing
-- Bcrypt password hashing (minimum 12 rounds)
-- Rate limiting (max 5 attempts per minute per IP)
-- Input sanitization and validation
-- HTTPS enforcement
-- CSRF protection where applicable
+### 2. Create Test Scenarios
+- **Single player walkthrough**: Complete empire setup → planet colonization → fleet combat → diplomacy
+- **Multi-player combat scenarios**: Various fleet compositions and battle conditions
+- **Resource economy balance tests**: Monitor resource flows and identify bottlenecks
+- **Diplomatic interaction tests**: Test proposal system, agreements, and trade routes
 
-### Data Validation
-- Email format validation
-- Password strength requirements (8+ chars, mixed case, numbers, symbols)
-- Username constraints (3-20 chars, alphanumeric + underscore)
-- Proper error messages without information disclosure
-
-### Response Format
-```json
-{
-  "success": boolean,
-  "data": object | null,
-  "message": string,
-  "errors": array | null
-}
-```
+### 3. Performance Baseline Measurement
+- Measure current API response times across all endpoints
+- Test with multiple concurrent users (start with 5-10, scale up)
+- Profile memory usage patterns during extended gameplay
+- Identify optimization opportunities
 
 ## Success Criteria
 
-- [ ] All authentication endpoints return consistent response format
-- [ ] Password security meets industry standards
-- [ ] Rate limiting prevents abuse
-- [ ] JWT tokens are properly secured and validated
-- [ ] Input validation prevents injection attacks
-- [ ] Error messages are helpful but don't leak sensitive information
-- [ ] Session management is secure and efficient
-- [ ] All endpoints have comprehensive tests
-- [ ] API documentation is complete and accurate
+### Game Balance
+- [ ] No dominant strategies in combat - all ship types viable
+- [ ] All planet specializations provide meaningful benefits
+- [ ] Economic growth curves feel balanced and engaging
+- [ ] Diplomatic options provide real strategic value
+- [ ] Technology progression feels rewarding
+
+### Performance Targets
+- [ ] API response times average < 200ms
+- [ ] System supports 50+ concurrent users without degradation
+- [ ] Memory usage remains stable over extended sessions
+- [ ] Database queries execute efficiently under load
+- [ ] Client interfaces remain responsive during peak usage
+
+### User Experience
+- [ ] New player onboarding is smooth and informative
+- [ ] Command interface is intuitive and discoverable
+- [ ] Error messages are helpful and actionable
+- [ ] Game progression feels engaging and rewarding
+- [ ] Multi-player interactions are fun and strategic
+
+## Technical Infrastructure Status ✅
+
+### Completed Systems
+- **Phase 1**: Complete server architecture with database, API, and game logic
+- **Phase 2**: Node.js terminal REPL client with full game functionality  
+- **Phase 3**: Browser-based web REPL client with feature parity
+- **Security**: Production-ready authentication, CSRF protection, input sanitization
+- **Database**: PostgreSQL with Redis caching, migrations, and seeds
+
+### Available Commands
+```bash
+npm start              # Production server
+npm run dev            # Development server with hot reload
+npm run terminal       # Terminal client
+npm test               # Run test suite
+node bin/game-init.js  # Initialize game state
+node bin/turn-processor.js  # Process turn advancement
+```
 
 ## Risk Assessment
 
-**High Risk Items:**
-- Password security implementation
-- JWT token security
-- Two-factor authentication
-- Email verification flow
+### High Risk Items
+- Combat system balance (complex interactions between ship types, experience, morale)
+- Concurrent user load testing (scaling challenges)
+- Anti-cheat validation under real gameplay conditions
 
-**Medium Risk Items:**
-- Rate limiting configuration
-- Account lockout mechanisms
-- Session management
-- Password reset flow
+### Medium Risk Items
+- Resource economy balance (complex production/consumption chains)
+- Turn timing and action point systems
+- Database performance under load
+- Memory usage optimization
 
-**Low Risk Items:**
-- Basic CRUD operations
-- Input validation
-- Response formatting
-- Documentation
+### Low Risk Items
+- Single-player game flow (well-tested systems)
+- API response time optimization (established patterns)
+- Error handling and user feedback
+- Documentation and help systems
 
-## Implementation Notes
+## Phase 4 Completion Goals
 
-- Build on existing auth infrastructure in src/server/controllers/auth.js
-- Leverage existing Player model and database migrations
-- Use existing middleware patterns for consistency
-- Follow established error handling patterns
-- Maintain compatibility with existing client interfaces
-
-## Next Steps
-
-1. Begin with Phase 1 task: Review existing auth infrastructure
-2. Move systematically through each phase
-3. Test thoroughly after each major milestone
-4. Document all endpoints as they're implemented
-5. Security review before considering complete
+Upon completion of Phase 4, the game should be:
+- **Balanced**: All game mechanics provide engaging strategic choices
+- **Performant**: Supports target concurrent user load smoothly
+- **Polished**: User experience is smooth and intuitive
+- **Tested**: Comprehensive coverage of gameplay scenarios
+- **Ready**: Prepared for Phase 5 user experience testing with real players
 
 ---
 
-This plan focuses exclusively on the REST API for player authentication, ensuring a secure, robust, and well-documented system for user management.
+**Next Phase**: Phase 5 - User Experience Testing with beta players and community feedback
