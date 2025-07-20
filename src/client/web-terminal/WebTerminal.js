@@ -1466,12 +1466,12 @@ Turn Status:
     };
 
     const handleLeaderboard = async () => {
-        const leaderboard = await apiRef.current.getLeaderboard();
-        displayLeaderboard(leaderboard);
+        const response = await apiRef.current.getLeaderboard();
+        displayLeaderboard(response);
     };
 
-    const displayLeaderboard = (leaderboard) => {
-        if (!leaderboard || leaderboard.length === 0) {
+    const displayLeaderboard = (response) => {
+        if (!response || !response.rankings || response.rankings.length === 0) {
             addOutput({
                 type: 'info',
                 content: 'Leaderboard not available',
@@ -1480,10 +1480,29 @@ Turn Status:
             return;
         }
 
-        let content = 'Leaderboard:\n';
-        leaderboard.forEach((player, index) => {
-            content += `  ${index + 1}. ${player.name} - Score: ${player.score}\n`;
+        const { rankings, category, lastUpdated } = response;
+        let content = `=== ${category.toUpperCase()} LEADERBOARD ===\n\n`;
+        
+        rankings.forEach((entry, index) => {
+            const empireName = entry.empire.name;
+            const playerName = entry.empire.player.replace('Player ', '');
+            content += `  ${entry.rank}. ${empireName}\n`;
+            content += `     Player: ${playerName}\n`;
+            content += `     Score: ${entry.score.toLocaleString()}`;
+            if (entry.isCurrentUser) {
+                content += ' ⭐ (You)';
+            }
+            content += '\n';
+            if (entry.breakdown) {
+                const breakdown = Object.entries(entry.breakdown)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join(', ');
+                content += `     Breakdown: ${breakdown}\n`;
+            }
+            content += '\n';
         });
+
+        content += `Last updated: ${new Date(lastUpdated).toLocaleTimeString()}`;
 
         addOutput({
             type: 'data',

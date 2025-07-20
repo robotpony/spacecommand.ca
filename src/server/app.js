@@ -172,7 +172,14 @@ app.use('/api/diplomacy', authenticateToken, diplomacyLimiter, diplomacyRoutes);
 app.use('/api/sectors', authenticateToken, heavyOperationLimiter, territoryRoutes);
 app.use('/api/colonize', authenticateToken, heavyOperationLimiter, territoryRoutes);
 app.use('/api/trade-routes', authenticateToken, territoryRoutes);
-app.use('/api/game', authenticateToken, gameRoutes);
+// Protected game routes (authentication required) - except leaderboard
+app.use('/api/game', (req, res, next) => {
+  // Skip authentication for leaderboard endpoint
+  if (req.path === '/leaderboard') {
+    return next();
+  }
+  return authenticateToken(req, res, next);
+}, gameRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

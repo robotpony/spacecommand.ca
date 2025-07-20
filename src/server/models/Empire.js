@@ -111,6 +111,19 @@ class Empire extends BaseModel {
   }
 
   /**
+   * Find all empires with optional filtering and ordering
+   * @param {Object} conditions - WHERE conditions
+   * @param {Object} options - Query options (orderBy, limit, offset)
+   * @returns {Promise<Empire[]>} Array of Empire instances
+   * @static
+   */
+  static async find(conditions = {}, options = {}) {
+    const model = new Empire();
+    const results = await model.find(conditions, options);
+    return results.map(result => new Empire(result));
+  }
+
+  /**
    * Save empire changes to database
    * @returns {Promise<Empire>} Updated empire instance
    */

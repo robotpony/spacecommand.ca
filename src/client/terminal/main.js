@@ -475,7 +475,16 @@ class SpaceCommandREPL {
      * Handle leaderboard command
      */
     async handleLeaderboard() {
-        const leaderboard = await this.api.getLeaderboard();
+        const response = await this.api.getLeaderboard();
+        // Extract rankings array from response and transform to expected format
+        const leaderboard = response.rankings ? response.rankings.map(entry => ({
+            username: entry.empire.player.replace('Player ', ''),
+            empire: { name: entry.empire.name },
+            score: entry.score,
+            planetCount: entry.breakdown?.planets || 0,
+            fleetCount: entry.breakdown?.fleets || 0,
+            rank: entry.rank
+        })) : [];
         this.terminal.displayLeaderboard(leaderboard);
     }
 

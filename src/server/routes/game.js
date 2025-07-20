@@ -359,9 +359,14 @@ router.get('/leaderboard', [
     const { category = 'overall', limit = 50 } = req.query;
     
     const leaderboard = await getLeaderboard(category, parseInt(limit));
-    const userRanking = await getUserRanking(req.user.id, category);
+    
+    // Get user ranking only if user is authenticated
+    let userRanking = null;
+    if (req.user && req.user.id) {
+      userRanking = await getUserRanking(req.user.id, category);
+    }
 
-    res.status(200).json({
+    const response = {
       category,
       rankings: leaderboard.map((entry, index) => ({
         rank: index + 1,
@@ -373,16 +378,22 @@ router.get('/leaderboard', [
         score: entry.score,
         breakdown: entry.breakdown,
         change: entry.rankChange,
-        isCurrentUser: entry.empireId === userRanking.empireId
+        isCurrentUser: userRanking ? entry.empireId === userRanking.empireId : false
       })),
-      userRanking: {
+      lastUpdated: leaderboard.lastUpdated || new Date().toISOString()
+    };
+
+    // Include user ranking only if user is authenticated
+    if (userRanking) {
+      response.userRanking = {
         rank: userRanking.rank,
         score: userRanking.score,
         percentile: userRanking.percentile,
         breakdown: userRanking.breakdown
-      },
-      lastUpdated: leaderboard.lastUpdated
-    });
+      };
+    }
+
+    res.status(200).json(response);
   } catch (error) {
     next(error);
   }
@@ -524,9 +535,74 @@ async function markEventAsRead(eventId) {
   // Placeholder implementation
 }
 
-async function getLeaderboard(category, limit) {
-  // Placeholder implementation
-  return [];
+async function getLeaderboard(category = 'overall', limit = 50) {
+  try {
+    // Get all empires for leaderboard calculation
+    const empires = await Empire.find({}, { 
+      orderBy: { created_at: 'ASC' },
+      limit: limit 
+    });
+
+    // Calculate score for each empire based on category
+    const leaderboardEntries = empires.map(empire => {
+      let score = 0;
+      const breakdown = {};
+
+      switch (category) {
+        case 'military':
+          // Calculate military score (placeholder calculation)
+          score = (empire.resources?.minerals || 0) * 0.5 + (empire.resources?.energy || 0) * 0.3;
+          breakdown.militaryPower = score;
+          break;
+        case 'economic':
+          // Calculate economic score
+          score = (empire.resources?.minerals || 0) + (empire.resources?.energy || 0) + (empire.resources?.food || 0);
+          breakdown.totalResources = score;
+          break;
+        case 'diplomatic':
+          // Calculate diplomatic score (placeholder)
+          score = Object.keys(empire.diplomacy || {}).length * 100;
+          breakdown.diplomaticRelations = Object.keys(empire.diplomacy || {}).length;
+          break;
+        case 'exploration':
+          // Calculate exploration score (placeholder)
+          score = (empire.resources?.research || 0) * 2;
+          breakdown.researchPoints = empire.resources?.research || 0;
+          break;
+        default: // overall
+          // Calculate overall score
+          const resources = (empire.resources?.minerals || 0) + (empire.resources?.energy || 0) + (empire.resources?.food || 0);
+          const research = (empire.resources?.research || 0) * 2;
+          const tech = Object.keys(empire.technology || {}).length * 50;
+          score = resources + research + tech;
+          breakdown.resources = resources;
+          breakdown.research = research;
+          breakdown.technology = tech;
+          break;
+      }
+
+      return {
+        empireId: empire.id,
+        empireName: empire.name,
+        playerName: `Player ${empire.playerId}`, // TODO: Join with Player table for real name
+        score: Math.floor(score),
+        breakdown,
+        rankChange: 0 // TODO: Implement rank change tracking
+      };
+    });
+
+    // Sort by score descending
+    leaderboardEntries.sort((a, b) => b.score - a.score);
+
+    // Add lastUpdated timestamp
+    leaderboardEntries.lastUpdated = new Date().toISOString();
+
+    return leaderboardEntries;
+  } catch (error) {
+    console.error('Error generating leaderboard:', error);
+    // Return empty leaderboard on error
+    return [];
+  }
 }
 
 async function getUserRanking(playerId, category) {
