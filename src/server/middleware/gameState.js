@@ -10,15 +10,15 @@
  */
 async function gameStateMiddleware(req, res, next) {
   try {
-    // Skip for health check and auth endpoints
-    if (req.path === '/health' || req.path.startsWith('/api/auth')) {
+    // Skip for health check, auth endpoints, and static files
+    if (req.path === '/health' || req.path.startsWith('/api/auth') || !req.path.startsWith('/api')) {
       return next();
     }
 
     // Get current game state (this would typically come from a game state service)
     const gameState = await getCurrentGameState();
     
-    // Add game state headers to all API responses
+    // Add game state headers to API responses only
     res.set({
       'X-Game-Turn': gameState.currentTurn.toString(),
       'X-Turn-Phase': gameState.currentPhase,

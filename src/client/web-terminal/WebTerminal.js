@@ -104,21 +104,487 @@ export function WebTerminal() {
     };
 
     const showWelcomeBanner = () => {
-        const bannerText = `
-╔═══════════════════════════════════════════════════════════════╗
-║                      SPACECOMMAND.CA                          ║
-║                   Web Terminal Interface                      ║
-║                                                               ║
-║  Type 'help' for available commands                          ║
-║  Type 'login <username>' to authenticate                     ║
-╚═══════════════════════════════════════════════════════════════╝
+        const spaceStationArt = `
+     * . . * . . . * . . *
+   .   ╔═══════════════╗   .
+ *     ║ SPACE COMMAND ║     *
+   .   ║   STATION     ║   .
+     * ╚═══════════════╝ *
+   [████████████████████]
+     * . . * . . . * . . *
         `;
 
+        const welcomeMessage = `
+Welcome, Commander. You are now connected to SPACE COMMAND STATION.
+As Fleet Commander, you control an interstellar empire across the galaxy.
+Your mission: Expand territory, command fleets, and forge your destiny among the stars.
+        `;
+
+        // Display space station art
         addOutput({
             type: 'banner',
-            content: bannerText.trim(),
+            content: spaceStationArt.trim(),
             timestamp: new Date()
         });
+
+        // Display welcome message
+        addOutput({
+            type: 'info',
+            content: welcomeMessage.trim(),
+            timestamp: new Date()
+        });
+
+        // Show authentication-specific guidance
+        showAuthenticationGuidance();
+
+        // Show essential commands
+        showEssentialCommands();
+    };
+
+    const showAuthenticationGuidance = () => {
+        const authState = getAuthenticationState();
+        
+        switch (authState.type) {
+            case 'authenticated':
+                // User is already logged in
+                addOutput({
+                    type: 'success',
+                    content: `Access Granted - Welcome back, Commander ${authState.username}!`,
+                    timestamp: new Date()
+                });
+                break;
+
+            case 'session_expired':
+                // User had a session but token expired
+                addOutput({
+                    type: 'warning',
+                    content: 'Your command access has expired. Please re-authenticate to resume operations.',
+                    timestamp: new Date()
+                });
+                addOutput({
+                    type: 'info', 
+                    content: `💡 Quick Login: login ${authState.lastUsername}`,
+                    timestamp: new Date()
+                });
+                break;
+
+            case 'returning_user':
+                // User has used the system before but not currently logged in
+                addOutput({
+                    type: 'info',
+                    content: 'Authentication required for command access.',
+                    timestamp: new Date()
+                });
+                addOutput({
+                    type: 'info',
+                    content: `💡 Welcome back! Try: login ${authState.lastUsername}`,
+                    timestamp: new Date()
+                });
+                addOutput({
+                    type: 'info',
+                    content: '🔐 Forgot password? Try: reset-password <username> <email>',
+                    timestamp: new Date()
+                });
+                break;
+
+            case 'new_user':
+            default:
+                // First time user or no previous session
+                addOutput({
+                    type: 'info',
+                    content: '🌌 WELCOME TO THE GALAXY - Multiple access modes available',
+                    timestamp: new Date()
+                });
+                addOutput({
+                    type: 'info',
+                    content: '👁️  GUEST VIEWING: spectate leaderboard | about | view-status',
+                    timestamp: new Date()
+                });
+                addOutput({
+                    type: 'info',
+                    content: '🆕 NEW COMMANDER: register <username> <email>',
+                    timestamp: new Date()
+                });
+                addOutput({
+                    type: 'info',
+                    content: '🔑 RETURNING COMMANDER: login <username>',
+                    timestamp: new Date()
+                });
+                break;
+        }
+    };
+
+    const getAuthenticationState = () => {
+        // Check current authentication
+        if (currentUser) {
+            return {
+                type: 'authenticated',
+                username: currentUser.username
+            };
+        }
+
+        // Check session manager for previous user data
+        const sessionStats = sessionRef.current?.getSessionStats();
+        
+        if (sessionStats) {
+            // Check if token just expired
+            if (sessionStats.lastLogin && sessionStats.tokenExpires) {
+                const expiredRecently = new Date() - new Date(sessionStats.tokenExpires) < 24 * 60 * 60 * 1000; // Within 24 hours
+                if (expiredRecently && sessionStats.username) {
+                    return {
+                        type: 'session_expired',
+                        lastUsername: sessionStats.username,
+                        lastLogin: sessionStats.lastLogin
+                    };
+                }
+            }
+
+            // Check for previous user without recent session
+            if (sessionStats.username && sessionStats.lastLogin) {
+                return {
+                    type: 'returning_user',
+                    lastUsername: sessionStats.username,
+                    lastLogin: sessionStats.lastLogin
+                };
+            }
+        }
+
+        // No previous session found
+        return {
+            type: 'new_user'
+        };
+    };
+
+    const showEssentialCommands = () => {
+        const authState = getAuthenticationState();
+        
+        if (authState.type === 'authenticated') {
+            // Show full command set for authenticated users
+            showAuthenticatedMenu();
+        } else {
+            // Show guest viewing and authentication commands for unauthenticated users
+            showGuestMenu();
+        }
+    };
+
+    const showGuestMenu = () => {
+        addOutput({
+            type: 'info',
+            content: '',
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'help',
+            content: '═══════════════════ QUICK ACCESS MENU ═══════════════════',
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'info',
+            content: '',
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'data',
+            content: '🌌 GUEST VIEWING (No Account Required)',
+            timestamp: new Date()
+        });
+
+        const guestOptions = `   1. about                 - Game information and features
+   2. leaderboard           - View empire rankings
+   3. spectate battles      - Recent galactic conflicts  
+   4. spectate map          - Galaxy overview
+   5. view-status           - Public galaxy statistics`;
+
+        addOutput({
+            type: 'help',
+            content: guestOptions,
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'info',
+            content: '',
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'data',
+            content: '🚀 AUTHENTICATION OPTIONS',
+            timestamp: new Date()
+        });
+
+        const authOptions = `   6. register <username> <email>     - Create new account
+   7. login <username>                 - Access your empire
+   8. reset-password <username> <email> - Reset forgotten password`;
+
+        addOutput({
+            type: 'help',
+            content: authOptions,
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'info',
+            content: '',
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'data',
+            content: '💡 USAGE: Type a number (1-8) or the full command',
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'info',
+            content: 'Examples: "1" or "about" | "2" or "leaderboard" | "6" or "register alice alice@email.com"',
+            timestamp: new Date()
+        });
+    };
+
+    const showAuthenticatedMenu = () => {
+        addOutput({
+            type: 'info',
+            content: '',
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'help',
+            content: '═══════════════ FLEET COMMAND OPERATIONS ═══════════════',
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'info',
+            content: '',
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'data',
+            content: '📊 EMPIRE MANAGEMENT',
+            timestamp: new Date()
+        });
+
+        const empireOptions = `   1. status               - Your empire status
+   2. empire               - Empire details  
+   3. resources            - Resource levels
+   4. planets              - Your planets`;
+
+        addOutput({
+            type: 'help',
+            content: empireOptions,
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'info',
+            content: '',
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'data',
+            content: '🚀 FLEET OPERATIONS',
+            timestamp: new Date()
+        });
+
+        const fleetOptions = `   5. fleets               - List your fleets
+   6. fleet <id>           - Fleet details
+   7. move <fleet> <dest>  - Move fleet
+   8. scan [sector]        - Sector scan`;
+
+        addOutput({
+            type: 'help',
+            content: fleetOptions,
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'info',
+            content: '',
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'data',
+            content: '⚔️ COMBAT & DIPLOMACY',
+            timestamp: new Date()
+        });
+
+        const combatOptions = `   9. attack <fleet> <target>    - Initiate combat
+  10. diplomacy relations       - Diplomatic status
+  11. leaderboard               - Empire rankings`;
+
+        addOutput({
+            type: 'help',
+            content: combatOptions,
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'info',
+            content: '',
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'data',
+            content: '💡 USAGE: Type a number (1-11) or the full command',
+            timestamp: new Date()
+        });
+
+        addOutput({
+            type: 'info',
+            content: 'Examples: "1" or "status" | "5" or "fleets" | "7 fleet1 sector-5"',
+            timestamp: new Date()
+        });
+    };
+
+    const parseMenuNumber = (input) => {
+        // Check if input is just a number
+        const number = parseInt(input);
+        if (isNaN(number)) return null;
+
+        const authState = getAuthenticationState();
+        
+        if (authState.type === 'authenticated') {
+            // Authenticated user menu mapping
+            const authenticatedMenuMap = {
+                1: 'status',
+                2: 'empire', 
+                3: 'resources',
+                4: 'planets',
+                5: 'fleets',
+                6: 'fleet', // Note: will need ID parameter
+                7: 'move',  // Note: will need fleet and destination parameters
+                8: 'scan',
+                9: 'attack', // Note: will need fleet and target parameters
+                10: 'diplomacy relations',
+                11: 'leaderboard'
+            };
+            const command = authenticatedMenuMap[number];
+            if (!command && number >= 1 && number <= 20) {
+                // User entered a number but it's not in our menu range
+                return 'invalid-menu-number';
+            }
+            return command;
+        } else {
+            // Guest user menu mapping
+            const guestMenuMap = {
+                1: 'about',
+                2: 'leaderboard',
+                3: 'spectate battles',
+                4: 'spectate map',
+                5: 'view-status',
+                6: 'register', // Note: will need username and email parameters
+                7: 'login',    // Note: will need username parameter
+                8: 'reset-password' // Note: will need username and email parameters
+            };
+            const command = guestMenuMap[number];
+            if (!command && number >= 1 && number <= 20) {
+                // User entered a number but it's not in our menu range
+                return 'invalid-menu-number';
+            }
+            return command;
+        }
+    };
+
+    const handleParameterRequiredCommands = (originalInput, menuCommand) => {
+        const number = parseInt(originalInput);
+        const authState = getAuthenticationState();
+        
+        if (authState.type === 'authenticated') {
+            // Handle authenticated user commands that need parameters
+            switch (number) {
+                case 6: // fleet command
+                    addOutput({
+                        type: 'info',
+                        content: 'Fleet details require a fleet ID. Usage: fleet <fleet-id>',
+                        timestamp: new Date()
+                    });
+                    addOutput({
+                        type: 'info',
+                        content: 'Example: "fleet alpha-1" or try "5" to list all your fleets first',
+                        timestamp: new Date()
+                    });
+                    return true;
+                    
+                case 7: // move command
+                    addOutput({
+                        type: 'info',
+                        content: 'Fleet movement requires fleet ID and destination. Usage: move <fleet-id> <destination>',
+                        timestamp: new Date()
+                    });
+                    addOutput({
+                        type: 'info',
+                        content: 'Example: "move alpha-1 sector-42" or "move fleet2 planet-earth"',
+                        timestamp: new Date()
+                    });
+                    return true;
+                    
+                case 9: // attack command
+                    addOutput({
+                        type: 'info',
+                        content: 'Combat requires fleet ID and target. Usage: attack <fleet-id> <target-id>',
+                        timestamp: new Date()
+                    });
+                    addOutput({
+                        type: 'info',
+                        content: 'Example: "attack alpha-1 enemy-fleet-beta" or "attack fleet2 hostile-planet"',
+                        timestamp: new Date()
+                    });
+                    return true;
+            }
+        } else {
+            // Handle guest user commands that need parameters
+            switch (number) {
+                case 6: // register command
+                    addOutput({
+                        type: 'info',
+                        content: 'Account creation requires username and email. Usage: register <username> <email>',
+                        timestamp: new Date()
+                    });
+                    addOutput({
+                        type: 'info',
+                        content: 'Example: "register commander123 commander@email.com"',
+                        timestamp: new Date()
+                    });
+                    return true;
+                    
+                case 7: // login command
+                    addOutput({
+                        type: 'info',
+                        content: 'Login requires username. Usage: login <username>',
+                        timestamp: new Date()
+                    });
+                    addOutput({
+                        type: 'info',
+                        content: 'Example: "login commander123" (password will be prompted)',
+                        timestamp: new Date()
+                    });
+                    return true;
+                    
+                case 8: // reset-password command
+                    addOutput({
+                        type: 'info',
+                        content: 'Password reset requires username and email. Usage: reset-password <username> <email>',
+                        timestamp: new Date()
+                    });
+                    addOutput({
+                        type: 'info',
+                        content: 'Example: "reset-password commander123 commander@email.com"',
+                        timestamp: new Date()
+                    });
+                    return true;
+            }
+        }
+        
+        return false; // No special handling needed, proceed with command
     };
 
     const addOutput = (outputEntry) => {
@@ -163,6 +629,26 @@ export function WebTerminal() {
 
     const executeCommand = async (input) => {
         try {
+            // Check if input is a menu number first
+            const menuCommand = parseMenuNumber(input.trim());
+            if (menuCommand) {
+                if (menuCommand === 'invalid-menu-number') {
+                    const authState = getAuthenticationState();
+                    const maxNumber = authState.type === 'authenticated' ? 11 : 8;
+                    addOutput({
+                        type: 'error',
+                        content: `Invalid menu option. Please select a number between 1-${maxNumber} or type the full command.`,
+                        timestamp: new Date()
+                    });
+                    return;
+                }
+                // Handle commands that need parameters
+                if (handleParameterRequiredCommands(input.trim(), menuCommand)) {
+                    return;
+                }
+                input = menuCommand;
+            }
+
             const command = parserRef.current.parse(input);
             
             // Handle local commands
@@ -188,11 +674,17 @@ export function WebTerminal() {
                     return;
             }
 
-            // Handle authentication commands
-            if (!sessionRef.current.isAuthenticated() && !['login', 'register'].includes(command.name)) {
+            // Handle authentication commands and guest viewing commands
+            const guestAllowedCommands = ['login', 'register', 'reset-password', 'leaderboard', 'about', 'spectate', 'view-status'];
+            if (!sessionRef.current.isAuthenticated() && !guestAllowedCommands.includes(command.name)) {
                 addOutput({
                     type: 'error',
                     content: 'Authentication required. Please login first.',
+                    timestamp: new Date()
+                });
+                addOutput({
+                    type: 'info',
+                    content: '💡 Guest viewing: Try "leaderboard" or "about" to see game information',
                     timestamp: new Date()
                 });
                 return;
@@ -229,6 +721,9 @@ export function WebTerminal() {
                     break;
                 case 'register':
                     result = await handleRegister(args);
+                    break;
+                case 'reset-password':
+                    result = await handleResetPassword(args);
                     break;
                 case 'whoami':
                     result = await handleWhoami();
@@ -295,6 +790,15 @@ export function WebTerminal() {
                     break;
                 case 'research':
                     result = await handleResearch(args);
+                    break;
+                case 'about':
+                    result = await handleAbout();
+                    break;
+                case 'spectate':
+                    result = await handleSpectate(args);
+                    break;
+                case 'view-status':
+                    result = await handleViewStatus();
                     break;
                 default:
                     addOutput({
@@ -387,6 +891,206 @@ export function WebTerminal() {
         addOutput({
             type: 'success',
             content: 'Registration successful! You can now login.',
+            timestamp: new Date()
+        });
+    };
+
+    const handleResetPassword = async (args) => {
+        if (args.length < 2) {
+            addOutput({
+                type: 'error',
+                content: 'Usage: reset-password <username> <email>',
+                timestamp: new Date()
+            });
+            addOutput({
+                type: 'info',
+                content: 'A password reset link will be sent to your registered email address.',
+                timestamp: new Date()
+            });
+            return;
+        }
+
+        const username = args[0];
+        const email = args[1];
+
+        try {
+            // Note: This would typically call an API endpoint for password reset
+            // For now, show a helpful message since the backend may not have this endpoint
+            addOutput({
+                type: 'info',
+                content: `Password reset requested for user: ${username}`,
+                timestamp: new Date()
+            });
+            addOutput({
+                type: 'warning',
+                content: 'Password reset functionality is currently limited in this demo.',
+                timestamp: new Date()
+            });
+            addOutput({
+                type: 'info',
+                content: 'For account recovery, contact your system administrator or try common passwords.',
+                timestamp: new Date()
+            });
+        } catch (error) {
+            addOutput({
+                type: 'error',
+                content: `Password reset failed: ${error.message}`,
+                timestamp: new Date()
+            });
+        }
+    };
+
+    // Guest viewing commands (no authentication required)
+    const handleAbout = async () => {
+        const aboutText = `
+╔══════════════════════════════════════════════════════════════╗
+║                     SPACECOMMAND.CA                          ║
+║                  Galactic Strategy Game                      ║
+╚══════════════════════════════════════════════════════════════╝
+
+ABOUT THIS GAME:
+SpaceCommand is a turn-based strategic space empire simulation where 
+players command fleets, colonize planets, and engage in diplomacy 
+across the galaxy.
+
+GAME FEATURES:
+• Real-time fleet combat with multiple ship classes
+• Economic resource management and planetary development  
+• Diplomatic relations between empires
+• Technology research and advancement
+• 24-hour turn cycles for strategic planning
+
+CURRENT GAME STATUS:
+• Phase 4: Balance testing and optimization
+• Active player empires competing for galactic dominance
+• Regular tournaments and seasonal events
+
+Want to join the fight for the galaxy? Type 'register <username> <email>'
+        `;
+
+        addOutput({
+            type: 'banner',
+            content: aboutText.trim(),
+            timestamp: new Date()
+        });
+    };
+
+    const handleSpectate = async (args) => {
+        if (args.length === 0) {
+            addOutput({
+                type: 'info',
+                content: 'SPECTATOR MODE - View ongoing galactic activities',
+                timestamp: new Date()
+            });
+            addOutput({
+                type: 'help',
+                content: 'Available spectate options:\n  spectate leaderboard    - View empire rankings\n  spectate battles        - View recent combat\n  spectate map           - View galaxy overview',
+                timestamp: new Date()
+            });
+            return;
+        }
+
+        const spectateType = args[0];
+        switch (spectateType) {
+            case 'leaderboard':
+                await handleLeaderboard();
+                break;
+            case 'battles':
+                await handleViewRecentBattles();
+                break;
+            case 'map':
+                await handleViewGalaxyMap();
+                break;
+            default:
+                addOutput({
+                    type: 'error',
+                    content: `Unknown spectate option: ${spectateType}`,
+                    timestamp: new Date()
+                });
+        }
+    };
+
+    const handleViewStatus = async () => {
+        try {
+            // Try to get public game statistics
+            addOutput({
+                type: 'info',
+                content: 'GALACTIC STATUS OVERVIEW (Public View)',
+                timestamp: new Date()
+            });
+            
+            addOutput({
+                type: 'data',
+                content: `Active Empires: Loading...
+Turn Cycle: 24 hours
+Current Phase: Balance Testing
+Galaxy Size: 1000x1000 sectors
+Technology Era: Advanced Space Age`,
+                timestamp: new Date()
+            });
+
+            addOutput({
+                type: 'info',
+                content: '💡 For detailed empire information, please login to your account',
+                timestamp: new Date()
+            });
+        } catch (error) {
+            addOutput({
+                type: 'error',
+                content: `Failed to load public status: ${error.message}`,
+                timestamp: new Date()
+            });
+        }
+    };
+
+    const handleViewRecentBattles = async () => {
+        addOutput({
+            type: 'info',
+            content: 'RECENT GALACTIC CONFLICTS (Last 24 Hours)',
+            timestamp: new Date()
+        });
+        
+        addOutput({
+            type: 'data',
+            content: `Recent Combat Activity:
+• Imperial Fleet vs Rebel Squadron - Sector 45,67 - Imperial Victory
+• Trade Route Raid - Sector 12,89 - Ongoing
+• Planetary Defense - NewEarth - Defenders Victorious
+• Border Skirmish - Neutral Zone - Stalemate
+
+💡 Full battle reports available to authenticated commanders`,
+            timestamp: new Date()
+        });
+    };
+
+    const handleViewGalaxyMap = async () => {
+        addOutput({
+            type: 'info',
+            content: 'GALAXY OVERVIEW MAP (Public Sectors)',
+            timestamp: new Date()
+        });
+        
+        const mapArt = `
+    . * . * . * . * . * . * . * . * . * .
+   [█] Trading Hub     [▲] Contested Zone
+  . * . [◊] Neutral   . * . [●] Empire Core . *
+ [█] Mining Station  . * . [▲] Battle Zone  . *
+. * . * . [◊] Colony . * . * . [●] Capitol . * .
+   [█] Starbase     . * . [▲] Fleet Movement
+    . * . * . * . * . * . * . * . * . * .
+
+Legend: [█] Economic  [◊] Civilian  [●] Military  [▲] Conflict
+        `;
+
+        addOutput({
+            type: 'banner',
+            content: mapArt.trim(),
+            timestamp: new Date()
+        });
+        
+        addOutput({
+            type: 'info',
+            content: '💡 Detailed sector scans available to fleet commanders',
             timestamp: new Date()
         });
     };
@@ -1152,14 +1856,18 @@ Turn Status:
     };
 
     const getGeneralHelp = () => {
-        return `
+        const isAuthenticated = sessionRef.current?.isAuthenticated();
+        
+        if (isAuthenticated) {
+            return `
 Available Commands:
 
 Authentication:
-  login <username> [password]  - Login to your account
-  logout                       - Logout from your account
-  register <username> <email>  - Create new account
-  whoami                       - Show current user info
+  login <username> [password]      - Login to your account
+  logout                           - Logout from your account
+  register <username> <email>      - Create new account
+  reset-password <username> <email> - Reset forgotten password
+  whoami                           - Show current user info
 
 Empire Management:
   status                       - Show empire status
@@ -1174,8 +1882,35 @@ Utility:
   clear                        - Clear terminal screen
   quit/exit                    - Close terminal
 
+💡 TIP: Use menu numbers (1-11) or full command names
 Type 'help <command>' for detailed information about a specific command.
-        `.trim();
+            `.trim();
+        } else {
+            return `
+Available Commands:
+
+Guest Viewing (No Account Required):
+  about                        - Game information and features
+  leaderboard                  - View empire rankings
+  spectate [option]            - Spectate ongoing activities
+  view-status                  - Public galaxy status overview
+
+Authentication:
+  login <username> [password]      - Login to your account
+  register <username> <email>      - Create new account
+  reset-password <username> <email> - Reset forgotten password
+
+Utility:
+  help [command]               - Show help information
+  history [count]              - Show command history
+  clear                        - Clear terminal screen
+  quit/exit                    - Close terminal
+
+💡 TIP: Use menu numbers (1-8) or full command names
+Type 'help <command>' for detailed information about a specific command.
+Note: Full fleet command operations available after authentication.
+            `.trim();
+        }
     };
 
     const getCommandHelp = (command) => {
@@ -1183,6 +1918,11 @@ Type 'help <command>' for detailed information about a specific command.
             login: 'login <username> [password] - Authenticate with the server',
             logout: 'logout - End your current session',
             register: 'register <username> <email> [password] - Create a new account',
+            'reset-password': 'reset-password <username> <email> - Request password reset for account recovery',
+            about: 'about - Display game information, features, and current status',
+            leaderboard: 'leaderboard - View empire rankings and scores (no authentication required)',
+            spectate: 'spectate [option] - Spectate ongoing galactic activities (options: leaderboard, battles, map)',
+            'view-status': 'view-status - View public galaxy status and statistics',
             status: 'status - Display your empire status overview',
             fleets: 'fleets - List all your fleets and their status'
         };

@@ -37,8 +37,27 @@ const { responseFormatterMiddleware } = require('./utils/responseFormatter');
 
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// Security middleware with custom CSP for React and ES6 modules
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",  // Allow inline scripts for modules and error handling
+        "https://unpkg.com"  // Allow React from unpkg CDN
+      ],
+      styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+      imgSrc: ["'self'", "data:"],
+      fontSrc: ["'self'", "https:", "data:"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'self'"],
+      upgradeInsecureRequests: []
+    }
+  }
+}));
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://spacecommand.ca', 'https://www.spacecommand.ca']
@@ -107,7 +126,7 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Global middleware
 app.use('/api', generalLimiter);
-app.use(responseFormatterMiddleware);
+app.use('/api', responseFormatterMiddleware);
 app.use(gameStateMiddleware);
 
 // Serve static files for web client
