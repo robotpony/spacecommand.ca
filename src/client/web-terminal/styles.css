@@ -65,10 +65,34 @@
     word-wrap: break-word;
 }
 
+/* Add vertical spacing for better readability */
+.output-line:empty {
+    min-height: 1.4em;
+    padding: 0.7em 0;
+}
+
+/* Add spacing after certain output types */
+.output-banner + .output-line,
+.output-help + .output-line,
+.output-data + .output-line {
+    margin-top: 0.5em;
+}
+
+/* Add spacing before section headers */
+.output-help {
+    margin-top: 0.8em;
+}
+
+/* Add spacing for menu sections */
+.output-data {
+    margin-top: 0.3em;
+}
+
 /* Output type specific styles */
 .output-command {
     color: #ffffff;
     font-weight: normal;
+    margin-bottom: 0.2em;
 }
 
 .output-success {

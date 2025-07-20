@@ -40,6 +40,7 @@ class Terminal {
 ╚═══════════════════════════════════════════════════════════════════════╝
 `;
         console.log(this.colorScheme.primary(banner));
+        console.log(); // Add extra spacing after banner
     }
 
     /**
@@ -91,7 +92,8 @@ class Terminal {
      * @param {Object} status - Empire status data
      */
     displayEmpireStatus(status) {
-        console.log(this.colorScheme.highlight('\n=== EMPIRE STATUS ==='));
+        console.log(); // Add spacing before status
+        console.log(this.colorScheme.highlight('=== EMPIRE STATUS ==='));
         
         // Basic empire info
         console.log(`Empire: ${this.colorScheme.primary(status.empire.name)}`);
@@ -148,8 +150,8 @@ class Terminal {
      * Display general help information
      */
     showGeneralHelp() {
-        const help = `
-${this.colorScheme.highlight('SPACECOMMAND TERMINAL HELP')}
+        console.log(); // Add spacing before help
+        const help = `${this.colorScheme.highlight('SPACECOMMAND TERMINAL HELP')}
 
 ${this.colorScheme.primary('AUTHENTICATION COMMANDS:')}
   login <username> [password]     - Authenticate with server

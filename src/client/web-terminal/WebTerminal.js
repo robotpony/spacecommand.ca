@@ -127,6 +127,13 @@ Your mission: Expand territory, command fleets, and forge your destiny among the
             timestamp: new Date()
         });
 
+        // Add spacing after banner
+        addOutput({
+            type: 'info',
+            content: '',
+            timestamp: new Date()
+        });
+
         // Display welcome message
         addOutput({
             type: 'info',
@@ -134,8 +141,22 @@ Your mission: Expand territory, command fleets, and forge your destiny among the
             timestamp: new Date()
         });
 
+        // Add spacing before authentication guidance
+        addOutput({
+            type: 'info',
+            content: '',
+            timestamp: new Date()
+        });
+
         // Show authentication-specific guidance
         showAuthenticationGuidance();
+
+        // Add spacing before commands
+        addOutput({
+            type: 'info',
+            content: '',
+            timestamp: new Date()
+        });
 
         // Show essential commands
         showEssentialCommands();
@@ -269,20 +290,8 @@ Your mission: Expand territory, command fleets, and forge your destiny among the
 
     const showGuestMenu = () => {
         addOutput({
-            type: 'info',
-            content: '',
-            timestamp: new Date()
-        });
-
-        addOutput({
             type: 'help',
             content: '═══════════════════ QUICK ACCESS MENU ═══════════════════',
-            timestamp: new Date()
-        });
-
-        addOutput({
-            type: 'info',
-            content: '',
             timestamp: new Date()
         });
 
@@ -305,12 +314,6 @@ Your mission: Expand territory, command fleets, and forge your destiny among the
         });
 
         addOutput({
-            type: 'info',
-            content: '',
-            timestamp: new Date()
-        });
-
-        addOutput({
             type: 'data',
             content: '🚀 AUTHENTICATION OPTIONS',
             timestamp: new Date()
@@ -323,12 +326,6 @@ Your mission: Expand territory, command fleets, and forge your destiny among the
         addOutput({
             type: 'help',
             content: authOptions,
-            timestamp: new Date()
-        });
-
-        addOutput({
-            type: 'info',
-            content: '',
             timestamp: new Date()
         });
 
@@ -347,20 +344,8 @@ Your mission: Expand territory, command fleets, and forge your destiny among the
 
     const showAuthenticatedMenu = () => {
         addOutput({
-            type: 'info',
-            content: '',
-            timestamp: new Date()
-        });
-
-        addOutput({
             type: 'help',
             content: '═══════════════ FLEET COMMAND OPERATIONS ═══════════════',
-            timestamp: new Date()
-        });
-
-        addOutput({
-            type: 'info',
-            content: '',
             timestamp: new Date()
         });
 
@@ -382,12 +367,6 @@ Your mission: Expand territory, command fleets, and forge your destiny among the
         });
 
         addOutput({
-            type: 'info',
-            content: '',
-            timestamp: new Date()
-        });
-
-        addOutput({
             type: 'data',
             content: '🚀 FLEET OPERATIONS',
             timestamp: new Date()
@@ -405,12 +384,6 @@ Your mission: Expand territory, command fleets, and forge your destiny among the
         });
 
         addOutput({
-            type: 'info',
-            content: '',
-            timestamp: new Date()
-        });
-
-        addOutput({
             type: 'data',
             content: '⚔️ COMBAT & DIPLOMACY',
             timestamp: new Date()
@@ -423,12 +396,6 @@ Your mission: Expand territory, command fleets, and forge your destiny among the
         addOutput({
             type: 'help',
             content: combatOptions,
-            timestamp: new Date()
-        });
-
-        addOutput({
-            type: 'info',
-            content: '',
             timestamp: new Date()
         });
 
