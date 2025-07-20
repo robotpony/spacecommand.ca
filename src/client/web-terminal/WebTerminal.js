@@ -2031,6 +2031,3 @@ Note: Full fleet command operations available after authentication.
         ])
     ]);
 }
-
-// Export the WebTerminal component
-export { WebTerminal };

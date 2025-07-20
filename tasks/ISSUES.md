@@ -237,3 +237,38 @@ export { WebTerminal };
 The previous fix to CommandParser was correct but ineffective because **Issue #2 prevented the terminal interface from loading entirely**. The export issue caused the module import to fail silently, leaving users on the loading screen.
 
 **Final Status**: ✅ **BOTH ISSUES RESOLVED** - Terminal loads properly and about command works
+
+---
+
+## NEW ISSUE: Duplicate Export of 'WebTerminal' (SyntaxError)
+
+**Date**: 2025-07-20
+**Issue**: Application error: SyntaxError: Duplicate export of 'WebTerminal'
+
+### Problem Analysis
+The WebTerminal.js file has duplicate exports:
+1. `export function WebTerminal()` on line 14 (function declaration export)
+2. `export { WebTerminal }` on line 2036 (named export)
+
+### Location
+- **File**: `src/client/web-terminal/WebTerminal.js`
+- **Lines**: 14 and 2036
+
+### Impact
+- Causes SyntaxError preventing module loading
+- Breaks application startup
+
+### Solution
+Remove the redundant named export on line 2036, keeping only the function declaration export on line 14.
+
+### Fix Applied
+**File Modified**: `src/client/web-terminal/WebTerminal.js:2036`
+- Removed redundant named export `export { WebTerminal };`
+- Kept the function declaration export on line 14: `export function WebTerminal()`
+
+### Verification
+- ✅ No duplicate exports found in file
+- ✅ Syntax validation passed for duplicate export issue  
+- ✅ Module structure preserved
+
+**Status**: ✅ **RESOLVED** - Duplicate export removed, keeping only function declaration export
