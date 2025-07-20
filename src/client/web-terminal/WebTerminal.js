@@ -1482,27 +1482,45 @@ Turn Status:
 
         const { rankings, category, lastUpdated } = response;
         
-        // Create table with single line borders
+        // Create multi-line format to show all metrics
         let content = `${category.toUpperCase()} LEADERBOARD\n\n`;
         
-        // Table header
-        content += '┌──────┬─────────────────────────────┬─────────────────────────────┬───────────┐\n';
-        content += '│ Rank │ Commander                   │ Empire                      │ Score     │\n';
-        content += '├──────┼─────────────────────────────┼─────────────────────────────┼───────────┤\n';
-        
-        // Table rows
         rankings.forEach((entry) => {
-            const rank = entry.rank.toString().padEnd(4);
-            const commander = (entry.player.alias || 'Unknown Commander').substring(0, 27).padEnd(27);
-            const empire = entry.empire.name.substring(0, 27).padEnd(27);
-            const score = entry.score.toLocaleString().padStart(9);
-            const marker = entry.isCurrentUser ? '★' : ' ';
+            const rank = entry.rank;
+            const commander = entry.player.alias || 'Unknown Commander';
+            const empire = entry.empire.name;
+            const score = entry.score.toLocaleString();
+            const planets = entry.totalPlanets || 0;
+            const units = entry.totalUnits || 0;
+            const population = (entry.totalPopulation || 0).toLocaleString();
+            const resources = (entry.totalResources || 0).toLocaleString();
+            const combat = entry.fleetCombatPower || 0;
+            const tech = entry.technologyLevel || 0;
+            const marker = entry.isCurrentUser ? ' ★' : '';
             
-            content += `│ ${rank} │ ${commander} │ ${empire} │ ${score} │${marker}\n`;
+            // Calculate content with exact 77-character width for border alignment
+            const borderWidth = 77;
+            
+            // Line 1: Rank + Commander + Empire + Marker
+            const line1Content = `${rank.toString().padStart(2)}. ${commander.substring(0, 25).padEnd(25)} (${empire.substring(0, 20).padEnd(20)})${marker.padStart(3)}`;
+            const line1 = ` ${line1Content}`.padEnd(borderWidth);
+            
+            // Line 2: Score + Planets + Units
+            const line2Content = `Score: ${score.padEnd(10)} Planets: ${planets.toString().padEnd(4)} Units: ${units.toString().padEnd(8)}`;
+            const line2 = ` ${line2Content}`.padEnd(borderWidth);
+            
+            // Line 3: Population + Resources + Combat + Tech
+            const line3Content = `Pop: ${population.padEnd(8)} Resources: ${resources.padEnd(8)} Combat: ${combat.toString().padEnd(6)} Tech: ${tech.toString().padEnd(3)}`;
+            const line3 = ` ${line3Content}`.padEnd(borderWidth);
+            
+            content += `┌─────────────────────────────────────────────────────────────────────────────┐\n`;
+            content += `│${line1}│\n`;
+            content += `├─────────────────────────────────────────────────────────────────────────────┤\n`;
+            content += `│${line2}│\n`;
+            content += `│${line3}│\n`;
+            content += `└─────────────────────────────────────────────────────────────────────────────┘\n`;
+            content += '\n';
         });
-        
-        // Table footer
-        content += '└──────┴─────────────────────────────┴─────────────────────────────┴───────────┘\n';
         content += `\nLast updated: ${new Date(lastUpdated).toLocaleTimeString()}`;
 
         addOutput({

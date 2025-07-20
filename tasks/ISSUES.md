@@ -546,6 +546,60 @@ if (req.user && req.user.id) {
 
 ---
 
+## Issue: Leaderboard Border Alignment Problem
+
+**Date**: 2025-07-20  
+**Reporter**: User  
+**Status**: In Progress  
+**Priority**: Medium  
+**Issue Type**: UI/Display Formatting  
+
+### Problem Description
+
+The leaderboard display in the web terminal has misaligned borders on the right edge. The border characters don't properly align with the content width, causing visual formatting issues in the boxed multi-line format.
+
+### Location
+- **File**: `src/client/web-terminal/WebTerminal.js`
+- **Function**: `displayLeaderboard()` 
+- **Lines**: 1501-1506
+
+### Root Cause Analysis
+
+The issue is in the multi-line leaderboard display format where:
+
+1. **Border Width**: The top/bottom borders use a fixed number of dash characters (77 dashes)
+2. **Content Width**: The content inside uses variable-length strings with padding that doesn't match the border width
+3. **Inconsistent Calculations**: Different lines have different total character counts causing misalignment
+
+### Current Problematic Code
+```javascript
+content += `┌─────────────────────────────────────────────────────────────────────────────┐\n`;
+content += `│ ${rank.toString().padStart(2)}. ${commander.substring(0, 35).padEnd(35)} (${empire.substring(0, 20)})${marker.padStart(10)} │\n`;
+content += `├─────────────────────────────────────────────────────────────────────────────┤\n`;
+content += `│ Score: ${score.padEnd(10)} Planets: ${planets.toString().padEnd(4)} Units: ${units.toString().padEnd(8)} │\n`;
+content += `│ Pop: ${population.padEnd(12)} Resources: ${resources.padEnd(10)} Combat: ${combat.toString().padEnd(6)} Tech: ${tech.toString().padEnd(3)} │\n`;
+content += `└─────────────────────────────────────────────────────────────────────────────┘\n`;
+```
+
+### Expected Behavior
+- All border characters should align perfectly
+- Content width should exactly match border width
+- Right edge should be straight and properly formatted
+
+### Solution Approach
+1. Calculate exact total content width needed for each line
+2. Ensure all content lines pad to exact same width
+3. Match border dash count to content width
+4. Test with various data lengths to ensure consistency
+
+### Complexity: Low
+### Risk: Low
+- Purely cosmetic formatting fix
+- No functional logic changes required
+- Isolated to display formatting code
+
+---
+
 ## Issue: Leaderboard Shows "forEach is not a function" Error
 
 **Date**: 2025-07-20  
@@ -732,3 +786,67 @@ Last updated: 6:13:40 PM
 - ✅ Terminal client preserves existing table format
 
 **Status**: Ready for production use
+
+---
+
+## Issue: Leaderboard Border Alignment Problem
+
+**Date**: 2025-07-20  
+**Reporter**: User  
+**Status**: In Progress  
+**Priority**: Medium  
+**Issue Type**: UI/Display Formatting  
+
+### Problem Description
+
+The leaderboard display in the web terminal has misaligned borders on the right edge. The border characters don't properly align with the content width, causing visual formatting issues in the boxed multi-line format.
+
+### Location
+- **File**: `src/client/web-terminal/WebTerminal.js`
+- **Function**: `displayLeaderboard()` 
+- **Lines**: 1501-1506
+
+### Root Cause Analysis
+
+The issue is in the multi-line leaderboard display format where:
+
+1. **Border Width**: The top/bottom borders use a fixed number of dash characters (77 dashes)
+2. **Content Width**: The content inside uses variable-length strings with padding that doesn't match the border width
+3. **Inconsistent Calculations**: Different lines have different total character counts causing misalignment
+
+### Current Problematic Code
+```javascript
+content += `┌─────────────────────────────────────────────────────────────────────────────┐\n`;
+content += `│ ${rank.toString().padStart(2)}. ${commander.substring(0, 35).padEnd(35)} (${empire.substring(0, 20)})${marker.padStart(10)} │\n`;
+content += `├─────────────────────────────────────────────────────────────────────────────┤\n`;
+content += `│ Score: ${score.padEnd(10)} Planets: ${planets.toString().padEnd(4)} Units: ${units.toString().padEnd(8)} │\n`;
+content += `│ Pop: ${population.padEnd(12)} Resources: ${resources.padEnd(10)} Combat: ${combat.toString().padEnd(6)} Tech: ${tech.toString().padEnd(3)} │\n`;
+content += `└─────────────────────────────────────────────────────────────────────────────┘\n`;
+```
+
+### Expected Behavior
+- All border characters should align perfectly
+- Content width should exactly match border width
+- Right edge should be straight and properly formatted
+
+### Solution Approach
+1. Calculate exact total content width needed for each line
+2. Ensure all content lines pad to exact same width
+3. Match border dash count to content width
+4. Test with various data lengths to ensure consistency
+
+### Complexity: Low
+### Risk: Low
+- Purely cosmetic formatting fix
+- No functional logic changes required
+- Isolated to display formatting code
+
+### Solution Implemented
+
+**Changes Made**: Fixed border alignment in `src/client/web-terminal/WebTerminal.js:1488-1523`
+
+**Key Fix**: Set `borderWidth = 77` and ensured all content lines use `.padEnd(borderWidth)` for exact character alignment.
+
+**Testing Results**: ✅ All content lines now exactly 77 characters, perfect border alignment confirmed.
+
+**Status**: ✅ **RESOLVED** - Ready for production use

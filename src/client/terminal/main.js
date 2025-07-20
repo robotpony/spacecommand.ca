@@ -478,11 +478,15 @@ class SpaceCommandREPL {
         const response = await this.api.getLeaderboard();
         // Extract rankings array from response and transform to expected format
         const leaderboard = response.rankings ? response.rankings.map(entry => ({
-            username: entry.player.alias || 'Unknown Commander',
+            playerAlias: entry.player.alias || 'Unknown Commander',
             empire: { name: entry.empire.name },
             score: entry.score,
-            planetCount: entry.breakdown?.planets || 0,
-            fleetCount: entry.breakdown?.fleets || 0,
+            totalPlanets: entry.totalPlanets || 0,
+            totalUnits: entry.totalUnits || 0,
+            totalPopulation: entry.totalPopulation || 0,
+            totalResources: entry.totalResources || 0,
+            fleetCombatPower: entry.fleetCombatPower || 0,
+            technologyLevel: entry.technologyLevel || 0,
             rank: entry.rank
         })) : [];
         this.terminal.displayLeaderboard(leaderboard);

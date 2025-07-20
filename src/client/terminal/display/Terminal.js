@@ -643,17 +643,25 @@ ${this.colorScheme.dim('Commands can be abbreviated: "s" for status, "f" for fle
             return;
         }
 
-        const headers = ['Rank', 'Player', 'Empire', 'Score', 'Planets', 'Fleets'];
-        const rows = leaderboard.map((player, index) => [
-            (index + 1).toString(),
-            player.username,
-            player.empire?.name || 'Unknown',
-            player.score || 0,
-            player.planetCount || 0,
-            player.fleetCount || 0
-        ]);
-
-        this.displayTable(headers, rows);
+        // Use a more compact multi-line format for all metrics
+        console.log();
+        leaderboard.forEach((player, index) => {
+            const rank = index + 1;
+            const name = player.playerAlias || player.username || 'Unknown';
+            const empire = player.empire?.name || 'Unknown';
+            const score = player.score || 0;
+            const planets = player.totalPlanets || 0;
+            const units = player.totalUnits || 0;
+            const population = player.totalPopulation || 0;
+            const resources = player.totalResources || 0;
+            const combat = player.fleetCombatPower || 0;
+            const tech = player.technologyLevel || 0;
+            
+            console.log(this.colorScheme.highlight(`${rank.toString().padStart(2)}. ${name} (${empire})`));
+            console.log(this.colorScheme.data(`    Score: ${score.toLocaleString().padEnd(8)} Planets: ${planets.toString().padEnd(3)} Units: ${units.toString().padEnd(5)}`));
+            console.log(this.colorScheme.dim(`    Pop: ${population.toLocaleString().padEnd(10)} Resources: ${resources.toLocaleString().padEnd(8)} Combat: ${combat.toString().padEnd(5)} Tech: ${tech}`));
+            console.log();
+        });
         console.log();
     }
 

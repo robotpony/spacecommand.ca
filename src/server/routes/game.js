@@ -379,6 +379,12 @@ router.get('/leaderboard', [
         },
         score: entry.score,
         breakdown: entry.breakdown,
+        totalPlanets: entry.totalPlanets,
+        totalUnits: entry.totalUnits,
+        totalPopulation: entry.totalPopulation,
+        totalResources: entry.totalResources,
+        fleetCombatPower: entry.fleetCombatPower,
+        technologyLevel: entry.technologyLevel,
         change: entry.rankChange,
         isCurrentUser: userRanking ? entry.empireId === userRanking.empireId : false
       })),
@@ -550,6 +556,49 @@ async function getLeaderboard(category = 'overall', limit = 50) {
       let score = 0;
       const breakdown = {};
 
+      // Get planets and fleets for additional metrics
+      let totalPlanets = 0;
+      let totalUnits = 0;
+      let totalPopulation = 0;
+      let totalResources = 0;
+      let fleetCombatPower = 0;
+      let technologyLevel = 0;
+      
+      try {
+        const planets = await empire.getPlanets();
+        totalPlanets = planets ? planets.length : 0;
+        
+        // Calculate total population from all planets
+        if (planets && planets.length > 0) {
+          totalPopulation = planets.reduce((sum, planet) => {
+            return sum + (planet.population || 0);
+          }, 0);
+        }
+        
+        const fleets = await empire.getFleets();
+        if (fleets && fleets.length > 0) {
+          totalUnits = fleets.reduce((sum, fleet) => {
+            return sum + fleet.getFleetSize();
+          }, 0);
+          
+          // Calculate total fleet combat power
+          fleetCombatPower = fleets.reduce((sum, fleet) => {
+            return sum + fleet.getTotalAttack() + fleet.getTotalDefense();
+          }, 0);
+        }
+      } catch (relatedDataError) {
+        console.warn(`Could not fetch planets/fleets for empire ${empire.id}:`, relatedDataError.message);
+      }
+      
+      // Calculate total resources
+      totalResources = (empire.resources?.minerals || 0) + 
+                      (empire.resources?.energy || 0) + 
+                      (empire.resources?.food || 0) + 
+                      (empire.resources?.research || 0);
+      
+      // Calculate technology level
+      technologyLevel = Object.keys(empire.technology || {}).length;
+
       switch (category) {
         case 'military':
           // Calculate military score (placeholder calculation)
@@ -604,6 +653,12 @@ async function getLeaderboard(category = 'overall', limit = 50) {
         playerAlias: playerAlias,
         score: Math.floor(score),
         breakdown,
+        totalPlanets,
+        totalUnits,
+        totalPopulation,
+        totalResources,
+        fleetCombatPower,
+        technologyLevel,
         rankChange: 0 // TODO: Implement rank change tracking
       };
     }));
