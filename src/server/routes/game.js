@@ -372,8 +372,10 @@ router.get('/leaderboard', [
         rank: index + 1,
         empire: {
           id: entry.empireId,
-          name: entry.empireName,
-          player: entry.playerName
+          name: entry.empireName
+        },
+        player: {
+          alias: entry.playerAlias
         },
         score: entry.score,
         breakdown: entry.breakdown,
@@ -543,8 +545,8 @@ async function getLeaderboard(category = 'overall', limit = 50) {
       limit: limit 
     });
 
-    // Calculate score for each empire based on category
-    const leaderboardEntries = empires.map(empire => {
+    // Get player data for all empires to fetch display names
+    const leaderboardEntries = await Promise.all(empires.map(async empire => {
       let score = 0;
       const breakdown = {};
 
@@ -581,15 +583,30 @@ async function getLeaderboard(category = 'overall', limit = 50) {
           break;
       }
 
+      // Fetch player data to get display name/alias
+      let playerAlias = 'Unknown Commander';
+      try {
+        const Player = require('../models/Player');
+        const player = await Player.findById(empire.playerId);
+        if (player && player.profile?.displayName) {
+          playerAlias = player.profile.displayName;
+        } else if (player && player.username) {
+          // Generate a space-themed alias if no displayName is set
+          playerAlias = generateSpaceAlias(player.username);
+        }
+      } catch (playerError) {
+        console.warn(`Could not fetch player data for empire ${empire.id}:`, playerError.message);
+      }
+
       return {
         empireId: empire.id,
         empireName: empire.name,
-        playerName: `Player ${empire.playerId}`, // TODO: Join with Player table for real name
+        playerAlias: playerAlias,
         score: Math.floor(score),
         breakdown,
         rankChange: 0 // TODO: Implement rank change tracking
       };
-    });
+    }));
 
     // Sort by score descending
     leaderboardEntries.sort((a, b) => b.score - a.score);
@@ -603,6 +620,23 @@ async function getLeaderboard(category = 'overall', limit = 50) {
     // Return empty leaderboard on error
     return [];
   }
+}
+
+/**
+ * Generate a space-themed alias from username
+ * @param {string} username - Original username
+ * @returns {string} Space-themed alias
+ */
+function generateSpaceAlias(username) {
+  const prefixes = ['Commander', 'Captain', 'Admiral', 'Colonel', 'Major', 'Pilot', 'Navigator', 'Chief'];
+  const suffixes = ['of the Void', 'Starborn', 'Nebula', 'Prime', 'Cosmic', 'Solar', 'Nova', 'Galactic'];
+  
+  // Use first few characters of username and add space theme
+  const baseTime = username.slice(0, 8);
+  const prefix = prefixes[username.length % prefixes.length];
+  const suffix = suffixes[username.charCodeAt(0) % suffixes.length];
+  
+  return `${prefix} ${baseTime} ${suffix}`;
 }
 
 async function getUserRanking(playerId, category) {

@@ -24,22 +24,22 @@ class Player extends BaseModel {
     this.id = data.id || null;
     this.username = data.username || '';
     this.email = data.email || '';
-    this.passwordHash = data.passwordHash || '';
-    this.empireId = data.empireId || null;
-    this.sessionToken = data.sessionToken || null;
-    this.sessionExpiry = data.sessionExpiry || null;
-    this.isActive = data.isActive || true;
-    this.isOnline = data.isOnline || false;
-    this.lastLogin = data.lastLogin || null;
-    this.profile = {
-      displayName: data.profile?.displayName || data.username,
-      avatar: data.profile?.avatar || null,
-      bio: data.profile?.bio || '',
-      joinDate: data.profile?.joinDate || new Date(),
-      gamesPlayed: data.profile?.gamesPlayed || 0,
-      gamesWon: data.profile?.gamesWon || 0,
-      totalScore: data.profile?.totalScore || 0,
-      achievements: data.profile?.achievements || []
+    this.passwordHash = data.password_hash || data.passwordHash || '';
+    this.empireId = data.empire_id || data.empireId || null;
+    this.sessionToken = data.session_token || data.sessionToken || null;
+    this.sessionExpiry = data.session_expiry || data.sessionExpiry || null;
+    this.isActive = data.is_active !== undefined ? data.is_active : data.isActive !== undefined ? data.isActive : true;
+    this.isOnline = data.is_online !== undefined ? data.is_online : data.isOnline !== undefined ? data.isOnline : false;
+    this.lastLogin = data.last_login || data.lastLogin || null;
+    this.profile = this._parseJSON(data.profile) || {
+      displayName: this._parseJSON(data.profile)?.displayName || data.username || 'Unknown Commander',
+      avatar: this._parseJSON(data.profile)?.avatar || null,
+      bio: this._parseJSON(data.profile)?.bio || '',
+      joinDate: this._parseJSON(data.profile)?.joinDate || new Date(),
+      gamesPlayed: this._parseJSON(data.profile)?.gamesPlayed || 0,
+      gamesWon: this._parseJSON(data.profile)?.gamesWon || 0,
+      totalScore: this._parseJSON(data.profile)?.totalScore || 0,
+      achievements: this._parseJSON(data.profile)?.achievements || []
     };
     this.settings = {
       notifications: data.settings?.notifications || true,
@@ -58,6 +58,23 @@ class Player extends BaseModel {
     };
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt || new Date();
+  }
+
+  /**
+   * Parse JSON data safely
+   * @param {string|Object} data - JSON string or object
+   * @returns {Object} Parsed object or original if already object
+   * @private
+   */
+  _parseJSON(data) {
+    if (!data) return null;
+    if (typeof data === 'object') return data;
+    try {
+      return JSON.parse(data);
+    } catch (error) {
+      console.warn('Failed to parse JSON data:', error.message);
+      return null;
+    }
   }
 
   /**
@@ -252,6 +269,20 @@ class Player extends BaseModel {
     delete json.email;
     delete json.permissions;
     return json;
+  }
+
+  /**
+   * Find a player by ID
+   * @param {string} id - Player ID to search for
+   * @returns {Promise<Player|null>} Player instance or null if not found
+   */
+  static async findById(id) {
+    const playerModel = new Player();
+    const result = await playerModel.db.query(
+      'SELECT * FROM players WHERE id = $1',
+      [id]
+    );
+    return result.rows[0] ? new Player(result.rows[0]) : null;
   }
 
   /**
