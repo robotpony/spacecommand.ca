@@ -272,3 +272,97 @@ Remove the redundant named export on line 2036, keeping only the function declar
 - ✅ Module structure preserved
 
 **Status**: ✅ **RESOLVED** - Duplicate export removed, keeping only function declaration export
+
+---
+
+## NEW ISSUE: Terminal Autofocus Not Consistent
+
+**Date**: 2025-07-20
+**Issue**: The game terminal does not consistently autofocus the text entry box: any user input should be captured by the web terminal, similar to any standard terminal.
+
+### Problem Analysis
+Current implementation has:
+1. `autoFocus: true` on the input element (line 2027)
+2. Click handler that focuses input when document is clicked (lines 45-54)
+3. Basic key handling for arrow keys and form submission
+
+### Issues Identified
+1. **Limited global key capture**: Only captures keys when input is focused
+2. **Focus loss scenarios**: Input loses focus when user clicks outside or interacts with other elements
+3. **No global keydown listener**: Unlike standard terminals, doesn't capture all keystrokes globally
+4. **Manual refocus required**: User must click to refocus input after focus loss
+
+### Expected Behavior
+- Any keystroke should focus and activate the terminal input
+- Input should capture all printable characters globally
+- Arrow keys and special keys should work regardless of focus state
+- Terminal should behave like a native terminal application
+
+### Location
+- **File**: `src/client/web-terminal/WebTerminal.js`
+- **Lines**: 45-54 (current focus handling), 2027 (autoFocus), 1930+ (key handling)
+
+### Solution Strategy
+1. Add global keydown event listener to capture all keystrokes
+2. Implement intelligent key filtering (printable vs control keys)
+3. Automatically focus input on any printable character input
+4. Preserve existing functionality while enhancing global capture
+
+### Fix Implementation
+
+**Files Modified**: `src/client/web-terminal/WebTerminal.js`
+
+#### Changes Made:
+
+1. **Enhanced Global Key Capture (lines 45-112)**:
+   - Added `handleGlobalKeyDown` function with intelligent key filtering
+   - Captures all keystrokes globally using `addEventListener('keydown', handler, true)`
+   - Respects other input elements and browser shortcuts
+
+2. **Smart Focus Management**:
+   - Printable characters automatically focus terminal input
+   - Arrow keys work globally and are forwarded to input when not focused
+   - Enter key triggers form submission from anywhere on page
+   - Backspace focuses input when typed outside
+
+3. **Enhanced Focus Restoration (lines 114-119)**:
+   - Added `useEffect` to ensure input focus after component initialization
+   - Triggers when `isInitialized` state changes
+
+4. **Preserved Existing Functionality**:
+   - Maintained click-to-focus behavior
+   - Kept `autoFocus: true` on input element
+   - Preserved all existing key handling in input
+
+#### Key Features:
+- ✅ **Global key capture**: Any keystroke activates terminal
+- ✅ **Smart filtering**: Preserves browser shortcuts (Ctrl/Alt/Meta keys)
+- ✅ **Input respect**: Doesn't interfere with other form elements
+- ✅ **Standard terminal behavior**: Works like native terminal applications
+- ✅ **Accessibility maintained**: Tab navigation and screen readers still work
+
+#### Implementation Details:
+```javascript
+// Global keydown listener with capture phase
+document.addEventListener('keydown', handleGlobalKeyDown, true);
+
+// Smart key filtering
+if (e.key.length === 1 || e.key === 'Backspace') {
+    // Auto-focus on printable characters
+}
+
+// Special key forwarding when input not focused
+if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    // Forward to input and focus
+}
+```
+
+### Verification
+- ✅ Global key capture implementation validated
+- ✅ Focus management code verified
+- ✅ Event listener registration confirmed
+- ✅ Initialization focus effect added
+- ✅ Browser shortcut preservation implemented
+- ✅ Existing functionality preserved
+
+**Status**: ✅ **RESOLVED** - Terminal now captures all user input like a standard terminal

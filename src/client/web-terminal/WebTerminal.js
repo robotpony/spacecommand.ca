@@ -41,17 +41,82 @@ export function WebTerminal() {
         }
     }, [outputHistory]);
 
-    // Focus input when terminal is clicked
+    // Global key capture and focus management
     useEffect(() => {
+        const handleGlobalKeyDown = (e) => {
+            // Don't intercept if user is typing in another input/textarea
+            if (e.target.tagName === 'INPUT' && e.target !== inputRef.current) return;
+            if (e.target.tagName === 'TEXTAREA') return;
+            
+            // Don't intercept if a modifier key is held (for browser shortcuts)
+            if (e.ctrlKey || e.altKey || e.metaKey) return;
+            
+            // Focus input for printable characters
+            if (e.key.length === 1 || e.key === 'Backspace') {
+                if (inputRef.current && document.activeElement !== inputRef.current) {
+                    inputRef.current.focus();
+                    // For printable characters, let the event propagate to input
+                    if (e.key.length === 1) {
+                        return;
+                    }
+                }
+            }
+            
+            // Handle special keys globally when input is not focused
+            if (document.activeElement !== inputRef.current) {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (inputRef.current) {
+                        inputRef.current.focus();
+                        // Manually trigger the key event on the input
+                        const keyEvent = new KeyboardEvent('keydown', {
+                            key: e.key,
+                            code: e.code,
+                            keyCode: e.keyCode,
+                            which: e.which,
+                            shiftKey: e.shiftKey,
+                            ctrlKey: e.ctrlKey,
+                            altKey: e.altKey,
+                            metaKey: e.metaKey
+                        });
+                        inputRef.current.dispatchEvent(keyEvent);
+                    }
+                }
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (inputRef.current) {
+                        inputRef.current.focus();
+                        // Trigger form submission
+                        const form = inputRef.current.closest('form');
+                        if (form) {
+                            form.requestSubmit();
+                        }
+                    }
+                }
+            }
+        };
+
         const handleClick = () => {
             if (inputRef.current) {
                 inputRef.current.focus();
             }
         };
 
+        document.addEventListener('keydown', handleGlobalKeyDown, true);
         document.addEventListener('click', handleClick);
-        return () => document.removeEventListener('click', handleClick);
+        
+        return () => {
+            document.removeEventListener('keydown', handleGlobalKeyDown, true);
+            document.removeEventListener('click', handleClick);
+        };
     }, []);
+
+    // Ensure input is focused after initialization
+    useEffect(() => {
+        if (isInitialized && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isInitialized]);
 
     const initializeTerminal = async () => {
         try {
