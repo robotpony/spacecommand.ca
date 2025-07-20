@@ -185,7 +185,8 @@ export class CommandParser {
             'fleets', 'fleet', 'create-fleet', 'move', 'merge', 'disband',
             'attack', 'retreat', 'scan',
             'diplomacy', 'explore', 'colonize',
-            'turn', 'events', 'leaderboard'
+            'turn', 'events', 'leaderboard',
+            'about', 'spectate', 'view-status', 'reset-password'
         ];
 
         if (!knownCommands.includes(command.name)) {

@@ -909,11 +909,12 @@ Your mission: Expand territory, command fleets, and forge your destiny among the
 
     // Guest viewing commands (no authentication required)
     const handleAbout = async () => {
-        const aboutText = `
-╔══════════════════════════════════════════════════════════════╗
-║                     SPACECOMMAND.CA                          ║
-║                  Galactic Strategy Game                      ║
-╚══════════════════════════════════════════════════════════════╝
+        try {
+            const aboutText = `
+================================================================
+                     SPACECOMMAND.CA                          
+                  Galactic Strategy Game                      
+================================================================
 
 ABOUT THIS GAME:
 SpaceCommand is a turn-based strategic space empire simulation where 
@@ -921,25 +922,41 @@ players command fleets, colonize planets, and engage in diplomacy
 across the galaxy.
 
 GAME FEATURES:
-• Real-time fleet combat with multiple ship classes
-• Economic resource management and planetary development  
-• Diplomatic relations between empires
-• Technology research and advancement
-• 24-hour turn cycles for strategic planning
+* Real-time fleet combat with multiple ship classes
+* Economic resource management and planetary development  
+* Diplomatic relations between empires
+* Technology research and advancement
+* 24-hour turn cycles for strategic planning
 
 CURRENT GAME STATUS:
-• Phase 4: Balance testing and optimization
-• Active player empires competing for galactic dominance
-• Regular tournaments and seasonal events
+* Phase 4: Balance testing and optimization
+* Active player empires competing for galactic dominance
+* Regular tournaments and seasonal events
 
 Want to join the fight for the galaxy? Type 'register <username> <email>'
-        `;
+            `;
 
-        addOutput({
-            type: 'banner',
-            content: aboutText.trim(),
-            timestamp: new Date()
-        });
+            addOutput({
+                type: 'banner',
+                content: aboutText.trim(),
+                timestamp: new Date()
+            });
+            
+            // Add a confirmation message
+            addOutput({
+                type: 'info',
+                content: '💡 About information displayed successfully. Try "2" for leaderboard or "register" to join!',
+                timestamp: new Date()
+            });
+            
+        } catch (error) {
+            console.error('ERROR in handleAbout:', error);
+            addOutput({
+                type: 'error',
+                content: 'Error displaying about information. Please try again.',
+                timestamp: new Date()
+            });
+        }
     };
 
     const handleSpectate = async (args) => {
@@ -2014,3 +2031,6 @@ Note: Full fleet command operations available after authentication.
         ])
     ]);
 }
+
+// Export the WebTerminal component
+export { WebTerminal };
