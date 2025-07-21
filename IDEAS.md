@@ -4,11 +4,15 @@ This is a collection of ideas for enhancements, tests, and play mechanics. Mark 
 
 # Web interface
 
+## Simple bugs/improvements
+
+- [ ]  fun + better handling of disconnected state
+
 ## Look and feel
 
-- [ ] Main logo should be larger and centred in the terminal
-- [ ] The terminal width should be limited to 100 characters, centred on the page
-- [ ] Placeholders should be added to the right of the terminal, for future dashboards and status (1/4 of the width or less)
+- [x] Main logo should be larger and centred in the terminal
+- [x] The terminal width should be limited to 100 characters, centred on the page
+- [x] Placeholders should be added to the right of the terminal, for future dashboards and status (1/4 of the width or less)
 
 ## Experience
 
@@ -31,4 +35,16 @@ This is a collection of ideas for enhancements, tests, and play mechanics. Mark 
 
 # APIs
 
+Nothing at this time.
+
 # Gameplay
+
+Nothing at this time (next up).
+
+
+
+# COMPLETED
+
+- [x] Main logo should be larger and centred in the terminal
+- [x] The terminal width should be limited to 100 characters, centred on the page
+- [x] Placeholders should be added to the right of the terminal, for future dashboards and status (1/4 of the width or less)

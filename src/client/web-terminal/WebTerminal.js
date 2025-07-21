@@ -170,14 +170,21 @@ export function WebTerminal() {
 
     const showWelcomeBanner = () => {
         const spaceStationArt = `
-     * . . * . . . * . . *
-   .   ╔═══════════════╗   .
- *     ║ SPACE COMMAND ║     *
-   .   ║   STATION     ║   .
-     * ╚═══════════════╝ *
-   [████████████████████]
-     * . . * . . . * . . *
-        `;
+╔════════════════════════════════════════════════════════════════════════════════════════════════╗
+║   ████   ████    ███    ███   ████      ███    ████   █     █ █     █   ███   █     █  █████   ║
+║  █    █  █   █  █   █  █   █  █        █   █  █    █  ██   ██ ██   ██  █   █  ██    █  █    █  ║
+║  █       █   █  █   █  █      █        █      █    █  █ █ █ █ █ █ █ █  █   █  █ █   █  █    █  ║
+║  █       ████   █████  █      ███      █      █    █  █  █  █ █  █  █  █████  █  █  █  █    █  ║
+║   ████   █      █   █  █      █        █      █    █  █     █ █     █  █   █  █   █ █  █    █  ║
+║       █  █      █   █  █   █  █        █   █  █    █  █     █ █     █  █   █  █    ██  █    █  ║
+║       █  █      █   █   ███   ████      ███    ████   █     █ █     █  █   █  █     █  █    █  ║
+║  █    █                                                                                █    █  ║
+║   ████               ⌥⌘ SPACECOMMAND.CA > Galactic Command Station                     █████   ║
+║                                                                                                ║
+║               . * . . * . [████████████████████████████████████████] . * . . * .               ║
+║                                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════╝
+`;
 
         const welcomeMessage = `
 Welcome, Commander. You are now connected to SPACE COMMAND STATION.
@@ -1498,27 +1505,40 @@ Turn Status:
             const tech = entry.technologyLevel || 0;
             const marker = entry.isCurrentUser ? ' ★' : '';
             
-            // Calculate content with exact 77-character width for border alignment
-            const borderWidth = 77;
+            // Calculate content with dynamic width for proper title display
+            const maxWidth = 90; // Increased from 77 for better content display
             
-            // Line 1: Rank + Commander + Empire + Marker
-            const line1Content = `${rank.toString().padStart(2)}. ${commander.substring(0, 25).padEnd(25)} (${empire.substring(0, 20).padEnd(20)})${marker.padStart(3)}`;
-            const line1 = ` ${line1Content}`.padEnd(borderWidth);
+            // Smart truncation with ellipsis for better readability
+            const truncateWithEllipsis = (text, maxLen) => {
+                if (text.length <= maxLen) return text.padEnd(maxLen);
+                return (text.substring(0, maxLen - 3) + '...').padEnd(maxLen);
+            };
             
-            // Line 2: Score + Planets + Units
-            const line2Content = `Score: ${score.padEnd(10)} Planets: ${planets.toString().padEnd(4)} Units: ${units.toString().padEnd(8)}`;
-            const line2 = ` ${line2Content}`.padEnd(borderWidth);
+            // Line 1: Rank + Commander + Empire + Marker (better space allocation)
+            const commanderField = truncateWithEllipsis(commander, 30); // Increased from 25
+            const empireField = truncateWithEllipsis(empire, 25); // Increased from 20
+            const line1Content = `${rank.toString().padStart(2)}. ${commanderField} (${empireField})${marker.padStart(3)}`;
+            const line1 = ` ${line1Content}`.padEnd(maxWidth);
             
-            // Line 3: Population + Resources + Combat + Tech
-            const line3Content = `Pop: ${population.padEnd(8)} Resources: ${resources.padEnd(8)} Combat: ${combat.toString().padEnd(6)} Tech: ${tech.toString().padEnd(3)}`;
-            const line3 = ` ${line3Content}`.padEnd(borderWidth);
+            // Line 2: Score + Planets + Units (better field sizing)
+            const line2Content = `Score: ${score.padEnd(12)} Planets: ${planets.toString().padEnd(4)} Units: ${units.toString().padEnd(10)}`;
+            const line2 = ` ${line2Content}`.padEnd(maxWidth);
             
-            content += `┌─────────────────────────────────────────────────────────────────────────────┐\n`;
+            // Line 3: Population + Resources + Combat + Tech (improved field sizing)
+            const line3Content = `Pop: ${population.padEnd(12)} Resources: ${resources.padEnd(12)} Combat: ${combat.toString().padEnd(6)} Tech: ${tech.toString().padEnd(3)}`;
+            const line3 = ` ${line3Content}`.padEnd(maxWidth);
+            
+            // Generate border with correct width matching content
+            const topBorder = `┌${'─'.repeat(maxWidth)}┐\n`;
+            const midBorder = `├${'─'.repeat(maxWidth)}┤\n`;
+            const bottomBorder = `└${'─'.repeat(maxWidth)}┘\n`;
+            
+            content += topBorder;
             content += `│${line1}│\n`;
-            content += `├─────────────────────────────────────────────────────────────────────────────┤\n`;
+            content += midBorder;
             content += `│${line2}│\n`;
             content += `│${line3}│\n`;
-            content += `└─────────────────────────────────────────────────────────────────────────────┘\n`;
+            content += bottomBorder;
             content += '\n';
         });
         content += `\nLast updated: ${new Date(lastUpdated).toLocaleTimeString()}`;
@@ -2092,45 +2112,124 @@ Note: Full fleet command operations available after authentication.
         return React.createElement('div', { className: 'terminal-loading' }, 'Initializing terminal...');
     }
 
-    return React.createElement('div', { className: 'web-terminal' }, [
-        // Terminal output
-        React.createElement('div', {
-            key: 'output',
-            className: 'terminal-output',
-            ref: outputRef
-        }, outputHistory.map((entry, index) => {
-            const formatted = formatOutput(entry);
-            return React.createElement('div', {
-                key: index,
-                className: `output-line output-${entry.type}`,
-                style: { color: formatted.color }
-            }, formatted.content);
-        })),
+    // Create dashboard panels
+    const createDashboardPanels = () => {
+        return React.createElement('div', { className: 'dashboard-panels' }, [
+            // System Status Panel
+            React.createElement('div', { 
+                key: 'system-status', 
+                className: 'dashboard-panel' 
+            }, [
+                React.createElement('div', {
+                    key: 'title-1',
+                    className: 'dashboard-panel-title'
+                }, 'System Status'),
+                React.createElement('div', {
+                    key: 'content-1',
+                    className: 'dashboard-panel-content'
+                }, React.createElement('div', {
+                    className: 'dashboard-placeholder'
+                }, 'Status widgets\ncoming soon...'))
+            ]),
 
-        // Terminal input
-        React.createElement('form', {
-            key: 'input-form',
-            className: 'terminal-input-form',
-            onSubmit: handleInputSubmit
-        }, [
-            React.createElement('span', {
-                key: 'prompt',
-                className: 'terminal-prompt',
-                style: { color: getStatusColor() }
-            }, getPrompt()),
-            React.createElement('input', {
-                key: 'input',
-                ref: inputRef,
-                type: 'text',
-                className: 'terminal-input',
-                value: currentInput,
-                onChange: (e) => setCurrentInput(e.target.value),
-                onKeyDown: handleKeyDown,
-                disabled: isProcessing,
-                autoFocus: true,
-                spellCheck: false,
-                autoComplete: 'off'
-            })
-        ])
+            // Empire Overview Panel
+            React.createElement('div', { 
+                key: 'empire-overview', 
+                className: 'dashboard-panel' 
+            }, [
+                React.createElement('div', {
+                    key: 'title-2',
+                    className: 'dashboard-panel-title'
+                }, 'Empire Overview'),
+                React.createElement('div', {
+                    key: 'content-2',
+                    className: 'dashboard-panel-content'
+                }, React.createElement('div', {
+                    className: 'dashboard-placeholder'
+                }, 'Empire stats\ncoming soon...'))
+            ]),
+
+            // Fleet Status Panel
+            React.createElement('div', { 
+                key: 'fleet-status', 
+                className: 'dashboard-panel' 
+            }, [
+                React.createElement('div', {
+                    key: 'title-3',
+                    className: 'dashboard-panel-title'
+                }, 'Fleet Status'),
+                React.createElement('div', {
+                    key: 'content-3',
+                    className: 'dashboard-panel-content'
+                }, React.createElement('div', {
+                    className: 'dashboard-placeholder'
+                }, 'Fleet information\ncoming soon...'))
+            ]),
+
+            // Resource Monitor Panel
+            React.createElement('div', { 
+                key: 'resource-monitor', 
+                className: 'dashboard-panel' 
+            }, [
+                React.createElement('div', {
+                    key: 'title-4',
+                    className: 'dashboard-panel-title'
+                }, 'Resource Monitor'),
+                React.createElement('div', {
+                    key: 'content-4',
+                    className: 'dashboard-panel-content'
+                }, React.createElement('div', {
+                    className: 'dashboard-placeholder'
+                }, 'Resource levels\ncoming soon...'))
+            ])
+        ]);
+    };
+
+    return React.createElement('div', { className: 'terminal-interface' }, [
+        // Main terminal
+        React.createElement('div', { key: 'terminal', className: 'web-terminal' }, [
+            // Terminal output
+            React.createElement('div', {
+                key: 'output',
+                className: 'terminal-output',
+                ref: outputRef
+            }, outputHistory.map((entry, index) => {
+                const formatted = formatOutput(entry);
+                return React.createElement('div', {
+                    key: index,
+                    className: `output-line output-${entry.type}`,
+                    style: { color: formatted.color }
+                }, formatted.content);
+            })),
+
+            // Terminal input
+            React.createElement('form', {
+                key: 'input-form',
+                className: 'terminal-input-form',
+                onSubmit: handleInputSubmit
+            }, [
+                React.createElement('span', {
+                    key: 'prompt',
+                    className: 'terminal-prompt',
+                    style: { color: getStatusColor() }
+                }, getPrompt()),
+                React.createElement('input', {
+                    key: 'input',
+                    ref: inputRef,
+                    type: 'text',
+                    className: 'terminal-input',
+                    value: currentInput,
+                    onChange: (e) => setCurrentInput(e.target.value),
+                    onKeyDown: handleKeyDown,
+                    disabled: isProcessing,
+                    autoFocus: true,
+                    spellCheck: false,
+                    autoComplete: 'off'
+                })
+            ])
+        ]),
+
+        // Dashboard panels
+        createDashboardPanels()
     ]);
 }
