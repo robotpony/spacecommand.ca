@@ -124,3 +124,62 @@ Betrayal mechanics: Should leaving an alliance have consequences? How do you bal
 Size limits: Cap alliance membership to prevent runaway dominance? Or let politics self-regulate?
 
 What's your instinct on alliance permanence - should they be easily formed/dissolved for tactical flexibility, or have enough friction to encourage genuine long-term cooperation?
+
+## UX Module Components
+
+The UX module provides a consistent terminal interface toolkit for both the terminal client and web-based retro UI.
+
+### Core Components
+
+**Decoration**
+- Title screens with ASCII art
+- Section dividers and borders
+- Logo displays and faction emblems
+- Visual separators between UI regions
+
+**Menu**
+- List of possible actions with keyboard shortcuts
+- Navigation options (numbered or lettered)
+- Contextual actions based on game state
+- Breadcrumb trail for nested menus
+
+**Status Bar**
+- Current turn and time remaining
+- Message indicators (new messages, alerts)
+- Connection status
+- Quick stats (credits, reputation)
+- Pending action queue count
+
+**Status Area**
+- Tabular data displays (market prices, fleet status)
+- ASCII charts (price trends, power levels)
+- Mini-maps for local sectors
+- Resource gauges and meters
+- Production/travel progress bars
+
+**Menu Response**
+- Text-based action results
+- Status updates from actions
+- Result tables (trade profits, combat outcomes)
+- Confirmation messages
+- Error/warning displays
+
+### Additional Considerations
+
+**Input Components**
+- Command line for text input
+- Form fields for complex actions
+- Hotkey handlers for quick navigation
+- Auto-complete for commands
+
+**Notifications**
+- Modal dialogs for critical decisions
+- Toast messages for transient updates
+- Alert panels for attacks/emergencies
+- Event log with filtering
+
+**Layout Management**
+- Split panes for multi-view displays
+- Scrollable regions for long content
+- Tab navigation between screens
+- Responsive layout for different terminal sizes
