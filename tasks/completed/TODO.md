@@ -50,7 +50,7 @@
 - [ ] WebSocket client for real-time updates
 
 ### Testing Framework
-- [ ] Unit tests for command parsing
+- [ ] Unit tests for command  parsing
 - [ ] Integration tests for API communication
 - [ ] End-to-end tests for complete game scenarios
 - [ ] Performance tests for concurrent player simulation

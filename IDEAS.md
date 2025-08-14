@@ -42,7 +42,7 @@ Nothing at this time.
 Nothing at this time (next up).
 
 
-
+         
 # COMPLETED
 
 - [x] Main logo should be larger and centred in the terminal
