@@ -110,7 +110,7 @@ class MainMenuV3 {
       height: layout.mainWindow.height,
       x: layout.mainWindow.x,
       y: layout.mainWindow.y,
-      border: 'none',
+      border: 'single',
       padding: layout.mainWindow.padding,
       content: adaptedContent
     });
