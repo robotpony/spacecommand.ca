@@ -183,3 +183,36 @@ The UX module provides a consistent terminal interface toolkit for both the term
 - Scrollable regions for long content
 - Tab navigation between screens
 - Responsive layout for different terminal sizes
+
+## Terminal Interface Architecture
+
+### BBS-Style Fixed-Screen Behavior
+
+SpaceCommand follows authentic BBS (Bulletin Board System) interface patterns:
+
+- **Fixed-screen display**: Content fills the terminal without scrolling
+- **Reserved cursor line**: Bottom line always reserved for user input/cursor
+- **In-place refresh**: Screen updates replace content rather than adding to it
+- **Responsive sizing**: Adapts to terminal dimensions while maintaining layout integrity
+
+### Terminal Sizing Constraints
+
+**Supported Dimensions**:
+- **Width**: Minimum 80 columns, responsive up to terminal width
+- **Height**: 24-48 lines with automatic content adaptation
+- **Effective Height**: Always `terminal_height - 1` (reserves bottom line)
+
+**Height Adaptation**: Content automatically adjusts from minimal layout (24 lines) to expanded layout (48 lines), with optional elements shown/hidden based on available space.
+
+### Color Usage
+
+**Retro Terminal Aesthetic**:
+- **Primary colors**: Bright green text on black background (classic phosphor terminal)
+- **Accent colors**: Cyan for highlights, yellow for warnings, red for alerts
+- **UI hierarchy**: Different color intensities distinguish UI elements (bright for interactive, dim for labels)
+- **Information coding**: Consistent color meaning across screens (green=good, red=danger, yellow=caution)
+
+**Accessibility Considerations**:
+- **Fallback support**: Graceful degradation for terminals without color support
+- **High contrast**: All text readable on monochrome displays
+- **Color independence**: Information conveyed through text and symbols, not color alone

@@ -126,3 +126,11 @@ npm run turn:process
 - The project follows JSDoc documentation standards
 - Focus on defensive security - no malicious code generation
 - Emphasis on classic BBS ASCII art and colorful, impactful screens
+
+## UI Development Guidelines
+
+- **MANDATORY**: ALL terminal-client screens MUST use the UX library components (`src/modules/ux/`)
+- Use `Window` component for consistent borders, layouts, and styling
+- Never manually render ASCII borders or hardcode box-drawing characters
+- Follow the component patterns established in the UX library for consistent behavior
+- The UX library provides proper layout management, color handling, and responsive design

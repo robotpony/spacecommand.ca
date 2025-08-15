@@ -455,6 +455,40 @@ V1 components are still supported for backward compatibility, but new developmen
 - Use the WindowManager for complex layouts instead of manual positioning
 - Cache rendered content when components don't change
 
+## Terminal Display Best Practices
+
+### Cursor Management
+
+For screens that don't require user input (like title screens), hide the cursor to provide a cleaner display:
+
+```javascript
+// Hide cursor for static screens
+process.stdout.write('\x1B[?25l');
+
+// Show cursor for interactive screens
+process.stdout.write('\x1B[?25h');
+```
+
+### Window Borders and Content Positioning
+
+When designing screens with borders, ensure all content stays within the window boundaries:
+
+```javascript
+// Example: Proper prompt positioning within a bordered window
+const promptLine = '│ Select option [1-6] or command key: _';
+const paddedPromptLine = promptLine.padEnd(79) + '│';
+lines.push(paddedPromptLine);
+lines.push(this.renderFooter());
+```
+
+### Screen Height Management
+
+For terminal screens with fixed dimensions (typically 80x24), ensure content fits properly:
+
+- Account for top and bottom borders when calculating available content lines
+- Use consistent spacing between sections
+- Test with different terminal sizes when possible
+
 ## Troubleshooting
 
 ### Common Issues
@@ -463,6 +497,8 @@ V1 components are still supported for backward compatibility, but new developmen
 2. **Layout issues**: Check component sizes and positions
 3. **Events not firing**: Verify event listener registration
 4. **Styling not applied**: Confirm StyleEngine configuration
+5. **Cursor visible on static screens**: Implement cursor hiding for non-interactive screens
+6. **Content outside window borders**: Ensure proper padding and positioning within window boundaries
 
 ### Debugging
 

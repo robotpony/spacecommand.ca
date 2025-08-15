@@ -3,18 +3,21 @@
 ## Design Requirements
 
 ### Layout Specifications
+
 - **Minimum terminal size**: 80 columns width
 - **Adaptive layout**: Screens adapt to terminal size with reasonable limits
 - **Positioning**: Elements can be left/right aligned, top/bottom, or centered
 - **Persistent status bar**: Always visible across all screens
 
 ### User Interface Elements
+
 - **Modal dialogs**: Used for cancellations (diplomatic envoys, agreements, selling resources)
 - **No context menus**: Actions accessed through main menus only
 - **Paginated displays**: For long lists (keeping page counts low)
 - **Screen refresh**: Updates on user actions (no real-time requirements initially)
 
 ### Complexity Management
+
 - **Progressive disclosure**: Complex screens unlock with technology/resource advancement
 - **No special beginner handling**: Natural progression through game mechanics
 - **Simple workflows**: Direct source/destination selection for trade routes (no wizards)
