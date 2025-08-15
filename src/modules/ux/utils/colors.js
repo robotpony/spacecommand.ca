@@ -78,6 +78,45 @@ const THEMES = {
 };
 
 let currentTheme = 'default';
+let colorsEnabled = null; // Auto-detect
+
+function isColorSupported() {
+  if (colorsEnabled !== null) {
+    return colorsEnabled;
+  }
+  
+  // Check environment variables
+  if (process.env.NO_COLOR) {
+    colorsEnabled = false;
+    return false;
+  }
+  
+  if (process.env.FORCE_COLOR) {
+    colorsEnabled = true;
+    return true;
+  }
+  
+  // Check if we're in a TTY
+  if (process.stdout && process.stdout.isTTY) {
+    colorsEnabled = true;
+    return true;
+  }
+  
+  // Check TERM variable
+  const term = process.env.TERM;
+  if (term && (term.includes('color') || term.includes('xterm') || term === 'screen')) {
+    colorsEnabled = true;
+    return true;
+  }
+  
+  // Default to no colors for safety
+  colorsEnabled = false;
+  return false;
+}
+
+function setColorSupport(enabled) {
+  colorsEnabled = enabled;
+}
 
 function setTheme(themeName) {
   if (THEMES[themeName]) {
@@ -90,20 +129,34 @@ function getTheme() {
 }
 
 function color(text, colorName) {
+  if (!isColorSupported()) {
+    return text;
+  }
+  
   const theme = getTheme();
   const colorCode = theme[colorName] || ANSI_CODES[colorName] || '';
   return colorCode + text + ANSI_CODES.reset;
 }
 
 function rgb(r, g, b) {
+  if (!isColorSupported()) {
+    return '';
+  }
   return `\x1b[38;2;${r};${g};${b}m`;
 }
 
 function bgRgb(r, g, b) {
+  if (!isColorSupported()) {
+    return '';
+  }
   return `\x1b[48;2;${r};${g};${b}m`;
 }
 
 function gradient(text, startColor, endColor) {
+  if (!isColorSupported()) {
+    return text;
+  }
+  
   const length = text.length;
   let result = '';
   
@@ -136,5 +189,7 @@ module.exports = {
   bgRgb,
   gradient,
   strip,
-  length
+  length,
+  isColorSupported,
+  setColorSupport
 };

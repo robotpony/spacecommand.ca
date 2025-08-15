@@ -1,6 +1,7 @@
 // Core components
 const UIComponent = require('./components/UIComponent');
 const { Window, Dialog } = require('./components/Window');
+const StatusBar = require('./components/StatusBar');
 
 // V1 Components (original)
 const { Decoration, TitleScreen } = require('./components/Decoration');
@@ -98,6 +99,13 @@ class UX {
     return new Dialog(options);
   }
 
+  statusBar(options = {}) {
+    return new StatusBar({
+      styleEngine: this.styleEngine,
+      ...options
+    });
+  }
+
   // Style management
   setTheme(themeName) {
     this.styleEngine.setTheme(themeName);
@@ -155,6 +163,15 @@ class UX {
     this.windowManager.clear();
   }
 
+  // Viewport management
+  updateViewport() {
+    return this.windowManager.updateViewport();
+  }
+
+  getViewport() {
+    return this.windowManager.viewport;
+  }
+
   // Utility access
   get colors() {
     return colors;
@@ -184,6 +201,7 @@ module.exports = {
   UIComponent,
   Window,
   Dialog,
+  StatusBar,
   
   // V1 Components (for backward compatibility)
   Decoration,

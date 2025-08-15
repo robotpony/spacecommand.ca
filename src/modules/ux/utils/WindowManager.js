@@ -8,9 +8,10 @@ const AnsiParser = require('./AnsiParser');
 class WindowManager {
   constructor(options = {}) {
     this.viewport = {
-      width: options.width || 80,
-      height: options.height || 24
+      width: options.width || this.getTerminalWidth(),
+      height: options.height || this.getTerminalHeight()
     };
+    this.manualViewport = !!(options.width || options.height); // Set if viewport specified in options
     this.windows = new Map();
     this.focusStack = [];
     this.styleEngine = new StyleEngine();
@@ -237,8 +238,10 @@ class WindowManager {
 
   render() {
     // Initialize buffer with parsed empty lines
+    // Reserve the last line for cursor/command prompt in BBS-style interfaces
+    const renderHeight = this.viewport.height - 1;
     const parsedBuffer = [];
-    for (let y = 0; y < this.viewport.height; y++) {
+    for (let y = 0; y < renderHeight; y++) {
       parsedBuffer[y] = [];
       for (let x = 0; x < this.viewport.width; x++) {
         parsedBuffer[y].push({ char: ' ', style: '' });
@@ -261,7 +264,7 @@ class WindowManager {
         windowLines.forEach((line, lineIndex) => {
           const targetY = startY + lineIndex;
           
-          if (targetY >= 0 && targetY < this.viewport.height) {
+          if (targetY >= 0 && targetY < renderHeight) {
             // Parse the window line
             const parsedLine = AnsiParser.parse(line);
             
@@ -281,7 +284,7 @@ class WindowManager {
     
     // Convert parsed buffer back to strings with ANSI codes
     const buffer = [];
-    for (let y = 0; y < this.viewport.height; y++) {
+    for (let y = 0; y < renderHeight; y++) {
       buffer.push(AnsiParser.unparse(parsedBuffer[y]));
     }
     
@@ -314,10 +317,41 @@ class WindowManager {
 
   setViewport(width, height) {
     this.viewport = { width, height };
+    this.manualViewport = true; // Flag to indicate viewport was manually set
+  }
+
+  resetViewport() {
+    this.manualViewport = false;
+    return this.updateViewport();
   }
 
   setTheme(themeName) {
     this.styleEngine.setTheme(themeName);
+  }
+
+  getTerminalWidth() {
+    if (process.stdout && process.stdout.columns) {
+      return Math.max(80, process.stdout.columns); // Minimum 80 columns
+    }
+    return 80; // Fallback
+  }
+
+  getTerminalHeight() {
+    if (process.stdout && process.stdout.rows) {
+      return Math.max(24, process.stdout.rows); // Minimum 24 rows
+    }
+    return 24; // Fallback
+  }
+
+  updateViewport() {
+    // Only update viewport if it wasn't manually set
+    if (!this.manualViewport) {
+      this.viewport = {
+        width: this.getTerminalWidth(),
+        height: this.getTerminalHeight()
+      };
+    }
+    return this.viewport;
   }
 }
 
