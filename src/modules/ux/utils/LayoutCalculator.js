@@ -104,6 +104,152 @@ class LayoutCalculator {
       needsScrolling: baseHeight > maxAvailable
     };
   }
+
+  // Calculate layout for trade center screen with multi-column content
+  calculateTradeCenterLayout() {
+    const { width, height } = this.viewport;
+    
+    const statusBarHeight = 3;
+    const commandPromptHeight = 2;
+    const availableHeight = height - statusBarHeight - commandPromptHeight;
+    const contentHeight = availableHeight - 4; // Account for window borders and padding
+    
+    // Calculate responsive column widths
+    const minTotalWidth = 80;
+    const preferredWidth = Math.min(width - 4, 120);
+    const actualWidth = Math.max(minTotalWidth, preferredWidth);
+    
+    return {
+      statusBar: { x: 0, y: 0, width, height: statusBarHeight },
+      mainWindow: { 
+        x: Math.floor((width - actualWidth) / 2), 
+        y: statusBarHeight, 
+        width: actualWidth, 
+        height: availableHeight,
+        contentHeight,
+        padding: 2
+      },
+      commandPrompt: { x: 0, y: height - commandPromptHeight, width, height: commandPromptHeight },
+      availableContentLines: contentHeight,
+      compactMode: width < 100 || height < 30
+    };
+  }
+
+  // Calculate layout for market overview screen
+  calculateMarketOverviewLayout() {
+    const { width, height } = this.viewport;
+    
+    const statusBarHeight = 3;
+    const commandPromptHeight = 2;
+    const availableHeight = height - statusBarHeight - commandPromptHeight;
+    
+    // Table needs space for headers + commodity rows + analysis section
+    const minRequiredHeight = 15; // Minimum for basic functionality
+    const preferredHeight = 25;
+    const actualHeight = Math.min(availableHeight, Math.max(minRequiredHeight, preferredHeight));
+    
+    return {
+      statusBar: { x: 0, y: 0, width, height: statusBarHeight },
+      mainWindow: { 
+        x: 2, 
+        y: statusBarHeight, 
+        width: width - 4, 
+        height: actualHeight,
+        contentHeight: actualHeight - 4,
+        padding: 2
+      },
+      commandPrompt: { x: 0, y: height - commandPromptHeight, width, height: commandPromptHeight },
+      availableContentLines: actualHeight - 4,
+      compactMode: width < 90 || height < 25,
+      showAnalysis: height >= 30
+    };
+  }
+
+  // Calculate layout for fleet overview screen
+  calculateFleetOverviewLayout() {
+    const { width, height } = this.viewport;
+    
+    const statusBarHeight = 3;
+    const commandPromptHeight = 2;
+    const availableHeight = height - statusBarHeight - commandPromptHeight;
+    
+    return {
+      statusBar: { x: 0, y: 0, width, height: statusBarHeight },
+      mainWindow: { 
+        x: 2, 
+        y: statusBarHeight, 
+        width: width - 4, 
+        height: availableHeight,
+        contentHeight: availableHeight - 4,
+        padding: 2
+      },
+      commandPrompt: { x: 0, y: height - commandPromptHeight, width, height: commandPromptHeight },
+      availableContentLines: availableHeight - 4,
+      compactMode: height < 25,
+      showSummary: height >= 30
+    };
+  }
+
+  // Calculate layout for galaxy map screen
+  calculateGalaxyMapLayout() {
+    const { width, height } = this.viewport;
+    
+    const statusBarHeight = 3;
+    const commandPromptHeight = 2;
+    const availableHeight = height - statusBarHeight - commandPromptHeight;
+    
+    // Galaxy map needs significant space
+    const mapWidth = Math.max(60, Math.min(width - 20, 100));
+    const legendWidth = Math.min(25, width - mapWidth - 6);
+    
+    return {
+      statusBar: { x: 0, y: 0, width, height: statusBarHeight },
+      mapWindow: { 
+        x: 2, 
+        y: statusBarHeight, 
+        width: mapWidth, 
+        height: availableHeight - 4,
+        contentHeight: availableHeight - 8,
+        padding: 2
+      },
+      legendWindow: {
+        x: mapWidth + 4,
+        y: statusBarHeight,
+        width: legendWidth,
+        height: Math.min(15, availableHeight - 4),
+        contentHeight: Math.min(11, availableHeight - 8),
+        padding: 2
+      },
+      commandPrompt: { x: 0, y: height - commandPromptHeight, width, height: commandPromptHeight },
+      availableContentLines: availableHeight - 8,
+      compactMode: width < 90,
+      showLegend: width >= 90
+    };
+  }
+
+  // Calculate layout for action queue screen
+  calculateActionQueueLayout() {
+    const { width, height } = this.viewport;
+    
+    const statusBarHeight = 3;
+    const commandPromptHeight = 2;
+    const availableHeight = height - statusBarHeight - commandPromptHeight;
+    
+    return {
+      statusBar: { x: 0, y: 0, width, height: statusBarHeight },
+      mainWindow: { 
+        x: 2, 
+        y: statusBarHeight, 
+        width: width - 4, 
+        height: availableHeight,
+        contentHeight: availableHeight - 4,
+        padding: 2
+      },
+      commandPrompt: { x: 0, y: height - commandPromptHeight, width, height: commandPromptHeight },
+      availableContentLines: availableHeight - 4,
+      compactMode: height < 25
+    };
+  }
 }
 
 module.exports = LayoutCalculator;
