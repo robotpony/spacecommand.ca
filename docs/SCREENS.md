@@ -25,6 +25,7 @@
 ## Screen Inventory
 
 ### Core Navigation
+
 1. **Title Screen**
    - Game logo and ASCII art
    - Version information
@@ -46,6 +47,7 @@
    - Quick access to urgent actions
 
 ### Economic System
+
 5. **Market Overview**
    - Current system's goods and prices
    - Supply/demand indicators
@@ -79,6 +81,7 @@
     - Bankruptcy warning indicators
 
 ### Fleet & Ship Management
+
 11. **Fleet Overview**
     - All ships with location and status
     - Maintenance requirements
@@ -106,6 +109,7 @@
     - Fuel/resource requirements
 
 ### Galaxy Navigation
+
 16. **Galaxy Map**
     - ASCII representation of systems
     - Connection paths
@@ -129,6 +133,7 @@
     - Exploration costs
 
 ### Diplomacy & Communication
+
 20. **Alliance Management**
     - Current alliances status
     - Agreement terms
@@ -155,6 +160,7 @@
     - Counter-propaganda actions
 
 ### Military & Combat
+
 25. **Military Overview**
     - Fleet strength summary
     - Defensive positions
@@ -176,6 +182,7 @@
     - Intelligence gathering options
 
 ### Information & News
+
 29. **Daily Newspaper**
     - Market reports
     - Major events
@@ -214,6 +221,7 @@
     - Research bonuses
 
 ### Game Administration
+
 36. **Action Queue**
     - Pending actions for next turn
     - Action point costs
@@ -235,6 +243,7 @@
     - Tutorial access
 
 ### Endgame & Victory
+
 40. **Victory Progress**
     - Domination metrics
     - Victory condition tracking
@@ -253,6 +262,7 @@
 ## Implementation Priority
 
 ### Phase 1 (Core Gameplay)
+
 - Title Screen
 - Main Menu
 - Universe Selection
@@ -265,6 +275,7 @@
 - Daily Newspaper
 
 ### Phase 2 (Extended Features)
+
 - Player Dashboard
 - Production Facilities
 - Ship Details
@@ -274,6 +285,7 @@
 - Event Log
 
 ### Phase 3 (Advanced Systems)
+
 - Military screens
 - Research screens
 - Propaganda Center
@@ -282,6 +294,7 @@
 - Endgame Options
 
 ### Phase 4 (Polish & Enhancement)
+
 - Financial analysis screens
 - Trade optimization tools
 - Advanced diplomatic options
