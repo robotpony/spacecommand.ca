@@ -1,22 +1,24 @@
-const colors = require('../../modules/ux/utils/colors');
-const { ANSI_CODES } = colors;
+const { createUX } = require('../../modules/ux');
+const LayoutCalculator = require('../../modules/ux/utils/LayoutCalculator');
 
-class TitleScreen {
+class TitleScreenV2 {
   constructor(ux) {
-    this.ux = ux;
-    this.width = 80;
-    this.height = 24;
+    this.ux = ux || createUX({ theme: 'retro' });
   }
 
   render() {
-    const lines = [];
-    const border = '='.repeat(this.width);
+    // Update viewport to current terminal size
+    const viewport = this.ux.updateViewport();
     
-    lines.push(border);
-    lines.push('');
+    // Calculate responsive layout
+    const layoutCalc = new LayoutCalculator(viewport);
+    const layout = layoutCalc.calculateTitleScreenLayout();
     
-    // ASCII Logo
-    const logo = [
+    // Clear existing windows
+    this.ux.clear();
+    
+    // Create the ASCII logo content
+    const logoLines = [
       '        ███████╗██████╗  █████╗  ██████╗███████╗',
       '        ██╔════╝██╔══██╗██╔══██╗██╔════╝██╔════╝',
       '        ███████╗██████╔╝███████║██║     █████╗',
@@ -32,36 +34,72 @@ class TitleScreen {
       '     ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝'
     ];
     
-    // Add logo with green color
-    logo.forEach(line => {
-      lines.push(colors.color(line, 'primary'));
+    let logoContent = [];
+    
+    // Add spacing based on available height
+    const logoHeight = logoLines.length;
+    const additionalContent = 8; // subtitle, version, prompt, spacing
+    const totalRequired = logoHeight + additionalContent;
+    
+    if (layout.availableContentLines >= totalRequired + 4) {
+      // Plenty of space - add extra spacing
+      logoContent.push('');
+      logoContent.push('');
+    } else if (layout.availableContentLines >= totalRequired + 2) {
+      // Some space - minimal spacing
+      logoContent.push('');
+    }
+    
+    // Add logo (colored)
+    logoLines.forEach(line => {
+      logoContent.push(this.ux.colors.color(line, 'primary'));
     });
     
-    lines.push('');
+    // Add spacing and content based on available space
+    if (layout.availableContentLines >= totalRequired) {
+      logoContent.push('');
+      logoContent.push('');
+      logoContent.push(this.ux.colors.color('                    A Golden Age Space Trading Adventure', 'secondary'));
+      logoContent.push('');
+      logoContent.push('');
+      logoContent.push(this.ux.colors.color('                              Version 0.1.0-alpha', 'muted'));
+      logoContent.push('');
+      logoContent.push('');
+    } else {
+      // Compact mode for small terminals
+      logoContent.push('');
+      logoContent.push(this.ux.colors.color('           A Golden Age Space Trading Adventure', 'secondary'));
+      logoContent.push('');
+    }
     
-    // Subtitle
-    const subtitle = 'A Golden Age Space Trading Adventure';
-    const padding = ' '.repeat((this.width - subtitle.length) / 2);
-    lines.push(ANSI_CODES.fgGreen + padding + subtitle + ANSI_CODES.reset);
+    logoContent.push(this.ux.colors.color('                         [ Press ENTER to Continue ]', 'highlight'));
     
-    lines.push('');
-    
-    // Version
-    const version = 'Version 0.1.0-alpha';
-    const versionPadding = ' '.repeat((this.width - version.length) / 2);
-    lines.push(ANSI_CODES.fgGray + versionPadding + version + ANSI_CODES.reset);
-    
-    lines.push('');
-    
-    // Prompt - use bold instead of blink for interactive element
-    const prompt = '[ Press ENTER to Continue ]';
-    const promptPadding = ' '.repeat((this.width - prompt.length) / 2);
-    lines.push(ANSI_CODES.bright + colors.color(promptPadding + prompt, 'primary') + ANSI_CODES.reset);
-    
-    lines.push('');
-    lines.push(border);
-    
-    return lines.join('\n');
+    // Ensure content fits
+    const adaptedContent = layoutCalc.adaptMenuContent(logoContent, layout.availableContentLines);
+
+    // Create main title window
+    const titleWindow = this.ux.window({
+      width: layout.titleWindow.width,
+      height: layout.titleWindow.height,
+      x: layout.titleWindow.x,
+      y: layout.titleWindow.y,
+      border: 'single',
+      padding: 1,
+      content: adaptedContent,
+      borderColor: 'border',
+      titleColor: 'title'
+    });
+
+    // Add window to manager
+    this.ux.windowManager.windows.set('title', {
+      window: titleWindow,
+      zIndex: 0,
+      visible: true,
+      modal: false
+    });
+
+    // Render the complete screen
+    return this.ux.render();
   }
 
   handleInput(key) {
@@ -72,4 +110,4 @@ class TitleScreen {
   }
 }
 
-module.exports = TitleScreen;
+module.exports = TitleScreenV2;

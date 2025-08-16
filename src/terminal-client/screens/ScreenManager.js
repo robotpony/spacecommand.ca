@@ -1,4 +1,4 @@
-const TitleScreenV2 = require('./TitleScreenV2');
+const TitleScreen = require('./TitleScreen');
 const MainMenu = require('./MainMenu');
 const UniverseSelection = require('./UniverseSelection');
 const MarketOverview = require('./MarketOverview');
@@ -34,7 +34,7 @@ class ScreenManager {
     
     // Initialize screens
     this.screens = {
-      'title': new TitleScreenV2(ux),
+      'title': new TitleScreen(ux),
       'main-menu': new MainMenu(ux, this.gameState),
       'universe-selection': new UniverseSelection(ux),
       'market-overview': new MarketOverview(ux, this.gameState),
