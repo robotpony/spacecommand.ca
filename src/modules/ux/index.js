@@ -6,13 +6,9 @@ const Table = require('./components/Table');
 const StandardGameScreen = require('./components/StandardGameScreen');
 const Prompt = require('./components/Prompt');
 
-// V1 Components (original)
+// Core UI Components
 const { Decoration, TitleScreen } = require('./components/Decoration');
 const { Menu, ContextMenu } = require('./components/Menu');
-
-// V2 Components (refactored with style engine)
-const { DecorationV2, TitleScreenV2 } = require('./components/DecorationV2');
-const { MenuV2, ContextMenuV2 } = require('./components/MenuV2');
 
 // Rendering system
 const Renderer = require('./rendering/Renderer');
@@ -68,7 +64,7 @@ class UX {
 
   // Component creation helpers
   menu(items, options = {}) {
-    return new MenuV2({
+    return new Menu({
       items,
       styleEngine: this.styleEngine,
       ...options
@@ -76,7 +72,7 @@ class UX {
   }
 
   contextMenu(items, options = {}) {
-    return new ContextMenuV2({
+    return new ContextMenu({
       items,
       styleEngine: this.styleEngine,
       ...options
@@ -84,7 +80,7 @@ class UX {
   }
 
   decoration(content, options = {}) {
-    return new DecorationV2({
+    return new Decoration({
       content,
       styleEngine: this.styleEngine,
       ...options
@@ -92,7 +88,7 @@ class UX {
   }
 
   titleScreen(options = {}) {
-    return new TitleScreenV2({
+    return new TitleScreen({
       styleEngine: this.styleEngine,
       ...options
     });
@@ -241,17 +237,11 @@ module.exports = {
   Table,
   StandardGameScreen,
   
-  // V1 Components (for backward compatibility)
+  // UI Components
   Decoration,
   TitleScreen,
   Menu,
   ContextMenu,
-  
-  // V2 Components (recommended)
-  DecorationV2,
-  TitleScreenV2,
-  MenuV2,
-  ContextMenuV2,
   
   // Rendering system
   Renderer,

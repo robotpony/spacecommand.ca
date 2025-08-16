@@ -1,103 +1,45 @@
 const UIComponent = require('./UIComponent');
-const colors = require('../utils/colors');
+const { Window } = require('./Window');
+const { StyleEngine } = require('../rendering/StyleEngine');
 const ascii = require('../utils/ascii');
-const formatting = require('../utils/formatting');
 const { getDefaultLogo } = require('../utils/branding');
 
 class Decoration extends UIComponent {
   constructor(options = {}) {
     super(options);
-    this.type = options.type || 'box';
-    this.style = options.style || 'single';
+    this.type = options.type || 'text';
     this.content = options.content || [];
-    this.title = options.title || '';
-    this.colorTheme = options.colorTheme || 'border';
-    this.padding = options.padding || 1;
+    this.styleSelector = options.styleSelector || 'text.title';
+    this.styleEngine = options.styleEngine || new StyleEngine();
+    this.align = options.align || 'center';
   }
 
   render() {
-    this.buffer = [];
-    
     switch (this.type) {
-      case 'box':
-        return this.renderBox();
-      case 'banner':
-        return this.renderBanner();
-      case 'divider':
-        return this.renderDivider();
-      case 'title':
-        return this.renderTitle();
+      case 'text':
+        return this.renderText();
       case 'logo':
         return this.renderLogo();
-      case 'border':
-        return this.renderBorder();
+      case 'divider':
+        return this.renderDivider();
+      case 'banner':
+        return this.renderBanner();
       default:
-        return this.renderBox();
+        return this.renderText();
     }
   }
 
-  renderBox() {
-    const boxLines = ascii.box(this.width, this.height, this.style, this.content);
-    const theme = colors.getTheme();
-    const color = theme[this.colorTheme] || theme.border;
+  renderText() {
+    const lines = [];
+    const contentArray = Array.isArray(this.content) ? this.content : [this.content];
     
-    this.buffer = boxLines.map(line => colors.color(line, this.colorTheme));
+    contentArray.forEach(line => {
+      const styledLine = this.styleEngine.createStyledText(line, this.styleSelector);
+      const alignedLine = this.alignText(styledLine);
+      lines.push(alignedLine);
+    });
     
-    if (this.title) {
-      const titleLine = this.buffer[0];
-      const titleText = ` ${this.title} `;
-      const insertPos = Math.max(2, Math.floor((this.width - titleText.length) / 2));
-      
-      this.buffer[0] = titleLine.substring(0, insertPos) + 
-                      colors.color(titleText, 'title') + 
-                      titleLine.substring(insertPos + titleText.length);
-    }
-    
-    return this.buffer;
-  }
-
-  renderBanner() {
-    const text = this.content.length > 0 ? this.content[0] : this.title;
-    const bannerLines = ascii.banner(text, this.style);
-    this.buffer = bannerLines.map(line => colors.color(line, this.colorTheme));
-    return this.buffer;
-  }
-
-  renderDivider() {
-    const chars = ascii.BOX_DRAWING[this.style] || ascii.BOX_DRAWING.single;
-    let line = '';
-    
-    if (this.title) {
-      const titleText = ` ${this.title} `;
-      const sideLength = Math.floor((this.width - titleText.length) / 2);
-      line = chars.horizontal.repeat(sideLength) + 
-             titleText + 
-             chars.horizontal.repeat(this.width - sideLength - titleText.length);
-    } else {
-      line = chars.horizontal.repeat(this.width);
-    }
-    
-    this.buffer = [colors.color(line, this.colorTheme)];
-    return this.buffer;
-  }
-
-  renderTitle() {
-    const text = this.content.length > 0 ? this.content[0] : this.title;
-    const centeredText = formatting.pad(text, this.width, 'center');
-    
-    this.buffer = [colors.color(centeredText, 'title')];
-    
-    if (this.height > 1) {
-      const underline = ascii.BOX_DRAWING[this.style].horizontal.repeat(text.length);
-      const centeredUnderline = formatting.pad(underline, this.width, 'center');
-      this.buffer.push(colors.color(centeredUnderline, this.colorTheme));
-    }
-    
-    while (this.buffer.length < this.height) {
-      this.buffer.push(' '.repeat(this.width));
-    }
-    
-    return this.buffer;
+    return lines;
   }
 
   renderLogo() {
@@ -105,54 +47,58 @@ class Decoration extends UIComponent {
       this.content = this.getDefaultLogo();
     }
     
-    const paddedContent = [];
+    const lines = [];
+    const logoLines = Array.isArray(this.content) ? this.content : [this.content];
     
-    for (let i = 0; i < this.height; i++) {
-      if (i < this.content.length) {
-        const line = this.content[i];
-        const centeredLine = formatting.pad(line, this.width, 'center');
-        paddedContent.push(colors.color(centeredLine, this.colorTheme));
-      } else {
-        paddedContent.push(' '.repeat(this.width));
-      }
-    }
+    logoLines.forEach(line => {
+      const styledLine = this.styleEngine.createStyledText(line, this.styleSelector);
+      const alignedLine = this.alignText(styledLine);
+      lines.push(alignedLine);
+    });
     
-    this.buffer = paddedContent;
-    return this.buffer;
+    return lines;
   }
 
-  renderBorder() {
-    const chars = ascii.BOX_DRAWING[this.style] || ascii.BOX_DRAWING.single;
-    const theme = colors.getTheme();
-    const color = theme[this.colorTheme] || theme.border;
+  renderDivider() {
+    const char = this.content[0] || '─';
+    let line = char.repeat(this.width);
     
-    this.buffer = [];
-    
-    for (let y = 0; y < this.height; y++) {
-      let line = '';
-      
-      for (let x = 0; x < this.width; x++) {
-        if (y === 0 || y === this.height - 1) {
-          if (x === 0) {
-            line += y === 0 ? chars.topLeft : chars.bottomLeft;
-          } else if (x === this.width - 1) {
-            line += y === 0 ? chars.topRight : chars.bottomRight;
-          } else {
-            line += chars.horizontal;
-          }
-        } else {
-          if (x === 0 || x === this.width - 1) {
-            line += chars.vertical;
-          } else {
-            line += ' ';
-          }
-        }
-      }
-      
-      this.buffer.push(colors.color(line, this.colorTheme));
+    if (this.content.length > 1) {
+      const titleText = ` ${this.content[1]} `;
+      const sideLength = Math.floor((this.width - titleText.length) / 2);
+      line = char.repeat(sideLength) + titleText + char.repeat(this.width - sideLength - titleText.length);
     }
     
-    return this.buffer;
+    const styledLine = this.styleEngine.createStyledText(line, this.styleSelector);
+    return [styledLine];
+  }
+
+  renderBanner() {
+    const text = Array.isArray(this.content) ? this.content[0] : this.content;
+    const bannerLines = ascii.banner(text, 'single');
+    
+    return bannerLines.map(line => {
+      const styledLine = this.styleEngine.createStyledText(line, this.styleSelector);
+      return this.alignText(styledLine);
+    });
+  }
+
+  alignText(text) {
+    const colors = require('../utils/colors');
+    const textLength = colors.length(text);
+    
+    switch (this.align) {
+      case 'left':
+        return text + ' '.repeat(Math.max(0, this.width - textLength));
+      case 'right':
+        return ' '.repeat(Math.max(0, this.width - textLength)) + text;
+      case 'center':
+      default:
+        const padding = Math.max(0, this.width - textLength);
+        const leftPad = Math.floor(padding / 2);
+        const rightPad = padding - leftPad;
+        return ' '.repeat(leftPad) + text + ' '.repeat(rightPad);
+    }
   }
 
   getDefaultLogo() {
@@ -164,66 +110,76 @@ class Decoration extends UIComponent {
     this.emit('content-changed', this.content);
   }
 
-  setTitle(title) {
-    this.title = title;
-    this.emit('title-changed', title);
+  setStyle(styleSelector) {
+    this.styleSelector = styleSelector;
+    this.emit('style-changed', styleSelector);
   }
 
-  setStyle(style) {
-    this.style = style;
-    this.emit('style-changed', style);
-  }
-
-  setColorTheme(theme) {
-    this.colorTheme = theme;
-    this.emit('color-theme-changed', theme);
+  setAlign(align) {
+    this.align = align;
+    this.emit('align-changed', align);
   }
 }
 
-class TitleScreen extends Decoration {
+class TitleScreen extends UIComponent {
   constructor(options = {}) {
-    super({
-      type: 'logo',
-      colorTheme: 'primary',
-      width: 80,
-      height: 25,
-      ...options
-    });
-    
+    super(options);
+    this.title = options.title || 'SPACE COMMAND';
     this.subtitle = options.subtitle || '';
     this.version = options.version || '';
     this.footer = options.footer || '';
+    this.styleEngine = options.styleEngine || new StyleEngine();
+    
+    this.logoComponent = new Decoration({
+      type: 'logo',
+      content: options.logo || this.getDefaultLogo(),
+      styleSelector: 'text.title',
+      styleEngine: this.styleEngine,
+      width: this.width,
+      height: this.height
+    });
   }
 
   render() {
-    const logo = this.getDefaultLogo();
-    const logoHeight = logo.length;
-    const startY = Math.floor((this.height - logoHeight - 4) / 2);
+    const lines = [];
+    const logoLines = this.logoComponent.render();
+    const logoHeight = logoLines.length;
     
-    this.buffer = [];
+    const startY = Math.floor((this.height - logoHeight - 4) / 2);
     
     for (let y = 0; y < this.height; y++) {
       if (y < startY) {
-        this.buffer.push(' '.repeat(this.width));
+        lines.push(' '.repeat(this.width));
       } else if (y < startY + logoHeight) {
-        const logoLine = logo[y - startY];
-        const centeredLine = formatting.pad(logoLine, this.width, 'center');
-        this.buffer.push(colors.color(centeredLine, 'primary'));
+        lines.push(logoLines[y - startY]);
       } else if (y === startY + logoHeight + 1 && this.subtitle) {
-        const centeredSubtitle = formatting.pad(this.subtitle, this.width, 'center');
-        this.buffer.push(colors.color(centeredSubtitle, 'secondary'));
+        const styledSubtitle = this.styleEngine.createStyledText(this.subtitle, 'text.subtitle');
+        lines.push(this.alignText(styledSubtitle));
       } else if (y === startY + logoHeight + 2 && this.version) {
-        const centeredVersion = formatting.pad(this.version, this.width, 'center');
-        this.buffer.push(colors.color(centeredVersion, 'muted'));
+        const styledVersion = this.styleEngine.createStyledText(this.version, 'text.subtitle');
+        lines.push(this.alignText(styledVersion));
       } else if (y === this.height - 2 && this.footer) {
-        const centeredFooter = formatting.pad(this.footer, this.width, 'center');
-        this.buffer.push(colors.color(centeredFooter, 'info'));
+        const styledFooter = this.styleEngine.createStyledText(this.footer, 'text.subtitle');
+        lines.push(this.alignText(styledFooter));
       } else {
-        this.buffer.push(' '.repeat(this.width));
+        lines.push(' '.repeat(this.width));
       }
     }
     
-    return this.buffer;
+    return lines;
+  }
+
+  alignText(text) {
+    const colors = require('../utils/colors');
+    const textLength = colors.length(text);
+    const padding = Math.max(0, this.width - textLength);
+    const leftPad = Math.floor(padding / 2);
+    const rightPad = padding - leftPad;
+    return ' '.repeat(leftPad) + text + ' '.repeat(rightPad);
+  }
+
+  getDefaultLogo() {
+    return getDefaultLogo();
   }
 
   setSubtitle(subtitle) {

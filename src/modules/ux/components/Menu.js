@@ -1,113 +1,42 @@
 const UIComponent = require('./UIComponent');
-const colors = require('../utils/colors');
-const ascii = require('../utils/ascii');
-const formatting = require('../utils/formatting');
-const Prompt = require('./Prompt');
+const { StyleEngine } = require('../rendering/StyleEngine');
 
 class Menu extends UIComponent {
   constructor(options = {}) {
     super(options);
     this.items = options.items || [];
-    this.title = options.title || '';
     this.selectedIndex = options.selectedIndex || 0;
-    this.showKeys = options.showKeys !== undefined ? options.showKeys : true;
-    this.showDescriptions = options.showDescriptions !== undefined ? options.showDescriptions : true;
+    this.styleSelector = options.styleSelector || 'menu.default';
     this.keyStyle = options.keyStyle || 'brackets';
-    this.itemSpacing = options.itemSpacing !== undefined ? options.itemSpacing : 1;
-    this.numbered = options.numbered || false;
-    this.breadcrumbs = options.breadcrumbs || [];
-    this.footer = options.footer || '';
+    this.showDescriptions = options.showDescriptions !== undefined ? options.showDescriptions : true;
     this.columns = options.columns || 1;
-    
-    // Prompt integration
-    this.promptActive = false;
-    this.prompt = options.prompt ? new Prompt({
-      text: options.prompt.text || 'Enter selection:',
-      style: options.prompt.style || 'minimal',
-      cursor: options.prompt.cursor || 'underline',
-      blinking: options.prompt.blinking !== undefined ? options.prompt.blinking : true,
-      spacing: options.prompt.spacing !== undefined ? options.prompt.spacing : 1,
-      placeholder: options.prompt.placeholder || '',
-      maxLength: options.prompt.maxLength || 100,
-      ...options.prompt
-    }) : null;
-    
-    // Set up prompt event forwarding if prompt exists
-    if (this.prompt) {
-      this.prompt.on('submit', (value) => {
-        this.emit('prompt-submit', value);
-      });
-      
-      this.prompt.on('cancel', () => {
-        this.emit('prompt-cancel');
-        this.promptActive = false;
-      });
-      
-      this.prompt.on('value-changed', (value) => {
-        this.emit('prompt-value-changed', value);
-      });
-    }
+    this.styleEngine = options.styleEngine || new StyleEngine();
   }
 
   render() {
-    this.buffer = [];
-    let currentY = 0;
-
-    if (this.breadcrumbs.length > 0) {
-      this.renderBreadcrumbs();
-      currentY += 2;
-    }
-
-    if (this.title) {
-      this.renderTitle();
-      currentY += 2;
-    }
-
     if (this.columns > 1) {
-      this.renderColumnarItems();
+      return this.renderColumns();
     } else {
-      this.renderLinearItems();
-    }
-
-    if (this.footer) {
-      this.renderFooter();
-    }
-
-    if (this.prompt) {
-      this.renderPrompt();
-    }
-
-    return this.buffer;
-  }
-
-  renderBreadcrumbs() {
-    const breadcrumbText = this.breadcrumbs.join(' > ');
-    this.buffer.push(colors.color(breadcrumbText, 'muted'));
-    this.buffer.push('');
-  }
-
-  renderTitle() {
-    if (this.title) {
-      this.buffer.push(colors.color(this.title, 'highlight'));
-      this.buffer.push('');
+      return this.renderLinear();
     }
   }
 
-  renderLinearItems() {
+  renderLinear() {
+    const style = this.styleEngine.getStyle(this.styleSelector);
+    const lines = [];
+    
     this.items.forEach((item, index) => {
       const isSelected = index === this.selectedIndex;
-      const line = this.formatMenuItem(item, index, isSelected);
-      this.buffer.push(line);
-
-      if (this.itemSpacing > 0 && index < this.items.length - 1) {
-        for (let i = 0; i < this.itemSpacing - 1; i++) {
-          this.buffer.push('');
-        }
-      }
+      const line = this.renderItem(item, index, isSelected, style);
+      lines.push(line);
     });
+    
+    return lines;
   }
 
-  renderColumnarItems() {
+  renderColumns() {
+    const style = this.styleEngine.getStyle(this.styleSelector);
+    const lines = [];
     const itemsPerColumn = Math.ceil(this.items.length / this.columns);
     const columnWidth = Math.floor(this.width / this.columns);
     
@@ -120,77 +49,71 @@ class Menu extends UIComponent {
         if (itemIndex < this.items.length) {
           const item = this.items[itemIndex];
           const isSelected = itemIndex === this.selectedIndex;
-          const itemText = this.formatMenuItem(item, itemIndex, isSelected, false);
-          line += formatting.pad(itemText, columnWidth, 'left');
+          const itemText = this.renderItem(item, itemIndex, isSelected, style, false);
+          line += this.padToWidth(itemText, columnWidth);
         } else {
           line += ' '.repeat(columnWidth);
         }
       }
       
-      this.buffer.push(line.trimEnd());
+      lines.push(line.trimEnd());
     }
-  }
-
-  renderFooter() {
-    if (this.buffer.length > 0) {
-      this.buffer.push('');
-    }
-    this.buffer.push(colors.color(this.footer, 'info'));
-  }
-
-  renderPrompt() {
-    if (this.prompt) {
-      const promptLines = this.prompt.render();
-      this.buffer.push(...promptLines);
-    }
-  }
-
-  formatMenuItem(item, index, isSelected = false, includeDescription = true) {
-    let line = '';
     
+    return lines;
+  }
+
+  renderItem(item, index, isSelected, style, includeDescription = true) {
+    const parts = [];
+    
+    // Selection indicator
+    if (isSelected) {
+      parts.push(this.styleEngine.createStyledText('> ', this.styleSelector, { color: style.selectedKeyColor }));
+    } else {
+      parts.push('  ');
+    }
+    
+    // Key display
     const keyDisplay = this.getKeyDisplay(item, index);
-    const labelColor = isSelected ? 'highlight' : 'info';
-    const keyColor = isSelected ? 'primary' : 'secondary';
-    
-    if (isSelected && this.keyStyle !== 'none') {
-      line += colors.color('> ', 'primary');
-    } else if (this.keyStyle !== 'none') {
-      line += '  ';
-    }
-    
     if (keyDisplay) {
-      line += colors.ANSI_CODES.bright + colors.color(keyDisplay, keyColor) + colors.ANSI_CODES.reset;
-      line += ' ';
+      const keyColor = isSelected ? style.selectedKeyColor : style.keyColor;
+      parts.push(this.styleEngine.createStyledText(keyDisplay + ' ', this.styleSelector, { color: keyColor }));
     }
     
-    line += colors.color(item.label || item.text || item.name || '', labelColor);
+    // Label
+    const labelColor = isSelected ? style.selectedLabelColor : style.labelColor;
+    const label = item.label || item.text || item.name || '';
+    parts.push(this.styleEngine.createStyledText(label, this.styleSelector, { color: labelColor }));
     
+    // Description
     if (includeDescription && this.showDescriptions && item.description) {
-      const descPadding = Math.max(1, 25 - (item.label || '').length);
-      line += ' '.repeat(descPadding);
-      line += colors.color(`- ${item.description}`, 'muted');
+      const descPadding = Math.max(1, 25 - label.length);
+      parts.push(' '.repeat(descPadding));
+      parts.push(this.styleEngine.createStyledText(`- ${item.description}`, this.styleSelector, { color: style.descriptionColor }));
     }
     
+    // Badge
     if (item.badge) {
-      line += ' ' + colors.color(`[${item.badge}]`, 'warning');
+      parts.push(' ');
+      parts.push(this.styleEngine.createStyledText(`[${item.badge}]`, 'text.warning'));
     }
     
+    let result = parts.join('');
+    
+    // Handle disabled items
     if (item.disabled) {
-      line = colors.color(line, 'muted');
+      result = this.styleEngine.createStyledText(result, this.styleSelector, { color: style.descriptionColor });
     }
     
-    return line;
+    return result;
   }
 
   getKeyDisplay(item, index) {
-    if (!this.showKeys) return '';
-    
     let key = '';
     
     if (item.key !== undefined) {
       key = item.key.toString();
-    } else if (this.numbered) {
-      key = (index + 1).toString();
+    } else if (item.number !== undefined) {
+      key = item.number.toString();
     } else {
       return '';
     }
@@ -209,6 +132,82 @@ class Menu extends UIComponent {
     }
   }
 
+  padToWidth(text, width) {
+    const colors = require('../utils/colors');
+    const textLength = colors.length(text);
+    
+    if (textLength >= width) {
+      return text.slice(0, width);
+    }
+    
+    return text + ' '.repeat(width - textLength);
+  }
+
+  // Navigation methods
+  selectNext() {
+    this.selectedIndex = (this.selectedIndex + 1) % this.items.length;
+    this.emit('selection-changed', this.selectedIndex, this.items[this.selectedIndex]);
+  }
+
+  selectPrevious() {
+    this.selectedIndex = this.selectedIndex === 0 ? this.items.length - 1 : this.selectedIndex - 1;
+    this.emit('selection-changed', this.selectedIndex, this.items[this.selectedIndex]);
+  }
+
+  selectItem(index) {
+    if (index >= 0 && index < this.items.length) {
+      this.selectedIndex = index;
+      this.emit('selection-changed', this.selectedIndex, this.items[index]);
+    }
+  }
+
+  getSelectedItem() {
+    return this.items[this.selectedIndex];
+  }
+
+  findItemByKey(key) {
+    return this.items.find(item => 
+      item.key && item.key.toString().toLowerCase() === key.toLowerCase()
+    );
+  }
+
+  // Input handling
+  handleInput(input) {
+    const key = input.toLowerCase();
+    
+    switch (key) {
+      case 'arrowup':
+      case 'w':
+        this.selectPrevious();
+        return true;
+        
+      case 'arrowdown':
+      case 's':
+        this.selectNext();
+        return true;
+        
+      case 'enter':
+      case ' ':
+        this.emit('item-selected', this.getSelectedItem(), this.selectedIndex);
+        return true;
+        
+      default:
+        const item = this.findItemByKey(key);
+        if (item && !item.disabled) {
+          this.emit('item-activated', item);
+          return true;
+        }
+        return false;
+    }
+  }
+
+  // Data management
+  setItems(items) {
+    this.items = items;
+    this.selectedIndex = Math.min(this.selectedIndex, items.length - 1);
+    this.emit('items-changed', items);
+  }
+
   addItem(item) {
     this.items.push(item);
     this.emit('item-added', item);
@@ -224,193 +223,24 @@ class Menu extends UIComponent {
     }
   }
 
-  setItems(items) {
-    this.items = items;
-    this.selectedIndex = 0;
-    this.emit('items-changed', items);
+  // Style management
+  setStyle(styleSelector) {
+    this.styleSelector = styleSelector;
+    this.emit('style-changed', styleSelector);
   }
 
-  selectItem(index) {
-    if (index >= 0 && index < this.items.length) {
-      this.selectedIndex = index;
-      this.emit('selection-changed', this.selectedIndex, this.items[index]);
-    }
-  }
-
-  selectNext() {
-    const nextIndex = (this.selectedIndex + 1) % this.items.length;
-    this.selectItem(nextIndex);
-  }
-
-  selectPrevious() {
-    const prevIndex = this.selectedIndex === 0 ? this.items.length - 1 : this.selectedIndex - 1;
-    this.selectItem(prevIndex);
-  }
-
-  getSelectedItem() {
-    return this.items[this.selectedIndex];
-  }
-
-  findItemByKey(key) {
-    return this.items.find(item => 
-      item.key && item.key.toString().toLowerCase() === key.toLowerCase()
-    );
-  }
-
-  handleInput(input) {
-    // If prompt is active, let it handle input first
-    if (this.prompt && this.promptActive) {
-      const handled = this.prompt.handleInput(input);
-      if (handled) {
-        return true;
-      }
-    }
-    
-    const key = input.toLowerCase();
-    
-    switch (key) {
-      case 'arrowup':
-      case 'w':
-        if (!this.promptActive) {
-          this.selectPrevious();
-          return true;
-        }
-        break;
-        
-      case 'arrowdown':
-      case 's':
-        if (!this.promptActive) {
-          this.selectNext();
-          return true;
-        }
-        break;
-        
-      case 'enter':
-      case ' ':
-        if (!this.promptActive) {
-          this.emit('item-selected', this.getSelectedItem(), this.selectedIndex);
-          return true;
-        }
-        break;
-        
-      case 'tab':
-        if (this.prompt) {
-          this.togglePrompt();
-          return true;
-        }
-        break;
-        
-      default:
-        if (!this.promptActive) {
-          const item = this.findItemByKey(key);
-          if (item && !item.disabled) {
-            this.emit('item-activated', item);
-            return true;
-          }
-        }
-        return false;
-    }
-    
-    return false;
-  }
-
-  setBreadcrumbs(breadcrumbs) {
-    this.breadcrumbs = breadcrumbs;
-    this.emit('breadcrumbs-changed', breadcrumbs);
-  }
-
-  setTitle(title) {
-    this.title = title;
-    this.emit('title-changed', title);
-  }
-
-  setFooter(footer) {
-    this.footer = footer;
-    this.emit('footer-changed', footer);
-  }
-
-  setPrompt(promptOptions) {
-    if (promptOptions) {
-      this.prompt = new Prompt({
-        text: promptOptions.text || 'Enter selection:',
-        style: promptOptions.style || 'minimal',
-        cursor: promptOptions.cursor || 'underline',
-        blinking: promptOptions.blinking !== undefined ? promptOptions.blinking : true,
-        spacing: promptOptions.spacing !== undefined ? promptOptions.spacing : 1,
-        placeholder: promptOptions.placeholder || '',
-        maxLength: promptOptions.maxLength || 100,
-        ...promptOptions
-      });
-      
-      // Forward prompt events
-      this.prompt.on('submit', (value) => {
-        this.emit('prompt-submit', value);
-      });
-      
-      this.prompt.on('cancel', () => {
-        this.emit('prompt-cancel');
-        this.promptActive = false;
-      });
-      
-      this.prompt.on('value-changed', (value) => {
-        this.emit('prompt-value-changed', value);
-      });
-    } else {
-      this.prompt = null;
-    }
-    this.promptActive = false;
-    this.emit('prompt-changed', this.prompt);
-  }
-
-  activatePrompt() {
-    if (this.prompt) {
-      this.promptActive = true;
-      this.prompt.focus();
-      this.emit('prompt-activated');
-    }
-  }
-
-  deactivatePrompt() {
-    if (this.prompt) {
-      this.promptActive = false;
-      this.prompt.blur();
-      this.emit('prompt-deactivated');
-    }
-  }
-
-  togglePrompt() {
-    if (this.prompt) {
-      if (this.promptActive) {
-        this.deactivatePrompt();
-      } else {
-        this.activatePrompt();
-      }
-    }
-  }
-
-  getPromptValue() {
-    return this.prompt ? this.prompt.value : '';
-  }
-
-  setPromptValue(value) {
-    if (this.prompt) {
-      this.prompt.setValue(value);
-    }
-  }
-
-  clearPrompt() {
-    if (this.prompt) {
-      this.prompt.clear();
-    }
+  setStyleEngine(styleEngine) {
+    this.styleEngine = styleEngine;
+    this.emit('style-engine-changed', styleEngine);
   }
 }
 
 class ContextMenu extends Menu {
   constructor(options = {}) {
     super({
-      showKeys: false,
+      styleSelector: 'menu.compact',
       keyStyle: 'none',
-      itemSpacing: 0,
+      showDescriptions: false,
       ...options
     });
     
@@ -418,33 +248,39 @@ class ContextMenu extends Menu {
   }
 
   render() {
-    this.buffer = [];
+    const style = this.styleEngine.getStyle(this.styleSelector);
+    const lines = [];
     
     this.items.forEach((item, index) => {
       if (this.separators.has(index)) {
-        const separator = ascii.BOX_DRAWING.single.horizontal.repeat(this.width - 4);
-        this.buffer.push(`  ${colors.color(separator, 'border')}`);
+        const separator = '─'.repeat(Math.max(20, this.width - 4));
+        lines.push(`  ${this.styleEngine.createStyledText(separator, this.styleSelector, { color: style.separatorColor })}`);
       }
       
       const isSelected = index === this.selectedIndex;
-      const line = this.formatContextItem(item, isSelected);
-      this.buffer.push(line);
+      const line = this.renderContextItem(item, isSelected, style);
+      lines.push(line);
     });
     
-    return this.buffer;
+    return lines;
   }
 
-  formatContextItem(item, isSelected) {
-    const prefix = isSelected ? colors.color('> ', 'primary') : '  ';
-    const labelColor = item.disabled ? 'muted' : (isSelected ? 'highlight' : 'info');
-    const label = colors.color(item.label || item.text, labelColor);
+  renderContextItem(item, isSelected, style) {
+    const prefix = isSelected ? 
+      this.styleEngine.createStyledText('> ', this.styleSelector, { color: style.selectedKeyColor }) : 
+      '  ';
+    
+    const labelColor = item.disabled ? style.descriptionColor : 
+                      (isSelected ? style.selectedLabelColor : style.labelColor);
+    
+    const label = this.styleEngine.createStyledText(item.label || item.text, this.styleSelector, { color: labelColor });
     
     let line = prefix + label;
     
     if (item.shortcut) {
       const shortcutPadding = Math.max(1, this.width - 10 - (item.label || '').length);
       line += ' '.repeat(shortcutPadding);
-      line += colors.color(item.shortcut, 'muted');
+      line += this.styleEngine.createStyledText(item.shortcut, this.styleSelector, { color: style.descriptionColor });
     }
     
     return line;
@@ -452,6 +288,10 @@ class ContextMenu extends Menu {
 
   addSeparator(index) {
     this.separators.add(index);
+  }
+
+  removeSeparator(index) {
+    this.separators.delete(index);
   }
 }
 

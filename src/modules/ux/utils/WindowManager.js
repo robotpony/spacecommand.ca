@@ -1,6 +1,6 @@
 const { Window, Dialog } = require('../components/Window');
-const { MenuV2, ContextMenuV2 } = require('../components/MenuV2');
-const { DecorationV2, TitleScreenV2 } = require('../components/DecorationV2');
+const { Menu, ContextMenu } = require('../components/Menu');
+const { Decoration, TitleScreen } = require('../components/Decoration');
 const { StyleEngine } = require('../rendering/StyleEngine');
 const LayoutEngine = require('../rendering/LayoutEngine');
 const AnsiParser = require('./AnsiParser');
@@ -70,7 +70,7 @@ class WindowManager {
   }
 
   createMenu(id, items, options = {}) {
-    const menu = new MenuV2({
+    const menu = new Menu({
       items,
       width: options.width || 30,
       height: options.height || items.length + 2,
@@ -90,7 +90,7 @@ class WindowManager {
   }
 
   createContextMenu(id, items, x, y, options = {}) {
-    const menu = new ContextMenuV2({
+    const menu = new ContextMenu({
       items,
       width: options.width || 25,
       height: items.length,
@@ -114,7 +114,7 @@ class WindowManager {
   }
 
   createTitleScreen(id, options = {}) {
-    const titleScreen = new TitleScreenV2({
+    const titleScreen = new TitleScreen({
       width: this.viewport.width,
       height: this.viewport.height,
       styleEngine: this.styleEngine,
