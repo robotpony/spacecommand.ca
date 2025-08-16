@@ -1,7 +1,7 @@
 const { createUX } = require('../../modules/ux');
 const LayoutCalculator = require('../../modules/ux/utils/LayoutCalculator');
 
-class TitleScreenV2 {
+class TitleScreen {
   constructor(ux) {
     this.ux = ux || createUX({ theme: 'retro' });
   }
@@ -110,4 +110,4 @@ class TitleScreenV2 {
   }
 }
 
-module.exports = TitleScreenV2;
+module.exports = TitleScreen;

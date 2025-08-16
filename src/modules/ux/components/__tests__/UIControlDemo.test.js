@@ -1,4 +1,4 @@
-const { createUX, MenuV2, ContextMenuV2, DecorationV2, TitleScreen, Window, Dialog } = require('../../index');
+const { createUX, Menu, ContextMenu, Decoration, TitleScreen, Window, Dialog } = require('../../index');
 const { getSampleMenuItems, getSamplePlayerStatus } = require('../../utils/branding');
 
 describe('UI Control Demo - Visual Tests', () => {
@@ -23,7 +23,7 @@ describe('UI Control Demo - Visual Tests', () => {
     console.log.mockRestore();
   });
 
-  describe('MenuV2 Component Demo', () => {
+  describe('Menu Component Demo', () => {
     it('should render basic menu with navigation', () => {
       const menuItems = [
         { label: 'Trade Center', key: 't', description: 'Buy and sell goods' },
@@ -33,7 +33,7 @@ describe('UI Control Demo - Visual Tests', () => {
         { label: 'Exit Game', key: 'q', description: 'Quit to main menu' }
       ];
 
-      const menu = new MenuV2({
+      const menu = new Menu({
         items: menuItems,
         title: 'Main Command Center',
         width: 60,
@@ -49,12 +49,12 @@ describe('UI Control Demo - Visual Tests', () => {
       expect(output.length).toBeGreaterThan(0);
       expect(output.some(line => line && line.includes && line.includes('Trade Center'))).toBe(true);
       
-      console.log('\n=== MenuV2 Demo ===');
+      console.log('\n=== Menu Demo ===');
       output.forEach(line => console.log(line));
     });
 
     it('should demonstrate menu selection and navigation', () => {
-      const menu = new MenuV2({
+      const menu = new Menu({
         items: getSampleMenuItems(),
         title: 'Navigation Demo',
         selectedIndex: 0
@@ -81,7 +81,7 @@ describe('UI Control Demo - Visual Tests', () => {
     });
   });
 
-  describe('ContextMenuV2 Component Demo', () => {
+  describe('ContextMenu Component Demo', () => {
     it('should render context menu with shortcuts', () => {
       const contextItems = [
         { label: 'Buy Cargo', shortcut: 'Ctrl+B' },
@@ -90,7 +90,7 @@ describe('UI Control Demo - Visual Tests', () => {
         { label: 'Travel', shortcut: 'Ctrl+T', disabled: true }
       ];
 
-      const contextMenu = new ContextMenuV2({
+      const contextMenu = new ContextMenu({
         items: contextItems,
         width: 35,
         separators: [2]
@@ -102,7 +102,7 @@ describe('UI Control Demo - Visual Tests', () => {
       expect(output.some(line => line.includes('Buy Cargo'))).toBe(true);
       expect(output.some(line => line.includes('Ctrl+B'))).toBe(true);
       
-      console.log('\n=== ContextMenuV2 Demo ===');
+      console.log('\n=== ContextMenu Demo ===');
       output.forEach(line => console.log(line));
     });
   });
@@ -163,9 +163,9 @@ describe('UI Control Demo - Visual Tests', () => {
     });
   });
 
-  describe('DecorationV2 Component Demo', () => {
+  describe('Decoration Component Demo', () => {
     it('should render decorative ASCII art', () => {
-      const decoration = new DecorationV2({
+      const decoration = new Decoration({
         content: [
           '    ╔══════════════════════════════╗',
           '    ║        SPACECOMMAND          ║',
@@ -181,7 +181,7 @@ describe('UI Control Demo - Visual Tests', () => {
       expect(output).toBeDefined();
       expect(output.some(line => line.includes('SPACECOMMAND'))).toBe(true);
       
-      console.log('\n=== DecorationV2 Demo ===');
+      console.log('\n=== Decoration Demo ===');
       output.forEach(line => console.log(line));
     });
   });
@@ -282,7 +282,7 @@ describe('UI Control Demo - Visual Tests', () => {
 
   describe('Interactive Input Demo', () => {
     it('should demonstrate input handling across components', () => {
-      const menu = new MenuV2({
+      const menu = new Menu({
         items: [
           { label: 'Combat Training', key: 'c' },
           { label: 'Trade Simulation', key: 't' },
@@ -337,11 +337,11 @@ describe('UI Control Demo - Visual Tests', () => {
   describe('Performance and Error Handling Demo', () => {
     it('should handle edge cases gracefully', () => {
       // Test empty menu
-      const emptyMenu = new MenuV2({ items: [] });
+      const emptyMenu = new Menu({ items: [] });
       expect(() => emptyMenu.render()).not.toThrow();
 
       // Test invalid input
-      const menu = new MenuV2({ items: getSampleMenuItems() });
+      const menu = new Menu({ items: getSampleMenuItems() });
       expect(menu.handleInput('invalid')).toBe(false);
       expect(menu.handleInput('')).toBe(false);
       

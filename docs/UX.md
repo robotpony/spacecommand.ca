@@ -65,9 +65,9 @@ ux.renderToConsole();
 
 ```
 UIComponent (base class)
-├── Decoration/DecorationV2 (logos, banners, dividers)
-├── Menu/MenuV2 (interactive menus)
-├── ContextMenu/ContextMenuV2 (popup menus)
+├── Decoration/Decoration (logos, banners, dividers)
+├── Menu/Menu (interactive menus)
+├── ContextMenu/ContextMenu (popup menus)
 ├── Window (containers with borders)
 └── Dialog (modal windows)
 ```
@@ -87,9 +87,8 @@ src/modules/ux/
 ├── components/           # UI component classes
 │   ├── UIComponent.js   # Base component class
 │   ├── Decoration.js    # V1 decoration components
-│   ├── DecorationV2.js  # V2 decoration components
-│   ├── Menu.js          # V1 menu components
-│   ├── MenuV2.js        # V2 menu components
+│   ├── Decoration.js  #  decoration components
+│   ├── Menu.js          # menu components
 │   └── Window.js        # Window and dialog components
 ├── rendering/           # Rendering and styling system
 │   ├── Renderer.js      # Terminal output renderer
@@ -145,11 +144,11 @@ const banner = new Decoration({
 });
 ```
 
-**V2 (Recommended)**:
+** (Recommended)**:
 ```javascript
-const { DecorationV2, TitleScreenV2 } = require('./src/modules/ux');
+const { Decoration, TitleScreen } = require('./src/modules/ux');
 
-const decoration = new DecorationV2({
+const decoration = new Decoration({
   type: 'logo',
   styleSelector: 'text.title',
   styleEngine: myStyleEngine
@@ -166,8 +165,8 @@ const menuItems = [
   { key: '2', label: 'Option 2', description: 'Second option' }
 ];
 
-// V2 Menu (recommended)
-const menu = new MenuV2({
+// Menu (recommended)
+const menu = new Menu({
   items: menuItems,
   styleSelector: 'menu.default',
   showDescriptions: true
@@ -242,7 +241,7 @@ The color system provides semantic color names:
 
 ### StyleEngine
 
-The V2 components use the StyleEngine for consistent theming:
+The components use the StyleEngine for consistent theming:
 
 ```javascript
 const { StyleEngine } = require('./src/modules/ux');
@@ -412,11 +411,11 @@ lines.forEach(line => console.log(line));
 
 ## Migration Guide
 
-### V1 to V2 Components
+### Components
 
-V2 components offer better styling integration and more consistent APIs:
+Components offer better styling integration and more consistent APIs:
 
-**V1 (Legacy)**:
+**Menu**:
 ```javascript
 const menu = new Menu({
   items: menuItems,
@@ -426,27 +425,15 @@ const menu = new Menu({
 });
 ```
 
-**V2 (Recommended)**:
-```javascript
-const menu = new MenuV2({
-  items: menuItems,
-  styleSelector: 'menu.default',
-  keyStyle: 'brackets',
-  styleEngine: myStyleEngine
-});
-```
 
 ### Key Differences
 
-1. **Styling**: V2 uses StyleEngine instead of direct color handling
+1. **Styling**: Uses StyleEngine instead of direct color handling
 2. **Configuration**: More consistent option naming
 3. **Events**: Improved event system with better data
 4. **Performance**: Better rendering performance
 5. **Extensibility**: Easier to customize and extend
 
-### Compatibility
-
-V1 components are still supported for backward compatibility, but new development should use V2 components. The high-level UX API automatically uses V2 components.
 
 ## Performance Considerations
 

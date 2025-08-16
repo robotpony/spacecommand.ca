@@ -5,20 +5,49 @@ class Menu extends UIComponent {
   constructor(options = {}) {
     super(options);
     this.items = options.items || [];
+    this.title = options.title || '';
     this.selectedIndex = options.selectedIndex || 0;
     this.styleSelector = options.styleSelector || 'menu.default';
     this.keyStyle = options.keyStyle || 'brackets';
+    this.showKeys = options.showKeys !== undefined ? options.showKeys : true;
     this.showDescriptions = options.showDescriptions !== undefined ? options.showDescriptions : true;
     this.columns = options.columns || 1;
+    this.itemSpacing = options.itemSpacing !== undefined ? options.itemSpacing : 1;
+    this.numbered = options.numbered || false;
+    this.breadcrumbs = options.breadcrumbs || [];
+    this.footer = options.footer || '';
     this.styleEngine = options.styleEngine || new StyleEngine();
   }
 
   render() {
-    if (this.columns > 1) {
-      return this.renderColumns();
-    } else {
-      return this.renderLinear();
+    const lines = [];
+    
+    // Add breadcrumbs if present
+    if (this.breadcrumbs && this.breadcrumbs.length > 0) {
+      lines.push(this.breadcrumbs.join(' > '));
+      lines.push('');
     }
+    
+    // Add title if present
+    if (this.title) {
+      lines.push(this.title);
+      lines.push('');
+    }
+    
+    // Render menu items
+    if (this.columns > 1) {
+      lines.push(...this.renderColumns());
+    } else {
+      lines.push(...this.renderLinear());
+    }
+    
+    // Add footer if present
+    if (this.footer) {
+      lines.push('');
+      lines.push(this.footer);
+    }
+    
+    return lines;
   }
 
   renderLinear() {
@@ -29,6 +58,13 @@ class Menu extends UIComponent {
       const isSelected = index === this.selectedIndex;
       const line = this.renderItem(item, index, isSelected, style);
       lines.push(line);
+      
+      // Add item spacing
+      if (this.itemSpacing > 0 && index < this.items.length - 1) {
+        for (let i = 0; i < this.itemSpacing; i++) {
+          lines.push('');
+        }
+      }
     });
     
     return lines;
@@ -108,9 +144,17 @@ class Menu extends UIComponent {
   }
 
   getKeyDisplay(item, index) {
+    // Return empty if showKeys is false
+    if (!this.showKeys) {
+      return '';
+    }
+    
     let key = '';
     
-    if (item.key !== undefined) {
+    // Use numbered index if numbered option is true
+    if (this.numbered) {
+      key = (index + 1).toString();
+    } else if (item.key !== undefined) {
       key = item.key.toString();
     } else if (item.number !== undefined) {
       key = item.number.toString();
@@ -204,7 +248,7 @@ class Menu extends UIComponent {
   // Data management
   setItems(items) {
     this.items = items;
-    this.selectedIndex = Math.min(this.selectedIndex, items.length - 1);
+    this.selectedIndex = 0;
     this.emit('items-changed', items);
   }
 
@@ -233,6 +277,22 @@ class Menu extends UIComponent {
     this.styleEngine = styleEngine;
     this.emit('style-engine-changed', styleEngine);
   }
+  
+  // Setter methods
+  setTitle(title) {
+    this.title = title;
+    this.emit('title-changed', title);
+  }
+  
+  setBreadcrumbs(breadcrumbs) {
+    this.breadcrumbs = breadcrumbs;
+    this.emit('breadcrumbs-changed', breadcrumbs);
+  }
+  
+  setFooter(footer) {
+    this.footer = footer;
+    this.emit('footer-changed', footer);
+  }
 }
 
 class ContextMenu extends Menu {
@@ -240,7 +300,9 @@ class ContextMenu extends Menu {
     super({
       styleSelector: 'menu.compact',
       keyStyle: 'none',
+      showKeys: false,
       showDescriptions: false,
+      itemSpacing: 0,
       ...options
     });
     

@@ -154,25 +154,6 @@ function demoAPIUsage() {
   return new Promise(resolve => setTimeout(resolve, 3000));
 }
 
-/**
- * Demo 7: Component Comparison (V1 vs V2)
- */
-function demoComponentComparison() {
-  console.log('\n7. Component Architecture:');
-  console.log('');
-  console.log('V1 Components (Legacy):');
-  console.log('  - Decoration, TitleScreen');
-  console.log('  - Menu, ContextMenu');
-  console.log('  - Direct color/style handling');
-  console.log('');
-  console.log('V2 Components (Recommended):');
-  console.log('  - DecorationV2, TitleScreenV2');
-  console.log('  - MenuV2, ContextMenuV2');
-  console.log('  - StyleEngine integration');
-  console.log('  - Better theming support');
-  return new Promise(resolve => setTimeout(resolve, 2000));
-}
-
 // Run all demos in sequence
 async function runAllDemos() {
   await demoTitleScreen();

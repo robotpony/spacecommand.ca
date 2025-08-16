@@ -84,16 +84,18 @@ class TradeCenter {
     content.push('BUYING:');
     content.push(...buyingTable.render());
     content.push('');
+
+    // Create selling table  
+    const sellingTable = this.createSellingTable();
+    content.push('SELLING:');
+    content.push(...sellingTable.render());
     
     // Create cargo info
     const cargoInfo = this.createCargoInfo();
     content.push(...cargoInfo.render());
     content.push('');
     
-    // Create selling table  
-    const sellingTable = this.createSellingTable();
-    content.push('SELLING:');
-    content.push(...sellingTable.render());
+
     
     content.push('');
     

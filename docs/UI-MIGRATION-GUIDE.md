@@ -119,8 +119,7 @@ buildContent() {
 
 All game screens now use the StandardGameScreen component for consistent UI styling. The following obsolete files have been removed:
 - `MainMenuStandardized.js` (example file)
-- `MainMenuV2.js` (old version)
-- `MainMenuV3.js` (old version)
+
 
 ### 🎯 Expected Results
 

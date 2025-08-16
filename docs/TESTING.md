@@ -34,12 +34,12 @@ npm test UIControlDemo.test.js
 This test demonstrates:
 
 #### Core Components
-- **MenuV2**: Navigation menus with keyboard shortcuts, descriptions, and styling
-- **ContextMenuV2**: Right-click style menus with separators and shortcuts  
+- **Menu**: Navigation menus with keyboard shortcuts, descriptions, and styling
+- **ContextMenu**: Right-click style menus with separators and shortcuts  
 - **Window**: Bordered content containers with titles
 - **Dialog**: Modal dialogs for confirmations and alerts
-- **DecorationV2**: ASCII art and decorative elements
-- **TitleScreenV2**: Game title screens with branding
+- **Decoration**: ASCII art and decorative elements
+- **TitleScreen**: Game title screens with branding
 
 #### Features Demonstrated
 - **Navigation**: Arrow keys, direct key activation, menu selection
@@ -52,7 +52,7 @@ This test demonstrates:
 
 The demo will show visual output like:
 ```
-=== MenuV2 Demo ===
+=== Menu Demo ===
 ╔══════════════════════════════════════════════════════════╗
 ║                    Main Command Center                   ║
 ╠══════════════════════════════════════════════════════════╣
@@ -139,7 +139,7 @@ npm test -- --verbose
 
 ### Single Test
 ```bash
-npm test -- --testNamePattern="MenuV2 Component Demo"
+npm test -- --testNamePattern="Menu Component Demo"
 ```
 
 ### Coverage Report

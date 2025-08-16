@@ -8,15 +8,14 @@ The UX module provides a comprehensive terminal-based user interface system for 
 
 ### Core Components
 - **UIComponent**: Base class for all UI elements with positioning, events, and rendering
-- **Menu/MenuV2**: Interactive menus with keyboard navigation and theming
+- **Menu/Menu**: Interactive menus with keyboard navigation and theming
 - **Window/Dialog**: Container components for organizing content and modal interactions
-- **Decoration/DecorationV2**: ASCII art, logos, banners, and decorative elements
+- **Decoration/Decoration**: ASCII art, logos, banners, and decorative elements
 
 ### Architecture
 - **Component-based design**: Modular, reusable UI elements
 - **Event-driven**: Components emit events for state changes and user interactions
 - **Dual API**: High-level convenience API (`createUX`) and low-level component access
-- **Version support**: V1 (legacy) and V2 (StyleEngine-integrated) components
 
 ### Key Features
 - **Theming system**: Built-in themes (default, retro, monochrome) with custom style support
