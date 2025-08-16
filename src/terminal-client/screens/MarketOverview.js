@@ -28,103 +28,81 @@ class MarketOverview {
     // Update viewport to current terminal size
     const viewport = this.ux.updateViewport();
     
-    // Calculate responsive layout
-    const layoutCalc = new LayoutCalculator(viewport);
-    const layout = layoutCalc.calculateMarketOverviewLayout();
-    
     // Clear existing windows
     this.ux.clear();
     
-    // Create status bar
-    const statusBar = this.ux.statusBar({
+    // Create the standardized game screen
+    const gameScreen = this.ux.standardGameScreen({
       width: viewport.width,
-      title: 'MARKET OVERVIEW',
-      subtitle: `Turn ${this.gameState.turn} | ${this.gameState.timeLeft} left`,
-      leftStatus: this.gameState.location,
-      rightStatus: `Credits: ₡${this.gameState.credits.toLocaleString()}  AP: ${this.gameState.actionPoints.current}/${this.gameState.actionPoints.max}`
+      height: viewport.height,
+      x: 0,
+      y: 0,
+      screenTitle: 'MARKET OVERVIEW',
+      gameState: this.gameState,
+      content: this.buildMarketContent()
     });
     
-    // Build content array with responsive considerations
-    const content = [];
-    
-    if (!layout.compactMode) {
-      content.push('');
-    }
-    
-    // Build table content
-    content.push('COMMODITY'.padEnd(18) + 'PRICE'.padEnd(9) + 'SUPPLY'.padEnd(9) + 'DEMAND'.padEnd(9) + '24H'.padEnd(10) + '7D'.padEnd(8) + 'MY CARGO');
-    content.push('═'.repeat(75));
-    
-    this.commodities.forEach(commodity => {
-      const priceColor = this.getPriceColor(commodity.change24h);
-      const trendIcon = commodity.trend;
-      const changeColor = commodity.change24h > 0 ? 'success' : 
-                         commodity.change24h < 0 ? 'error' : 
-                         'warning';
-      
-      const line = commodity.name.padEnd(18) +
-        this.ux.colors.color(`₡${commodity.price}`, priceColor).padEnd(9) +
-        this.ux.colors.color(commodity.supply, this.getSupplyColorName(commodity.supply)).padEnd(9) +
-        this.ux.colors.color(commodity.demand, this.getDemandColorName(commodity.demand)).padEnd(9) +
-        this.ux.colors.color(trendIcon + this.formatChange(commodity.change24h), changeColor).padEnd(10) +
-        this.formatChange(commodity.change7d).padEnd(8) +
-        (commodity.cargo > 0 ? `${commodity.cargo} units` : '0 units');
-      
-      content.push(line);
-    });
-    
-    // Add market analysis if space allows
-    if (layout.showAnalysis) {
-      content.push('');
-      content.push('Market Analysis:');
-      content.push('─'.repeat(16));
-      content.push('• Ore shortage driving prices up - expect ₡500+ next turn');
-      content.push('• Food oversupply from Centauri imports');
-      content.push('• Weapons demand spike due to Orion conflict');
-    }
-    
-    if (!layout.compactMode) {
-      content.push('');
-      content.push(`${this.ux.colors.color('[T]', 'highlight')} Trade  ${this.ux.colors.color('[P]', 'highlight')} Price History  ${this.ux.colors.color('[R]', 'highlight')} Reports  ${this.ux.colors.color('[B]', 'highlight')} Back to Menu`);
-      content.push('');
-      content.push('Command:');
-    } else {
-      content.push('');
-      content.push(`${this.ux.colors.color('[T]', 'highlight')} Trade  ${this.ux.colors.color('[P]', 'highlight')} History  ${this.ux.colors.color('[R]', 'highlight')} Reports  ${this.ux.colors.color('[B]', 'highlight')} Back`);
-      content.push('Command:');
-    }
-    
-    // Adapt content to available space
-    const adaptedContent = layoutCalc.adaptMenuContent(content, layout.availableContentLines);
-    
-    // Create main window using layout coordinates
-    const mainWindow = this.ux.window({
-      width: layout.mainWindow.width,
-      height: layout.mainWindow.height,
-      x: layout.mainWindow.x,
-      y: layout.mainWindow.y,
-      border: 'single',
-      padding: layout.mainWindow.padding,
-      content: adaptedContent
-    });
-    
-    // Add windows to manager (status + main)
-    this.ux.windowManager.windows.set('status', {
-      window: { render: () => statusBar.render(), x: 0, y: 0, width: viewport.width, height: 3 },
+    // Add to window manager
+    this.ux.windowManager.windows.set('main', {
+      window: gameScreen,
       zIndex: 0,
       visible: true,
       modal: false
     });
     
-    this.ux.windowManager.windows.set('main', {
-      window: mainWindow,
-      zIndex: 1,
-      visible: true,
-      modal: false
+    return this.ux.render();
+  }
+
+  buildMarketContent() {
+    const content = [];
+    
+    // Add spacing for better layout
+    content.push('');
+    
+    // Create table for commodities
+    const marketTable = this.ux.table({
+      headers: ['COMMODITY', 'PRICE', 'SUPPLY', 'DEMAND', '24H', '7D', 'MY CARGO'],
+      columnWidths: [16, 10, 8, 8, 8, 6, 12],
+      columnAligns: ['left', 'right', 'left', 'left', 'left', 'left', 'left'],
+      compact: true,
+      headerSeparator: true,
+      rows: this.commodities.map(commodity => {
+        const priceColor = this.getPriceColor(commodity.change24h);
+        const trendIcon = commodity.trend;
+        const changeColor = commodity.change24h > 0 ? 'success' : 
+                           commodity.change24h < 0 ? 'error' : 
+                           'warning';
+        
+        return [
+          commodity.name,
+          { text: `₡${commodity.price}`, color: priceColor },
+          { text: commodity.supply, color: this.getSupplyColorName(commodity.supply) },
+          { text: commodity.demand, color: this.getDemandColorName(commodity.demand) },
+          { text: trendIcon + this.formatChange(commodity.change24h), color: changeColor },
+          this.formatChange(commodity.change7d),
+          commodity.cargo > 0 ? `${commodity.cargo} units` : '0 units'
+        ];
+      })
     });
     
-    // Render the complete screen
-    return this.ux.render();
+    // Add table to content
+    const tableLines = marketTable.render();
+    tableLines.forEach(line => content.push(line));
+    
+    // Add market analysis
+    content.push('');
+    content.push('Market Analysis:');
+    content.push('─'.repeat(16));
+    content.push('• Ore shortage driving prices up - expect ₡500+ next turn');
+    content.push('• Food oversupply from Centauri imports');
+    content.push('• Weapons demand spike due to Orion conflict');
+    
+    content.push('');
+    content.push(`${this.ux.colors.color('[T]', 'highlight')} Trade  ${this.ux.colors.color('[P]', 'highlight')} Price History  ${this.ux.colors.color('[R]', 'highlight')} Reports  ${this.ux.colors.color('[B]', 'highlight')} Back to Menu`);
+    content.push('');
+    content.push('Command:');
+    
+    return content;
   }
 
   getPriceColor(change) {

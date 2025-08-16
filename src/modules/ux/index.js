@@ -2,6 +2,8 @@
 const UIComponent = require('./components/UIComponent');
 const { Window, Dialog } = require('./components/Window');
 const StatusBar = require('./components/StatusBar');
+const Table = require('./components/Table');
+const StandardGameScreen = require('./components/StandardGameScreen');
 
 // V1 Components (original)
 const { Decoration, TitleScreen } = require('./components/Decoration');
@@ -106,6 +108,17 @@ class UX {
     });
   }
 
+  table(options = {}) {
+    return new Table(options);
+  }
+
+  standardGameScreen(options = {}) {
+    return new StandardGameScreen({
+      styleEngine: this.styleEngine,
+      ...options
+    });
+  }
+
   // Style management
   setTheme(themeName) {
     this.styleEngine.setTheme(themeName);
@@ -172,6 +185,19 @@ class UX {
     return this.windowManager.viewport;
   }
 
+  // Root window management
+  setRootWindow(enabled) {
+    this.windowManager.setRootWindow(enabled);
+  }
+
+  setRootWindowBorder(borderStyle) {
+    this.windowManager.setRootWindowBorder(borderStyle);
+  }
+
+  setRootWindowColor(color) {
+    this.windowManager.setRootWindowColor(color);
+  }
+
   // Utility access
   get colors() {
     return colors;
@@ -202,6 +228,8 @@ module.exports = {
   Window,
   Dialog,
   StatusBar,
+  Table,
+  StandardGameScreen,
   
   // V1 Components (for backward compatibility)
   Decoration,

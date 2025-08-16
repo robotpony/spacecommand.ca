@@ -51,25 +51,37 @@ class GalaxyMap {
     // Update viewport to current terminal size
     const viewport = this.ux.updateViewport();
     
-    // Calculate responsive layout
-    const layoutCalc = new LayoutCalculator(viewport);
-    const layout = layoutCalc.calculateGalaxyMapLayout();
-    
     // Clear existing windows
     this.ux.clear();
     
-    // Create status bar
-    const statusBar = this.ux.statusBar({
+    // Create the standardized game screen
+    const gameScreen = this.ux.standardGameScreen({
       width: viewport.width,
-      title: 'GALAXY MAP',
-      subtitle: `Turn ${this.gameState.turn} | ${this.gameState.timeLeft} left`,
-      leftStatus: `Current: ${this.gameState.currentSystem} System`,
-      rightStatus: `Credits: ₡${this.gameState.credits.toLocaleString()}  AP: ${this.gameState.actionPoints.current}/${this.gameState.actionPoints.max}`
+      height: viewport.height,
+      x: 0,
+      y: 0,
+      screenTitle: 'GALAXY MAP',
+      gameState: this.gameState,
+      content: this.buildGalaxyContent()
     });
     
-    // Create map grid based on layout
-    const mapHeight = Math.max(12, layout.mapWindow.contentHeight);
-    const mapWidth = Math.max(50, layout.mapWindow.width - 4);
+    // Add to window manager
+    this.ux.windowManager.windows.set('main', {
+      window: gameScreen,
+      zIndex: 0,
+      visible: true,
+      modal: false
+    });
+    
+    return this.ux.render();
+  }
+
+  buildGalaxyContent() {
+    const content = [];
+    
+    // Create map grid
+    const mapHeight = 15;
+    const mapWidth = 50;
     const map = Array(mapHeight).fill(null).map(() => Array(mapWidth).fill(' '));
     
     // Draw connections
@@ -103,12 +115,11 @@ class GalaxyMap {
       }
     });
     
-    // Build map content with colors
-    const mapContent = [];
-    if (!layout.compactMode) {
-      mapContent.push('');
-    }
+    // Build map display with legend side by side
+    content.push('');
     
+    // Create two column layout: map on left, legend on right
+    const mapLines = [];
     map.forEach((row, y) => {
       let line = '';
       row.forEach((char, x) => {
@@ -137,89 +148,41 @@ class GalaxyMap {
           line += char;
         }
       });
-      mapContent.push(line);
+      mapLines.push(line);
     });
     
-    // Add controls at bottom if compact mode
-    if (layout.compactMode) {
-      mapContent.push('');
-      mapContent.push(`${this.ux.colors.color('[↑↓←→]', 'highlight')} Navigate  ${this.ux.colors.color('[Enter]', 'highlight')} Jump  ${this.ux.colors.color('[I]', 'highlight')} Info  ${this.ux.colors.color('[ESC]', 'highlight')} Back`);
-      mapContent.push(`Selected: ${this.selectedSystem}`);
+    // Build legend
+    const legendLines = [
+      'Legend:',
+      '─'.repeat(7),
+      this.ux.colors.color('●', 'success', { bright: true }) + ' You are here',
+      this.ux.colors.color('★', 'success') + ' Controlled',
+      '○ Neutral',
+      this.ux.colors.color('·', 'muted') + ' Jump route',
+      '',
+      'Controls:',
+      '─'.repeat(9),
+      this.ux.colors.color('[↑↓←→]', 'highlight') + ' Navigate',
+      this.ux.colors.color('[Enter]', 'highlight') + ' Jump',
+      this.ux.colors.color('[I]', 'highlight') + ' System Info',
+      this.ux.colors.color('[F]', 'highlight') + ' Fleet',
+      this.ux.colors.color('[ESC]', 'highlight') + ' Back',
+      '',
+      `Selected: ${this.selectedSystem}`
+    ];
+    
+    // Combine map and legend side by side
+    const maxRows = Math.max(mapLines.length, legendLines.length);
+    for (let i = 0; i < maxRows; i++) {
+      const mapLine = (mapLines[i] || '').padEnd(mapWidth + 2);
+      const legendLine = legendLines[i] || '';
+      content.push(mapLine + legendLine);
     }
     
-    // Create map window using layout coordinates
-    const mapWindow = this.ux.window({
-      width: layout.mapWindow.width,
-      height: layout.mapWindow.height,
-      x: layout.mapWindow.x,
-      y: layout.mapWindow.y,
-      border: 'single',
-      padding: layout.mapWindow.padding,
-      content: mapContent
-    });
+    content.push('');
+    content.push(`Current Location: ${this.gameState.currentSystem} System`);
     
-    // Add windows to manager (status + map)
-    this.ux.windowManager.windows.set('status', {
-      window: { render: () => statusBar.render(), x: 0, y: 0, width: viewport.width, height: 3 },
-      zIndex: 0,
-      visible: true,
-      modal: false
-    });
-    
-    this.ux.windowManager.windows.set('map', {
-      window: mapWindow,
-      zIndex: 1,
-      visible: true,
-      modal: false
-    });
-    
-    // Create legend window if layout has space
-    if (layout.showLegend) {
-      const legendContent = [];
-      if (!layout.compactMode) {
-        legendContent.push('');
-      }
-      
-      legendContent.push('Legend:');
-      legendContent.push('─'.repeat(7));
-      legendContent.push(this.ux.colors.color('●', 'success', { bright: true }) + ' You are here');
-      legendContent.push(this.ux.colors.color('★', 'success') + ' Controlled');
-      legendContent.push('○ Neutral');
-      legendContent.push(this.ux.colors.color('·', 'muted') + ' Jump route');
-      
-      if (!layout.compactMode) {
-        legendContent.push('');
-        legendContent.push('Controls:');
-        legendContent.push('─'.repeat(9));
-        legendContent.push(this.ux.colors.color('[↑↓←→]', 'highlight') + ' Navigate');
-        legendContent.push(this.ux.colors.color('[Enter]', 'highlight') + ' Jump');
-        legendContent.push(this.ux.colors.color('[I]', 'highlight') + ' System Info');
-        legendContent.push(this.ux.colors.color('[F]', 'highlight') + ' Fleet');
-        legendContent.push(this.ux.colors.color('[ESC]', 'highlight') + ' Back');
-        legendContent.push('');
-        legendContent.push(`Selected: ${this.selectedSystem}`);
-      }
-      
-      const legendWindow = this.ux.window({
-        width: layout.legendWindow.width,
-        height: layout.legendWindow.height,
-        x: layout.legendWindow.x,
-        y: layout.legendWindow.y,
-        border: 'single',
-        padding: layout.legendWindow.padding,
-        content: legendContent
-      });
-      
-      this.ux.windowManager.windows.set('legend', {
-        window: legendWindow,
-        zIndex: 1,
-        visible: true,
-        modal: false
-      });
-    }
-    
-    // Render the complete screen
-    return this.ux.render();
+    return content;
   }
 
   drawConnection(map, from, to) {

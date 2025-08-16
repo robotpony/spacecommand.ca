@@ -151,9 +151,9 @@ class LayoutCalculator {
     return {
       statusBar: { x: 0, y: 0, width, height: statusBarHeight },
       mainWindow: { 
-        x: 2, 
+        x: 0, 
         y: statusBarHeight, 
-        width: width - 4, 
+        width: width, 
         height: actualHeight,
         contentHeight: actualHeight - 4,
         padding: 2
@@ -176,9 +176,9 @@ class LayoutCalculator {
     return {
       statusBar: { x: 0, y: 0, width, height: statusBarHeight },
       mainWindow: { 
-        x: 2, 
+        x: 0, 
         y: statusBarHeight, 
-        width: width - 4, 
+        width: width, 
         height: availableHeight,
         contentHeight: availableHeight - 4,
         padding: 2
@@ -205,7 +205,7 @@ class LayoutCalculator {
     return {
       statusBar: { x: 0, y: 0, width, height: statusBarHeight },
       mapWindow: { 
-        x: 2, 
+        x: 0, 
         y: statusBarHeight, 
         width: mapWidth, 
         height: availableHeight - 4,
@@ -213,7 +213,7 @@ class LayoutCalculator {
         padding: 2
       },
       legendWindow: {
-        x: mapWidth + 4,
+        x: mapWidth + 2,
         y: statusBarHeight,
         width: legendWidth,
         height: Math.min(15, availableHeight - 4),
@@ -238,9 +238,9 @@ class LayoutCalculator {
     return {
       statusBar: { x: 0, y: 0, width, height: statusBarHeight },
       mainWindow: { 
-        x: 2, 
+        x: 0, 
         y: statusBarHeight, 
-        width: width - 4, 
+        width: width, 
         height: availableHeight,
         contentHeight: availableHeight - 4,
         padding: 2

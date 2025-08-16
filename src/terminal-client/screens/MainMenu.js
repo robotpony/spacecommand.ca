@@ -1,8 +1,8 @@
-const { ANSI_CODES } = require('../../modules/ux/utils/colors');
+const { createUX } = require('../../modules/ux');
 
 class MainMenu {
   constructor(ux, gameState = {}) {
-    this.ux = ux;
+    this.ux = ux || createUX({ theme: 'retro' });
     this.gameState = {
       player: 'Captain Reynolds',
       location: 'Sol System',
@@ -20,26 +20,41 @@ class MainMenu {
   }
 
   render() {
-    const lines = [];
-    const width = 80;
+    // Update viewport to current terminal size
+    const viewport = this.ux.updateViewport();
     
-    // Header with status bar
-    lines.push(this.renderHeader());
-    lines.push(this.renderStatusBar());
-    lines.push(this.renderSeparator());
-    lines.push('');
+    // Clear existing windows
+    this.ux.clear();
     
-    // Title
-    const title = 'COMMAND CENTER MENU';
-    const titlePadding = ' '.repeat((width - title.length) / 2);
-    lines.push(titlePadding + ANSI_CODES.fgBrightGreen + title + ANSI_CODES.reset);
+    // Create the standardized game screen
+    const gameScreen = this.ux.standardGameScreen({
+      width: viewport.width,
+      height: viewport.height,
+      x: 0,
+      y: 0,
+      screenTitle: 'COMMAND CENTER MENU',
+      gameState: this.gameState,
+      content: this.buildMenuContent()
+    });
     
-    const underline = '═'.repeat(title.length);
-    const underlinePadding = ' '.repeat((width - underline.length) / 2);
-    lines.push(underlinePadding + ANSI_CODES.fgGreen + underline + ANSI_CODES.reset);
-    lines.push('');
+    // Add to window manager
+    this.ux.windowManager.windows.set('main', {
+      window: gameScreen,
+      zIndex: 0,
+      visible: true,
+      modal: false
+    });
     
-    // Menu options
+    return this.ux.render();
+  }
+
+  buildMenuContent() {
+    const content = [];
+    
+    // Add spacing for better layout
+    content.push('');
+    
+    // Menu options with consistent formatting
     const menuItems = [
       { key: '1', label: 'TRADE CENTER', desc: 'Buy and sell goods across the galaxy' },
       { key: '2', label: 'FLEET OVERVIEW', desc: 'View and manage your ships' },
@@ -52,11 +67,11 @@ class MainMenu {
     menuItems.forEach(item => {
       const keyStr = `[${item.key}]`;
       const labelStr = item.label.padEnd(20);
-      const line = `    ${ANSI_CODES.fgBrightGreen}${keyStr}${ANSI_CODES.reset} ${labelStr}${ANSI_CODES.fgGray}${item.desc}${ANSI_CODES.reset}`;
-      lines.push(line);
+      const line = `    ${this.ux.colors.color(keyStr, 'highlight')} ${labelStr}${this.ux.colors.color(item.desc, 'muted')}`;
+      content.push(line);
     });
     
-    lines.push('');
+    content.push('');
     
     // Secondary options
     const secondaryOptions = [
@@ -65,9 +80,9 @@ class MainMenu {
     ];
     
     const secondaryLine = secondaryOptions.map(opt => 
-      `${ANSI_CODES.fgGreen}[${opt.key}]${ANSI_CODES.reset} ${opt.label}`
+      `${this.ux.colors.color(`[${opt.key}]`, 'info')} ${opt.label}`
     ).join('      ');
-    lines.push('    ' + secondaryLine);
+    content.push('    ' + secondaryLine);
     
     const tertiaryOptions = [
       { key: 'H', label: 'Help' },
@@ -75,53 +90,27 @@ class MainMenu {
     ];
     
     const tertiaryLine = tertiaryOptions.map(opt => 
-      `${ANSI_CODES.fgGreen}[${opt.key}]${ANSI_CODES.reset} ${opt.label}`
+      `${this.ux.colors.color(`[${opt.key}]`, 'info')} ${opt.label}`
     ).join('               ');
-    lines.push('    ' + tertiaryLine);
+    content.push('    ' + tertiaryLine);
     
-    lines.push('');
+    content.push('');
+    content.push('');
     
-    // Quick stats box
-    lines.push('  ┌─ Quick Stats ─────────────────────────────────────────────────────┐');
-    lines.push(`  │ Fleet: ${this.gameState.fleet.total} ships (${this.gameState.fleet.trading} trading, ${this.gameState.fleet.idle} idle)                                │`);
-    lines.push(`  │ Trade Routes: 2 active, ₡${this.gameState.tradeProfit.toLocaleString()} profit/turn                       │`);
-    lines.push(`  │ Reputation: ${this.gameState.reputation} | Alliance: ${this.gameState.alliance}                       │`);
-    lines.push('  └───────────────────────────────────────────────────────────────────┘');
+    // Quick stats box using ASCII art but consistent with screen borders
+    content.push('  ┌─ Quick Stats ─────────────────────────────────────────────────────┐');
+    content.push(`  │ Fleet: ${this.gameState.fleet.total} ships (${this.gameState.fleet.trading} trading, ${this.gameState.fleet.idle} idle)                                │`);
+    content.push(`  │ Trade Routes: 2 active, ₡${this.gameState.tradeProfit.toLocaleString()} profit/turn                       │`);
+    content.push(`  │ Reputation: ${this.gameState.reputation} | Alliance: ${this.gameState.alliance}                       │`);
+    content.push('  └───────────────────────────────────────────────────────────────────┘');
+    content.push('');
     
-    // Prompt line within the main window border (removed empty line to fit in 24 lines)
-    const prompt = 'Select option [1-6] or command key: _';
-    const promptLine = `│ ${prompt.padEnd(76)} │`;
-    lines.push(promptLine);
-    lines.push(this.renderFooter());
+    // Prompt
+    content.push('Select option [1-6] or command key: _');
     
-    return lines.join('\n');
+    return content;
   }
 
-  renderHeader() {
-    const left = '┌─[ SPACE COMMAND ]─';
-    const middle = '─'.repeat(28);
-    const right = `─[ Turn ${this.gameState.turn} | ${this.gameState.timeLeft} left ]─┐`;
-    return left + middle + right;
-  }
-
-  renderStatusBar() {
-    const player = `${this.gameState.player} @ ${this.gameState.location}`;
-    const credits = `Credits: ₡${this.gameState.credits.toLocaleString()}`;
-    const ap = `AP: ${this.gameState.actionPoints.current}/${this.gameState.actionPoints.max}`;
-    
-    const leftPart = player.padEnd(35);
-    const rightPart = `${credits}  ${ap}`;
-    
-    return `│ ${leftPart}${rightPart.padStart(42)} │`;
-  }
-
-  renderSeparator() {
-    return '├' + '─'.repeat(78) + '┤';
-  }
-
-  renderFooter() {
-    return '└' + '─'.repeat(78) + '┘';
-  }
 
   handleInput(key) {
     const keyUpper = key.toUpperCase();

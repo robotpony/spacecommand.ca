@@ -54,28 +54,42 @@ class FleetOverview {
     // Update viewport to current terminal size
     const viewport = this.ux.updateViewport();
     
-    // Calculate responsive layout
-    const layoutCalc = new LayoutCalculator(viewport);
-    const layout = layoutCalc.calculateFleetOverviewLayout();
-    
     // Clear existing windows
     this.ux.clear();
     
-    // Create status bar
-    const statusBar = this.ux.statusBar({
+    // Update gameState with fleet-specific location info
+    const gameStateWithFleet = {
+      ...this.gameState,
+      location: `Total Fleet: ${this.ships.length} Ships`
+    };
+    
+    // Create the standardized game screen
+    const gameScreen = this.ux.standardGameScreen({
       width: viewport.width,
-      title: 'FLEET COMMAND',
-      subtitle: `Turn ${this.gameState.turn} | ${this.gameState.timeLeft} left`,
-      leftStatus: `Total Fleet: ${this.ships.length} Ships`,
-      rightStatus: `Credits: ₡${this.gameState.credits.toLocaleString()}  AP: ${this.gameState.actionPoints.current}/${this.gameState.actionPoints.max}`
+      height: viewport.height,
+      x: 0,
+      y: 0,
+      screenTitle: 'FLEET COMMAND',
+      gameState: gameStateWithFleet,
+      content: this.buildFleetContent()
     });
     
-    // Build content array with responsive considerations
+    // Add to window manager
+    this.ux.windowManager.windows.set('main', {
+      window: gameScreen,
+      zIndex: 0,
+      visible: true,
+      modal: false
+    });
+    
+    return this.ux.render();
+  }
+
+  buildFleetContent() {
     const content = [];
     
-    if (!layout.compactMode) {
-      content.push('');
-    }
+    // Add spacing for better layout
+    content.push('');
     
     // Build fleet table content
     content.push('ID   NAME           CLASS      LOCATION    STATUS      CARGO    HEALTH');
@@ -108,61 +122,23 @@ class FleetOverview {
       content.push(line);
     });
     
-    // Add fleet summary if space allows
-    if (layout.showSummary) {
-      content.push('');
-      content.push('Fleet Summary:');
-      content.push('─'.repeat(14));
-      content.push('Total Cargo Capacity: 1,600 tons');
-      content.push('Maintenance Due: SS Nebula (3 turns)');
-      content.push('Trade Routes: 2 active, generating ₡12,500/turn');
-      content.push('Combat Rating: 15 (Minimal)');
-    }
+    // Add fleet summary
+    content.push('');
+    content.push('Fleet Summary:');
+    content.push('─'.repeat(14));
+    content.push('Total Cargo Capacity: 1,600 tons');
+    content.push('Maintenance Due: SS Nebula (3 turns)');
+    content.push('Trade Routes: 2 active, generating ₡12,500/turn');
+    content.push('Combat Rating: 15 (Minimal)');
     
-    if (!layout.compactMode) {
-      content.push('');
-      content.push('Ship Commands:');
-      content.push(`${this.ux.colors.color('[1-3]', 'highlight')} Select Ship  ${this.ux.colors.color('[D]', 'highlight')} Deploy  ${this.ux.colors.color('[T]', 'highlight')} Trade Route  ${this.ux.colors.color('[M]', 'highlight')} Maintenance`);
-      content.push(`${this.ux.colors.color('[U]', 'highlight')} Upgrade  ${this.ux.colors.color('[S]', 'highlight')} Sell  ${this.ux.colors.color('[N]', 'highlight')} Buy New Ship  ${this.ux.colors.color('[ESC]', 'highlight')} Back`);
-      content.push('');
-      content.push('Select ship or command:');
-    } else {
-      content.push('');
-      content.push(`${this.ux.colors.color('[1-3]', 'highlight')} Select  ${this.ux.colors.color('[D]', 'highlight')} Deploy  ${this.ux.colors.color('[T]', 'highlight')} Trade  ${this.ux.colors.color('[M]', 'highlight')} Maintenance  ${this.ux.colors.color('[N]', 'highlight')} Buy  ${this.ux.colors.color('[ESC]', 'highlight')} Back`);
-      content.push('Command:');
-    }
+    content.push('');
+    content.push('Ship Commands:');
+    content.push(`${this.ux.colors.color('[1-3]', 'highlight')} Select Ship  ${this.ux.colors.color('[D]', 'highlight')} Deploy  ${this.ux.colors.color('[T]', 'highlight')} Trade Route  ${this.ux.colors.color('[M]', 'highlight')} Maintenance`);
+    content.push(`${this.ux.colors.color('[U]', 'highlight')} Upgrade  ${this.ux.colors.color('[S]', 'highlight')} Sell  ${this.ux.colors.color('[N]', 'highlight')} Buy New Ship  ${this.ux.colors.color('[ESC]', 'highlight')} Back`);
+    content.push('');
+    content.push('Select ship or command:');
     
-    // Adapt content to available space
-    const adaptedContent = layoutCalc.adaptMenuContent(content, layout.availableContentLines);
-    
-    // Create main window using layout coordinates
-    const mainWindow = this.ux.window({
-      width: layout.mainWindow.width,
-      height: layout.mainWindow.height,
-      x: layout.mainWindow.x,
-      y: layout.mainWindow.y,
-      border: 'single',
-      padding: layout.mainWindow.padding,
-      content: adaptedContent
-    });
-    
-    // Add windows to manager (status + main)
-    this.ux.windowManager.windows.set('status', {
-      window: { render: () => statusBar.render(), x: 0, y: 0, width: viewport.width, height: 3 },
-      zIndex: 0,
-      visible: true,
-      modal: false
-    });
-    
-    this.ux.windowManager.windows.set('main', {
-      window: mainWindow,
-      zIndex: 1,
-      visible: true,
-      modal: false
-    });
-    
-    // Render the complete screen
-    return this.ux.render();
+    return content;
   }
 
 

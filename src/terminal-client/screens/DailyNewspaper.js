@@ -46,37 +46,51 @@ class DailyNewspaper {
     // Update viewport to current terminal size
     const viewport = this.ux.updateViewport();
     
-    // Calculate responsive layout
-    const layoutCalc = new LayoutCalculator(viewport);
-    const layout = layoutCalc.calculateMainMenuLayout();
-    
     // Clear existing windows
     this.ux.clear();
     
-    // Create status bar
-    const statusBar = this.ux.statusBar({
+    // Update gameState with newspaper-specific location info
+    const gameStateWithNews = {
+      ...this.gameState,
+      location: `Stardate ${this.gameState.stardate}`,
+      player: 'Galactic Daily News',
+      credits: 0,
+      actionPoints: { current: 0, max: 0 }
+    };
+    
+    // Create the standardized game screen
+    const gameScreen = this.ux.standardGameScreen({
       width: viewport.width,
-      title: 'GALACTIC DAILY NEWS',
-      subtitle: `Turn ${this.gameState.turn} | ${this.gameState.timeLeft} left`,
-      leftStatus: `Stardate ${this.gameState.stardate}`,
-      rightStatus: ''
+      height: viewport.height,
+      x: 0,
+      y: 0,
+      screenTitle: 'GALACTIC DAILY NEWS',
+      gameState: gameStateWithNews,
+      content: this.buildNewsContent()
     });
     
-    // Build content array with responsive considerations
+    // Add to window manager
+    this.ux.windowManager.windows.set('main', {
+      window: gameScreen,
+      zIndex: 0,
+      visible: true,
+      modal: false
+    });
+    
+    return this.ux.render();
+  }
+
+  buildNewsContent() {
     const content = [];
     
+    // Add spacing for better layout
+    content.push('');
+    
     // Newspaper masthead
-    if (!layout.compactMode) {
-      content.push('');
-      content.push('╔═══════════════════════════════════════════════════════════════════╗');
-      content.push('║' + this.ux.colors.color('            THE GALACTIC HERALD - YOUR SOURCE FOR NEWS             ', 'success', { bright: true }) + '║');
-      content.push('╚═══════════════════════════════════════════════════════════════════╝');
-      content.push('');
-    } else {
-      content.push('');
-      content.push(this.ux.colors.color('THE GALACTIC HERALD', 'success', { bright: true }));
-      content.push('');
-    }
+    content.push(this.ux.colors.color('══════════════════════════════════════════════════════════════════════', 'border'));
+    content.push(this.ux.colors.color('                    THE GALACTIC HERALD', 'success', { bright: true }));
+    content.push(this.ux.colors.color('                 YOUR SOURCE FOR NEWS', 'success'));
+    content.push('');
     
     // Main article
     const mainArticle = this.articles[0];
@@ -87,96 +101,54 @@ class DailyNewspaper {
       content.push(line);
     });
     
-    if (!layout.compactMode) {
-      content.push('');
+    content.push('');
+    
+    // Market watch section
+    content.push('MARKET WATCH          TOP TRADERS');
+    content.push('─'.repeat(13) + '          ' + '─'.repeat(11));
+    
+    const maxRows = Math.max(this.marketWatch.length, this.topTraders.length);
+    for (let i = 0; i < maxRows; i++) {
+      const marketItem = this.marketWatch[i] || '';
+      const trader = this.topTraders[i];
       
-      // Market watch section
-      content.push('MARKET WATCH          TOP TRADERS');
-      content.push('─'.repeat(13) + '          ' + '─'.repeat(11));
-      
-      const maxRows = Math.max(this.marketWatch.length, this.topTraders.length);
-      for (let i = 0; i < maxRows; i++) {
-        const marketItem = this.marketWatch[i] || '';
-        const trader = this.topTraders[i];
+      let traderStr = '';
+      if (trader) {
+        const credits = trader.credits < 100000 ? 
+          `₡${trader.credits.toLocaleString()}` : 
+          `₡${(trader.credits / 1000000).toFixed(1)}M`;
         
-        let traderStr = '';
-        if (trader) {
-          const credits = trader.credits < 100000 ? 
-            `₡${trader.credits.toLocaleString()}` : 
-            `₡${(trader.credits / 1000000).toFixed(1)}M`;
-          
-          traderStr = `${trader.rank}. ${trader.name.padEnd(12)}${credits}`;
-          
-          if (trader.name === 'You') {
-            traderStr = this.ux.colors.color(traderStr, 'success', { bright: true });
-          }
+        traderStr = `${trader.rank}. ${trader.name.padEnd(12)}${credits}`;
+        
+        if (trader.name === 'You') {
+          traderStr = this.ux.colors.color(traderStr, 'success', { bright: true });
         }
-        
-        const line = marketItem.padEnd(22) + traderStr;
-        content.push(line);
       }
       
-      // Secondary article
-      if (this.articles[1]) {
-        content.push('');
-        const article = this.articles[1];
-        content.push(this.ux.colors.color(article.headline + ':', 'info') + ' ' + article.content[0]);
-      }
-      
-      // Advertisement
-      content.push('');
-      content.push(this.ux.colors.color('┌─────────────────────────────────────────────────────────────────┐', 'muted'));
-      content.push(this.ux.colors.color('│ ADVERTISEMENT: Visit Orion Prime - Best weapons in the galaxy! │', 'muted'));
-      content.push(this.ux.colors.color('└─────────────────────────────────────────────────────────────────┘', 'muted'));
-    } else {
-      // Compact mode - just show essentials
-      content.push('');
-      content.push('Top Trader: ' + this.ux.colors.color('You (#3)', 'success', { bright: true }));
+      const line = marketItem.padEnd(22) + traderStr;
+      content.push(line);
     }
+    
+    // Secondary article
+    if (this.articles[1]) {
+      content.push('');
+      const article = this.articles[1];
+      content.push(this.ux.colors.color(article.headline + ':', 'info') + ' ' + article.content[0]);
+    }
+    
+    // Advertisement
+    content.push('');
+    content.push('╔══════════════════════════════════════════════════════════════════╗');
+    content.push('║ ADVERTISEMENT: Visit Orion Prime - Best weapons in the galaxy!  ║');
+    content.push('╚══════════════════════════════════════════════════════════════════╝');
     
     // Controls
-    if (!layout.compactMode) {
-      content.push('');
-      content.push(`${this.ux.colors.color('[P]', 'highlight')} Previous  ${this.ux.colors.color('[N]', 'highlight')} Next  ${this.ux.colors.color('[M]', 'highlight')} Market Details  ${this.ux.colors.color('[S]', 'highlight')} Submit Story  ${this.ux.colors.color('[ESC]', 'highlight')} Back`);
-      content.push('');
-      content.push('Command:');
-    } else {
-      content.push('');
-      content.push(`${this.ux.colors.color('[P]', 'highlight')} Prev  ${this.ux.colors.color('[N]', 'highlight')} Next  ${this.ux.colors.color('[M]', 'highlight')} Market  ${this.ux.colors.color('[S]', 'highlight')} Submit  ${this.ux.colors.color('[ESC]', 'highlight')} Back`);
-      content.push('Command:');
-    }
+    content.push('');
+    content.push(`${this.ux.colors.color('[P]', 'highlight')} Previous  ${this.ux.colors.color('[N]', 'highlight')} Next  ${this.ux.colors.color('[M]', 'highlight')} Market Details  ${this.ux.colors.color('[S]', 'highlight')} Submit Story  ${this.ux.colors.color('[ESC]', 'highlight')} Back`);
+    content.push('');
+    content.push('Command:');
     
-    // Adapt content to available space
-    const adaptedContent = layoutCalc.adaptMenuContent(content, layout.availableContentLines);
-    
-    // Create main window using layout coordinates
-    const mainWindow = this.ux.window({
-      width: layout.mainWindow.width,
-      height: layout.mainWindow.height,
-      x: layout.mainWindow.x,
-      y: layout.mainWindow.y,
-      border: 'single',
-      padding: layout.mainWindow.padding,
-      content: adaptedContent
-    });
-    
-    // Add windows to manager (status + main)
-    this.ux.windowManager.windows.set('status', {
-      window: { render: () => statusBar.render(), x: 0, y: 0, width: viewport.width, height: 3 },
-      zIndex: 0,
-      visible: true,
-      modal: false
-    });
-    
-    this.ux.windowManager.windows.set('main', {
-      window: mainWindow,
-      zIndex: 1,
-      visible: true,
-      modal: false
-    });
-    
-    // Render the complete screen
-    return this.ux.render();
+    return content;
   }
 
 

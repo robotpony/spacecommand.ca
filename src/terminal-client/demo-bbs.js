@@ -9,6 +9,7 @@ const logger = require('./utils/logger');
 class BBSClient {
   constructor() {
     this.ux = createUX({ theme: 'retro' });
+    this.ux.setRootWindow(true); // Enable root window for all screens
     this.screenManager = new ScreenManager(this.ux);
     this.running = false;
     

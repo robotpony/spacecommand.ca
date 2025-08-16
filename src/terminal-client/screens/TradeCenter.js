@@ -37,33 +37,40 @@ class TradeCenter {
     // Update viewport to current terminal size
     const viewport = this.ux.updateViewport();
     
-    // Calculate responsive layout
-    const layoutCalc = new LayoutCalculator(viewport);
-    const layout = layoutCalc.calculateTradeCenterLayout();
-    
     // Clear existing windows
     this.ux.clear();
     
-    // Create status bar
-    const statusBar = this.ux.statusBar({
+    // Create the standardized game screen
+    const gameScreen = this.ux.standardGameScreen({
       width: viewport.width,
-      title: 'TRADE CENTER',
-      subtitle: `Turn ${this.gameState.turn} | ${this.gameState.timeLeft} left`,
-      leftStatus: this.gameState.location,
-      rightStatus: `Credits: ₡${this.gameState.credits.toLocaleString()}  AP: ${this.gameState.actionPoints.current}/${this.gameState.actionPoints.max}`
+      height: viewport.height,
+      x: 0,
+      y: 0,
+      screenTitle: 'TRADE CENTER',
+      gameState: this.gameState,
+      content: this.buildTradeContent()
     });
     
-    // Build main content with responsive layout
+    // Add to window manager
+    this.ux.windowManager.windows.set('main', {
+      window: gameScreen,
+      zIndex: 0,
+      visible: true,
+      modal: false
+    });
+    
+    return this.ux.render();
+  }
+
+  buildTradeContent() {
     const content = [];
     
-    if (!layout.compactMode) {
-      content.push('');
-    }
+    // Add spacing for better layout
+    content.push('');
     
-    // Create three-column layout within single window
+    // Create three-column layout
     const leftColWidth = 35;
     const rightColWidth = 25;
-    const centerColWidth = layout.mainWindow.width - leftColWidth - rightColWidth - 12; // Account for borders and spacing
     
     // Header row
     const headerRow = 
@@ -73,7 +80,7 @@ class TradeCenter {
       ' '.repeat(2) +
       'SELLING';
     content.push(headerRow);
-    content.push('═'.repeat(layout.mainWindow.width - 4));
+    content.push('═'.repeat(Math.min(80, leftColWidth + rightColWidth + 20)));
     
     // Build buying items
     const buyingItems = this.marketGoods.map(good => 
@@ -129,49 +136,13 @@ class TradeCenter {
       content.push(row);
     }
     
-    if (!layout.compactMode) {
-      content.push('');
-      content.push('Quick Actions:');
-      content.push(`${this.ux.colors.color('[Q]', 'highlight')} Quick Sell All  ${this.ux.colors.color('[W]', 'highlight')} Optimal Buy  ${this.ux.colors.color('[ESC]', 'highlight')} Back to Menu`);
-      content.push('');
-      content.push('Enter selection or amount (e.g., "1 100" to buy 100 Food):');
-    } else {
-      content.push('');
-      content.push(`${this.ux.colors.color('[Q]', 'highlight')} Quick Sell  ${this.ux.colors.color('[W]', 'highlight')} Optimal Buy  ${this.ux.colors.color('[ESC]', 'highlight')} Back`);
-      content.push('Command:');
-    }
+    content.push('');
+    content.push('Quick Actions:');
+    content.push(`${this.ux.colors.color('[Q]', 'highlight')} Quick Sell All  ${this.ux.colors.color('[W]', 'highlight')} Optimal Buy  ${this.ux.colors.color('[ESC]', 'highlight')} Back to Menu`);
+    content.push('');
+    content.push('Enter selection or amount (e.g., "1 100" to buy 100 Food):');
     
-    // Adapt content to available space
-    const adaptedContent = layoutCalc.adaptMenuContent(content, layout.availableContentLines);
-    
-    // Create main window
-    const mainWindow = this.ux.window({
-      width: layout.mainWindow.width,
-      height: layout.mainWindow.height,
-      x: layout.mainWindow.x,
-      y: layout.mainWindow.y,
-      border: 'single',
-      padding: layout.mainWindow.padding,
-      content: adaptedContent
-    });
-    
-    // Add windows to manager
-    this.ux.windowManager.windows.set('status', {
-      window: { render: () => statusBar.render(), x: 0, y: 0, width: viewport.width, height: 3 },
-      zIndex: 0,
-      visible: true,
-      modal: false
-    });
-    
-    this.ux.windowManager.windows.set('main', {
-      window: mainWindow,
-      zIndex: 1,
-      visible: true,
-      modal: false
-    });
-    
-    // Render the complete screen
-    return this.ux.render();
+    return content;
   }
 
 

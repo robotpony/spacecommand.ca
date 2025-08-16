@@ -4,6 +4,8 @@ const { DecorationV2, TitleScreenV2 } = require('../components/DecorationV2');
 const { StyleEngine } = require('../rendering/StyleEngine');
 const LayoutEngine = require('../rendering/LayoutEngine');
 const AnsiParser = require('./AnsiParser');
+const ascii = require('../utils/ascii');
+const colors = require('../utils/colors');
 
 class WindowManager {
   constructor(options = {}) {
@@ -17,6 +19,9 @@ class WindowManager {
     this.styleEngine = new StyleEngine();
     this.layoutEngine = new LayoutEngine();
     this.zIndex = 0;
+    this.useRootWindow = options.useRootWindow !== false; // Default to true
+    this.rootWindowBorder = options.rootWindowBorder || 'single';
+    this.rootWindowColor = options.rootWindowColor || 'border';
   }
 
   createWindow(id, options = {}) {
@@ -238,14 +243,18 @@ class WindowManager {
 
   render() {
     // Initialize buffer with parsed empty lines
-    // Reserve the last line for cursor/command prompt in BBS-style interfaces
-    const renderHeight = this.viewport.height - 1;
+    const renderHeight = this.viewport.height;
     const parsedBuffer = [];
     for (let y = 0; y < renderHeight; y++) {
       parsedBuffer[y] = [];
       for (let x = 0; x < this.viewport.width; x++) {
         parsedBuffer[y].push({ char: ' ', style: '' });
       }
+    }
+    
+    // If root window is enabled, render the border first
+    if (this.useRootWindow) {
+      this.renderRootWindow(parsedBuffer);
     }
     
     const sortedWindows = Array.from(this.windows.entries())
@@ -291,6 +300,57 @@ class WindowManager {
     return buffer;
   }
 
+  renderRootWindow(parsedBuffer) {
+    const chars = ascii.BOX_DRAWING[this.rootWindowBorder] || ascii.BOX_DRAWING.single;
+    const width = this.viewport.width;
+    const height = this.viewport.height;
+    
+    // Top border
+    for (let x = 0; x < width; x++) {
+      let char;
+      if (x === 0) {
+        char = chars.topLeft;
+      } else if (x === width - 1) {
+        char = chars.topRight;
+      } else {
+        char = chars.horizontal;
+      }
+      
+      // Parse the colored character to get its style
+      const coloredChar = colors.color(char, this.rootWindowColor);
+      const parsed = AnsiParser.parse(coloredChar);
+      parsedBuffer[0][x] = parsed[0] || { char: char, style: '' };
+    }
+    
+    // Side borders
+    for (let y = 1; y < height - 1; y++) {
+      // Left border
+      const coloredVertical = colors.color(chars.vertical, this.rootWindowColor);
+      const parsedVertical = AnsiParser.parse(coloredVertical);
+      parsedBuffer[y][0] = parsedVertical[0] || { char: chars.vertical, style: '' };
+      
+      // Right border
+      parsedBuffer[y][width - 1] = parsedVertical[0] || { char: chars.vertical, style: '' };
+    }
+    
+    // Bottom border
+    for (let x = 0; x < width; x++) {
+      let char;
+      if (x === 0) {
+        char = chars.bottomLeft;
+      } else if (x === width - 1) {
+        char = chars.bottomRight;
+      } else {
+        char = chars.horizontal;
+      }
+      
+      // Parse the colored character to get its style
+      const coloredChar = colors.color(char, this.rootWindowColor);
+      const parsed = AnsiParser.parse(coloredChar);
+      parsedBuffer[height - 1][x] = parsed[0] || { char: char, style: '' };
+    }
+  }
+
   renderToString() {
     return this.render().join('\n');
   }
@@ -327,6 +387,18 @@ class WindowManager {
 
   setTheme(themeName) {
     this.styleEngine.setTheme(themeName);
+  }
+
+  setRootWindow(enabled) {
+    this.useRootWindow = enabled;
+  }
+
+  setRootWindowBorder(borderStyle) {
+    this.rootWindowBorder = borderStyle;
+  }
+
+  setRootWindowColor(color) {
+    this.rootWindowColor = color;
   }
 
   getTerminalWidth() {
