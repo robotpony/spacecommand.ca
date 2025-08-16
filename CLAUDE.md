@@ -134,3 +134,244 @@ npm run turn:process
 - Never manually render ASCII borders or hardcode box-drawing characters
 - Follow the component patterns established in the UX library for consistent behavior
 - The UX library provides proper layout management, color handling, and responsive design
+
+## Coding Guidelines
+
+### Documentation Standards
+
+#### Classes
+- Every class MUST have a short explanation of its purpose at the top
+- Document the class's responsibilities and main interactions
+- Example:
+```javascript
+/**
+ * Manages player trading operations and market interactions.
+ * Handles buy/sell orders, validates transactions, and updates inventories.
+ * Emits TradeCompleted events on successful trades.
+ */
+class TradingManager { }
+```
+
+#### Functions/Methods
+- All public methods MUST have JSDoc comments explaining:
+  - Purpose and use case
+  - Parameters with types and descriptions
+  - Return value
+  - Side effects (state changes, events emitted)
+  - Possible errors thrown or returned
+- Example:
+```javascript
+/**
+ * Executes a trade between player and station.
+ * @param {string} playerId - UUID of the trading player
+ * @param {TradeOrder} order - Trade details including item and quantity
+ * @returns {TradeResult} Result object with success status or error
+ * @throws {NetworkError} On connection failure
+ * @emits TradeCompleted On successful trade
+ * @sideEffect Updates player inventory and station stock
+ */
+async executeTrade(playerId, order) { }
+```
+
+#### Inline Comments
+- Focus on the "why" not the "what"
+- Explain complex algorithms and business logic
+- Mark TODOs with context: `// TODO: [username] - Optimize for large fleets (>100 ships)`
+- Use tactical comments to guide readers through multi-step algorithms
+
+### Error Handling
+
+- **Network/System Errors**: Use exceptions (try/catch)
+  - HTTP failures, database connections, file I/O
+  - Always include error context and recovery suggestions
+- **Application Logic**: Return error objects
+  - Use consistent format: `{ success: boolean, data?: T, error?: string, code?: string }`
+  - Never throw for expected business logic failures (insufficient funds, invalid move)
+- **Error boundaries**: Wrap external API calls with try/catch at service boundaries
+
+### Naming Conventions
+
+- **Classes**: PascalCase (`PlayerShip`, `MarketController`)
+- **Methods/Functions**: camelCase (`calculateDistance`, `processOrder`)
+- **Constants**: UPPER_SNAKE_CASE (`MAX_CARGO_CAPACITY`, `TURN_DURATION_MS`)
+- **Private members**: Prefix with underscore (`_internalState`) or use # for true privacy
+- **Interfaces**: Prefix with 'I' for contracts (`ITradeHandler`), no prefix for data shapes
+- **Events**: PascalCase for event names (`TradeCompleted`, `ShipDestroyed`)
+- **Files**: kebab-case for files (`trade-manager.ts`), match class name for single-class files
+
+### File Organization
+
+- **One class per file** (exceptions: small related utility classes)
+- **File size warning**: Flag files over 300 lines for potential refactoring
+- **Class size warning**: Flag classes over 200 lines as candidates for splitting
+- **Module structure**:
+  ```
+  module/
+  ├── index.ts           # Public exports only
+  ├── types.ts           # Shared types/interfaces
+  ├── constants.ts       # Module constants
+  ├── class-name.ts      # Implementation files
+  └── class-name.test.ts # Test files alongside implementation
+  ```
+- **Import order**:
+  1. Node built-ins
+  2. External dependencies
+  3. Internal modules (absolute paths)
+  4. Relative imports
+  5. Type imports
+
+### TypeScript Guidelines
+
+- **Types vs Interfaces**:
+  - Use `type` for primitives, unions, and utility types
+  - Use `interface` for object shapes and contracts that may be extended
+- **Explicit return types**: Always specify return types for public methods
+- **Strict mode**: Enable all strict checks
+- **Avoid `any`**: Use `unknown` if type is truly unknown, then narrow
+- **Generics**: Use meaningful names (`TPayload` not `T` when possible)
+
+### Testing Standards
+
+- **Coverage goals**:
+  - 100% class coverage (every class has a test file)
+  - Focus on testing used code paths, not arbitrary line coverage
+  - Critical game logic should approach 100% branch coverage
+- **Test structure**: Arrange-Act-Assert pattern
+- **Test names**: Describe behavior, not implementation
+  - Good: `"should deduct credits when purchase succeeds"`
+  - Bad: `"should call updateBalance method"`
+- **Mock sparingly**: Prefer real objects, mock only external dependencies
+
+### Async Code Patterns
+
+- **Always use async/await** over raw promises or callbacks
+- **Error handling**: Every async function should have try/catch or return error object
+- **Concurrent operations**: Use `Promise.all()` for parallel operations
+- **Avoid blocking**: Never use synchronous I/O operations
+- **Timeouts**: Set reasonable timeouts for all external calls
+
+### Game-Specific Patterns
+
+#### State Management
+- **Immutability**: Never mutate game state directly
+- Create new state objects incorporating changes:
+```javascript
+// Good
+const newState = {
+  ...currentState,
+  players: {
+    ...currentState.players,
+    [playerId]: updatedPlayer
+  }
+};
+
+// Bad
+currentState.players[playerId] = updatedPlayer;
+```
+- Consider using Immer for complex state updates
+
+#### Event System
+- **Global Event Bus**: Singleton or dependency-injected EventEmitter
+- **Event naming**: PascalCase, past tense for completed actions
+- **Event payload**: Always include timestamp and source
+```javascript
+eventBus.emit('TradeCompleted', {
+  timestamp: Date.now(),
+  source: 'TradingManager',
+  playerId,
+  trade: tradeDetails
+});
+```
+- **Cleanup**: Always remove listeners when components are destroyed
+
+#### Turn Processing
+- **State Machine**: Define clear game phases
+```javascript
+enum GamePhase {
+  COLLECTING_ORDERS = 'collecting_orders',
+  PROCESSING_MOVEMENT = 'processing_movement',
+  RESOLVING_COMBAT = 'resolving_combat',
+  UPDATING_ECONOMY = 'updating_economy',
+  SENDING_RESULTS = 'sending_results'
+}
+```
+- **Command Pattern**: Encapsulate player actions as command objects
+```javascript
+interface GameCommand {
+  type: CommandType;
+  playerId: string;
+  validate(): ValidationResult;
+  execute(state: GameState): GameState;
+  undo(state: GameState): GameState;  // For rollback support
+}
+```
+
+### Performance Guidelines
+
+- **Document complexity**: Add comments for O(n²) or worse operations
+- **Lazy loading**: Load large datasets only when needed
+- **Caching**: Cache expensive calculations with TTL
+- **Database queries**: Use indexes, avoid N+1 queries
+- **Memory management**: Clean up event listeners, clear caches periodically
+
+### Code Quality
+
+- **Pure functions**: Prefer pure functions for calculations and game logic
+- **Side effects**: Isolate side effects to service boundaries
+- **Magic values**: Extract all magic numbers/strings to named constants
+- **Early returns**: Use guard clauses to reduce nesting
+- **Function size**: Keep functions under 30 lines (flag for refactoring if larger)
+
+### Data Validation
+
+- **API boundaries**: Validate all inputs from external sources
+- **Type guards**: Create type guard functions for runtime validation
+- **Fail fast**: Validate early and provide clear error messages
+- **Sanitization**: Always sanitize user input before storage or display
+
+### Logging
+
+- **Structured logging**: Use consistent format with metadata
+```javascript
+logger.info('Trade executed', {
+  playerId,
+  itemId,
+  quantity,
+  price,
+  timestamp: Date.now()
+});
+```
+- **Log levels**:
+  - `debug`: Detailed execution flow
+  - `info`: Important business events
+  - `warn`: Recoverable issues
+  - `error`: Errors requiring attention
+- **No sensitive data**: Never log passwords, tokens, or personal data
+
+### Git Workflow
+
+- **Commit format**: Use conventional commits
+  - `feat:` New features
+  - `fix:` Bug fixes
+  - `refactor:` Code restructuring
+  - `docs:` Documentation only
+  - `test:` Test additions/changes
+  - `chore:` Build process, dependencies
+- **Commit size**: Small, atomic commits that pass tests
+- **Branch naming**: `feature/description`, `bugfix/description`
+
+### Security Guidelines
+
+- **Input validation**: Never trust user input
+- **SQL injection**: Always use parameterized queries
+- **Secrets**: Never commit secrets, use environment variables
+- **Authentication**: Validate tokens on every request
+- **Rate limiting**: Implement rate limits on all endpoints
+
+### Common Patterns to Follow
+
+- **Repository pattern**: For data access layer
+- **Service layer**: For business logic
+- **DTO pattern**: For API request/response shapes
+- **Factory pattern**: For complex object creation
+- **Observer pattern**: For reactive updates (via Event Bus)

@@ -4,6 +4,7 @@ const { Window, Dialog } = require('./components/Window');
 const StatusBar = require('./components/StatusBar');
 const Table = require('./components/Table');
 const StandardGameScreen = require('./components/StandardGameScreen');
+const Prompt = require('./components/Prompt');
 
 // V1 Components (original)
 const { Decoration, TitleScreen } = require('./components/Decoration');
@@ -236,6 +237,7 @@ module.exports = {
   Window,
   Dialog,
   StatusBar,
+  Prompt,
   Table,
   StandardGameScreen,
   

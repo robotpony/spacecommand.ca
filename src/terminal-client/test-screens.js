@@ -5,6 +5,7 @@ const ActionQueue = require('./screens/ActionQueue');
 const MarketOverview = require('./screens/MarketOverview');
 const GalaxyMap = require('./screens/GalaxyMap');
 const DailyNewspaper = require('./screens/DailyNewspaper');
+const TradeCenter = require('./screens/TradeCenter');
 const fs = require('fs');
 const path = require('path');
 
@@ -50,6 +51,7 @@ async function main() {
     await testScreen(MarketOverview, 'Market Overview');
     await testScreen(GalaxyMap, 'Galaxy Map');
     await testScreen(DailyNewspaper, 'Daily News');
+    await testScreen(TradeCenter, 'Trade Center');
     
     console.log('\n✅ All screens tested successfully!');
     console.log('Check tmp/test-output/ for rendered output files');

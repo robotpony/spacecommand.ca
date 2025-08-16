@@ -65,104 +65,150 @@ class TradeCenter {
   buildTradeContent() {
     const content = [];
     
-    // Add spacing for better layout
-    content.push('');
-    
-    // Calculate available width for content (accounting for StandardGameScreen layout)
+    // Calculate available width for content
     const viewport = this.ux.getViewport();
-    const contentPadding = 1; // From StandardGameScreen
-    const availableWidth = viewport.width - (contentPadding * 2) - 2; // borders
+    const contentPadding = 1;
+    const availableWidth = viewport.width - (contentPadding * 2) - 2;
     
     // Create three-column layout with responsive widths
-    const spacing = 2; // space between columns
-    const totalSpacing = spacing * 2; // two gaps
+    const spacing = 2;
+    const totalSpacing = spacing * 2;
     const usableWidth = availableWidth - totalSpacing;
     
-    // Distribute columns: 45% buying, 30% cargo, 25% selling
-    const leftColWidth = Math.floor(usableWidth * 0.45);
-    const rightColWidth = Math.floor(usableWidth * 0.30);
-    const sellingColWidth = usableWidth - leftColWidth - rightColWidth;
+    const leftColWidth = Math.floor(usableWidth * 0.32);
+    const centerColWidth = Math.floor(usableWidth * 0.38);
+    const rightColWidth = usableWidth - leftColWidth - centerColWidth;
     
-    // Header row
-    const headerRow = 
-      'BUYING'.padEnd(leftColWidth) + 
-      ' '.repeat(spacing) +
-      'CARGO BAY'.padEnd(rightColWidth) + 
-      ' '.repeat(spacing) +
-      'SELLING';
-    content.push(headerRow);
-    content.push('═'.repeat(usableWidth));
+    // Create buying table
+    const buyingTable = this.createBuyingTable();
+    content.push('BUYING:');
+    content.push(...buyingTable.render());
+    content.push('');
     
-    // Build buying items
-    const buyingItems = this.marketGoods.map(good => 
-      `${this.ux.colors.color(`[${good.id}]`, 'highlight')} ${good.name.padEnd(10)} ₡${String(good.price).padEnd(4)} (${good.available})`
-    );
+    // Create cargo info
+    const cargoInfo = this.createCargoInfo();
+    content.push(...cargoInfo.render());
+    content.push('');
     
-    // Build cargo info
-    const cargoItems = [
-      `Ship: ${this.gameState.ship}`,
-      `Capacity: ${this.gameState.cargoCapacity.used}/${this.gameState.cargoCapacity.total}`,
-      '',
-      'Current Cargo:',
-      ...this.cargo.map(item => `• ${item.name} ${item.quantity}u @ ₡${item.purchasePrice}`)
-    ];
+    // Create selling table  
+    const sellingTable = this.createSellingTable();
+    content.push('SELLING:');
+    content.push(...sellingTable.render());
+    
+    content.push('');
+    
+    // Create a menu with prompt for trade actions
+    const { Menu } = require('../../modules/ux/components/Menu');
+    const tradeMenu = new Menu({
+      items: [
+        { key: 'Q', label: 'Quick Sell All', description: 'Sell all cargo at current prices' },
+        { key: 'W', label: 'Optimal Buy', description: 'Buy recommended items' },
+        { key: 'ESC', label: 'Back to Menu', description: 'Return to main menu' }
+      ],
+      title: 'Quick Actions:',
+      showKeys: true,
+      showDescriptions: true,
+      itemSpacing: 0,
+      prompt: {
+        text: 'Enter selection or amount (e.g., "1 100" to buy 100 Food):',
+        style: 'minimal',
+        cursor: 'underline',
+        blinking: true,
+        spacing: 1
+      }
+    });
+    
+    content.push(...tradeMenu.render());
+    
+    return content;
+  }
+
+  createBuyingTable() {
+    const Table = require('../../modules/ux/components/Table');
+    
+    const headers = ['', 'ITEM', 'PRICE', 'QTY'];
+    const rows = this.marketGoods.map(good => [
+      this.ux.colors.color(`[${good.id}]`, 'highlight'),
+      good.name,
+      `₡${good.price}`,
+      `(${good.available})`
+    ]);
+    
+    return new Table({
+      headers,
+      rows,
+      columnAligns: ['left', 'left', 'right', 'right'],
+      border: 'single',
+      compact: false,
+      borderColor: 'border',
+      headerColor: 'title'
+    });
+  }
+
+  createCargoInfo() {
+    const { Window } = require('../../modules/ux/components/Window');
     
     const totalValue = this.cargo.reduce((sum, item) => {
       const marketGood = this.marketGoods.find(g => g.name === item.name);
       return sum + (marketGood ? item.quantity * marketGood.price : 0);
     }, 0);
     
-    cargoItems.push('');
-    cargoItems.push(`Est. Value: ₡${totalValue.toLocaleString()}`);
+    const cargoContent = [
+      `Ship: ${this.gameState.ship}`,
+      `Capacity: ${this.gameState.cargoCapacity.used}/${this.gameState.cargoCapacity.total}`,
+      '',
+      'Current Cargo:',
+      ...this.cargo.map(item => `• ${item.name} ${item.quantity}u @ ₡${item.purchasePrice}`),
+      '',
+      `Est. Value: ₡${totalValue.toLocaleString()}`
+    ];
     
-    // Build selling items
+    return new Window({
+      title: 'CARGO BAY',
+      content: cargoContent,
+      height: cargoContent.length + 4,
+      padding: 1,
+      border: 'single',
+      borderColor: 'border',
+      titleColor: 'title'
+    });
+  }
+
+  createSellingTable() {
+    const Table = require('../../modules/ux/components/Table');
+    
     const sellKeys = ['A', 'B', 'C', 'D'];
-    const sellingItems = [];
-    let sellIndex = 0;
+    const headers = ['', 'SELL', 'PROFIT'];
+    const rows = [];
     
+    let sellIndex = 0;
     this.cargo.forEach((item) => {
       const marketGood = this.marketGoods.find(g => g.name === item.name);
-      if (marketGood) {
+      if (marketGood && sellIndex < sellKeys.length) {
         const totalValue = item.quantity * marketGood.price;
         const purchaseValue = item.quantity * item.purchasePrice;
         const profit = totalValue - purchaseValue;
-        const profitStr = profit >= 0 ? `+₡${profit.toLocaleString()}` : `-₡${Math.abs(profit).toLocaleString()}`;
+        const profitStr = profit >= 0 ? `+₡${profit}` : `-₡${Math.abs(profit)}`;
         const profitColor = profit >= 0 ? 'success' : 'error';
         
-        const line = `${this.ux.colors.color(`[${sellKeys[sellIndex]}]`, 'highlight')} ${item.name} ${item.quantity}u ${this.ux.colors.color(`${profitStr}`, profitColor)}`;
-        sellingItems.push(line);
+        rows.push([
+          this.ux.colors.color(`[${sellKeys[sellIndex]}]`, 'highlight'),
+          `${item.name} ${item.quantity}u`,
+          { text: profitStr, color: profitColor }
+        ]);
         sellIndex++;
       }
     });
     
-    // Combine columns row by row
-    const maxRows = Math.max(buyingItems.length, cargoItems.length, sellingItems.length);
-    
-    for (let i = 0; i < maxRows; i++) {
-      const leftCol = (buyingItems[i] || '');
-      const centerCol = (cargoItems[i] || '');
-      const rightCol = (sellingItems[i] || '');
-      
-      // Truncate each column to fit its allocated width
-      const leftTruncated = this.truncateToWidth(leftCol, leftColWidth);
-      const centerTruncated = this.truncateToWidth(centerCol, rightColWidth);
-      const rightTruncated = this.truncateToWidth(rightCol, sellingColWidth);
-      
-      const row = leftTruncated.padEnd(leftColWidth) + 
-                  ' '.repeat(spacing) + 
-                  centerTruncated.padEnd(rightColWidth) + 
-                  ' '.repeat(spacing) + 
-                  rightTruncated;
-      content.push(row);
-    }
-    
-    content.push('');
-    content.push('Quick Actions:');
-    content.push(`${this.ux.colors.color('[Q]', 'highlight')} Quick Sell All  ${this.ux.colors.color('[W]', 'highlight')} Optimal Buy  ${this.ux.colors.color('[ESC]', 'highlight')} Back to Menu`);
-    content.push('');
-    content.push('Enter selection or amount (e.g., "1 100" to buy 100 Food):');
-    
-    return content;
+    return new Table({
+      headers,
+      rows,
+      columnAligns: ['left', 'left', 'right'],
+      border: 'single',
+      compact: false,
+      borderColor: 'border',
+      headerColor: 'title'
+    });
   }
 
   truncateToWidth(text, maxWidth) {
@@ -174,6 +220,17 @@ class TradeCenter {
     
     // Simple truncation for now - could be improved to handle color codes better
     return text.substring(0, maxWidth - 3) + '...';
+  }
+
+  padToWidth(text, targetWidth) {
+    // Use the UX library's color-aware length calculation
+    const displayLength = this.ux.colors.length(text);
+    if (displayLength >= targetWidth) {
+      return text;
+    }
+    
+    const padding = targetWidth - displayLength;
+    return text + ' '.repeat(padding);
   }
 
   handleInput(input) {
