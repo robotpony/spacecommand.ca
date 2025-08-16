@@ -10,21 +10,38 @@ SpaceCommand is a BBS-style multiplayer space trading and empire-building game f
 
 The project follows a clean domain-driven architecture:
 
+### Current Implementation
 ```text
 src/
 ├── core/              # Game engine & business logic
+│   └── entities/      # Core game entities (Player, Fleet, System, etc.)
+├── infrastructure/    # Database and external services
+│   └── database/      # Connection, migrations, seeding
+├── modules/           
+│   └── ux/            # Custom terminal UI toolkit
+│       ├── components/    # UI components (Window, Menu, Table, etc.)
+│       ├── rendering/     # Layout and rendering engines
+│       └── utils/         # Colors, formatting, ASCII art
+├── terminal-client/   # Terminal-based game client
+│   ├── screens/       # Game screens (MainMenu, TradeCenter, etc.)
+│   └── utils/         # Client utilities
+└── shared/            # Shared types and interfaces
+```
+
+### Planned Architecture (Not Yet Implemented)
+```text
+src/
+├── core/              # TO BE EXPANDED:
 │   ├── economy/       # Market dynamics, trade routes
 │   ├── military/      # Combat, fleet management
 │   ├── diplomacy/     # Alliances, treaties, reputation
 │   ├── resources/     # Mining, production, consumption
 │   └── simulation/    # Turn processing, events
-├── modules/           
-│   ├── ux/            # UX toolkit for shared features
+├── modules/           # TO BE EXPANDED:
 │   ├── world/         # Shared world tools (data models)
 │   └── messaging/     # Game and p2p messaging tools
-├── api/               # REST endpoints + WebSocket
-├── terminal-client/   # Curses/rich-based TUI
-└── web-client/        # Retro web UI
+├── api/               # REST endpoints + WebSocket (NOT YET IMPLEMENTED)
+└── web-client/        # Retro web UI (NOT YET IMPLEMENTED)
 ```
 
 ## Key Architectural Patterns
@@ -38,6 +55,22 @@ src/
 ## Development Status
 
 The project is currently in early development after a reset (branch: recombobulated).
+
+### What's Implemented
+- Core entity models (Player, Fleet, System, Empire, Planet)
+- Custom terminal UI toolkit (UX library)
+- Terminal client screens (MainMenu, TradeCenter, GalaxyMap, etc.)
+- Database schema and migrations
+- Basic project structure and TypeScript configuration
+
+### What's Not Yet Implemented
+- Game logic (economy, combat, diplomacy)
+- Turn processing system
+- API endpoints
+- Web client
+- Multiplayer functionality
+- Redis session management
+- Actual database operations (migrations and seeding scripts exist but need implementation)
 
 ## Game Design Philosophy
 
@@ -58,11 +91,9 @@ npm install
 cp .env.example .env
 # Edit .env with your database credentials
 
-# Run database migrations
-npm run db:migrate
-
-# Seed initial game data
-npm run db:seed
+# Database commands (NOT YET FUNCTIONAL - implementation needed):
+# npm run db:migrate  # Needs migrate.ts implementation
+# npm run db:seed     # Needs seed.ts implementation
 ```
 
 ### Development Commands
@@ -88,36 +119,40 @@ npm run build
 npm start
 ```
 
-### Database Commands
+### Database Commands (Scripts defined but not yet implemented)
 ```bash
-# Run migrations
-npm run db:migrate
-
-# Reset database (drop all tables and re-migrate)
-npm run db:migrate reset
-
-# Seed database with test data
-npm run db:seed
-
-# Clear seed data
-npm run db:seed clear
+# These commands are defined in package.json but the underlying scripts need implementation:
+# npm run db:migrate       # Requires src/infrastructure/database/migrate.ts
+# npm run db:migrate reset # Requires migrate.ts with reset functionality
+# npm run db:seed          # Requires src/infrastructure/database/seed.ts
+# npm run db:seed clear    # Requires seed.ts with clear functionality
 ```
 
-### Game Management
+### Game Management (Scripts defined but not yet implemented)
 ```bash
-# Initialize game universe
-npm run game:init
-
-# Process turn (for testing)
-npm run turn:process
+# These commands are defined in package.json but the underlying scripts need implementation:
+# npm run game:init        # Requires src/scripts/init-game.ts
+# npm run turn:process     # Requires src/scripts/process-turn.ts
 ```
 
-## Technology Stack (Based on Previous Implementation)
+## Technology Stack
 
-- **Backend**: Node.js with Express
-- **Database**: PostgreSQL for game data, Redis for sessions
-- **Frontend**: Terminal client (Node.js readline), Web client (React planned)
-- **Testing**: Jest for unit tests, integration tests planned
+### Currently Installed & Configured
+- **Runtime**: Node.js with TypeScript (tsx for development)
+- **Database**: PostgreSQL (pg driver installed)
+- **Caching**: Redis (installed but not yet integrated)
+- **Terminal UI**: Custom UX library (not readline-based)
+- **Authentication**: bcryptjs, jsonwebtoken (installed)
+- **Validation**: Zod for schema validation
+- **Logging**: Winston logger
+- **Testing**: Jest (configured but tests not yet written)
+- **Linting**: ESLint with TypeScript support
+
+### Planned but Not Implemented
+- **API**: Express (installed but no endpoints created)
+- **Web Client**: React or similar (not yet started)
+- **Session Management**: Redis sessions (Redis installed but not configured)
+- **Real-time Updates**: WebSockets (not yet implemented)
 
 ## Important Notes
 
@@ -232,7 +267,9 @@ async executeTrade(playerId, order) { }
 
 ### Testing Standards
 
-- **Coverage goals**:
+**Note**: Jest is configured but automated tests are not yet implemented. Current test files are manual demos for UI components.
+
+- **Coverage goals** (when tests are implemented):
   - 100% class coverage (every class has a test file)
   - Focus on testing used code paths, not arbitrary line coverage
   - Critical game logic should approach 100% branch coverage
