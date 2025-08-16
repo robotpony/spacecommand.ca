@@ -28,6 +28,7 @@ class StyleEngine {
 
     this.defineStyle('menu.default', {
       keyColor: 'secondary',
+      keyWeight: 'bold',
       labelColor: 'info',
       selectedKeyColor: 'primary',
       selectedLabelColor: 'highlight',
@@ -37,6 +38,7 @@ class StyleEngine {
 
     this.defineStyle('menu.compact', {
       keyColor: 'muted',
+      keyWeight: 'bold',
       labelColor: 'info',
       selectedKeyColor: 'highlight',
       selectedLabelColor: 'highlight',
@@ -94,6 +96,54 @@ class StyleEngine {
       color: 'success',
       weight: 'bold'
     });
+
+    this.defineStyle('text.danger', {
+      color: 'error',
+      weight: 'bold',
+      effect: 'flash'
+    });
+
+    this.defineStyle('text.critical', {
+      color: 'error',
+      weight: 'bold',
+      effect: 'flash'
+    });
+
+    this.defineStyle('text.interactive', {
+      color: 'primary',
+      weight: 'bold'
+    });
+
+    this.defineStyle('text.highlight', {
+      color: 'highlight',
+      weight: 'bold'
+    });
+
+    this.defineStyle('text.data', {
+      color: 'info',
+      effect: 'underline'
+    });
+
+    this.defineStyle('text.status', {
+      color: 'info',
+      weight: 'bold'
+    });
+
+    this.defineStyle('text.navigation', {
+      color: 'muted',
+      weight: 'bold'
+    });
+
+    this.defineStyle('text.header', {
+      color: 'title',
+      weight: 'bold',
+      align: 'center'
+    });
+
+    this.defineStyle('text.subheader', {
+      color: 'secondary',
+      weight: 'bold'
+    });
   }
 
   defineStyle(selector, properties) {
@@ -141,8 +191,16 @@ class StyleEngine {
       // Background color implementation would go here
     }
     
-    if (finalStyle.weight === 'bold') {
+    if (finalStyle.weight === 'bold' || finalStyle.keyWeight === 'bold') {
       result = colors.ANSI_CODES.bright + result;
+    }
+    
+    if (finalStyle.effect === 'underline') {
+      result = colors.ANSI_CODES.underscore + result + colors.ANSI_CODES.reset;
+    }
+    
+    if (finalStyle.effect === 'flash') {
+      result = colors.ANSI_CODES.blink + result + colors.ANSI_CODES.reset;
     }
     
     return result;

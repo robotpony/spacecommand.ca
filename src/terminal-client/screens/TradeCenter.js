@@ -68,23 +68,34 @@ class TradeCenter {
     // Add spacing for better layout
     content.push('');
     
-    // Create three-column layout
-    const leftColWidth = 35;
-    const rightColWidth = 25;
+    // Calculate available width for content (accounting for StandardGameScreen layout)
+    const viewport = this.ux.getViewport();
+    const contentPadding = 1; // From StandardGameScreen
+    const availableWidth = viewport.width - (contentPadding * 2) - 2; // borders
+    
+    // Create three-column layout with responsive widths
+    const spacing = 2; // space between columns
+    const totalSpacing = spacing * 2; // two gaps
+    const usableWidth = availableWidth - totalSpacing;
+    
+    // Distribute columns: 45% buying, 30% cargo, 25% selling
+    const leftColWidth = Math.floor(usableWidth * 0.45);
+    const rightColWidth = Math.floor(usableWidth * 0.30);
+    const sellingColWidth = usableWidth - leftColWidth - rightColWidth;
     
     // Header row
     const headerRow = 
       'BUYING'.padEnd(leftColWidth) + 
-      ' '.repeat(2) +
+      ' '.repeat(spacing) +
       'CARGO BAY'.padEnd(rightColWidth) + 
-      ' '.repeat(2) +
+      ' '.repeat(spacing) +
       'SELLING';
     content.push(headerRow);
-    content.push('═'.repeat(Math.min(80, leftColWidth + rightColWidth + 20)));
+    content.push('═'.repeat(usableWidth));
     
     // Build buying items
     const buyingItems = this.marketGoods.map(good => 
-      `${this.ux.colors.color(`[${good.id}]`, 'highlight')} ${good.name.padEnd(12)}₡${String(good.price).padEnd(7)}/u (${good.available} avail)`
+      `${this.ux.colors.color(`[${good.id}]`, 'highlight')} ${good.name.padEnd(10)} ₡${String(good.price).padEnd(4)} (${good.available})`
     );
     
     // Build cargo info
@@ -118,7 +129,7 @@ class TradeCenter {
         const profitStr = profit >= 0 ? `+₡${profit.toLocaleString()}` : `-₡${Math.abs(profit).toLocaleString()}`;
         const profitColor = profit >= 0 ? 'success' : 'error';
         
-        const line = `${this.ux.colors.color(`[${sellKeys[sellIndex]}]`, 'highlight')} ${item.name} ${item.quantity}u → ₡${totalValue.toLocaleString()} ${this.ux.colors.color(`(${profitStr})`, profitColor)}`;
+        const line = `${this.ux.colors.color(`[${sellKeys[sellIndex]}]`, 'highlight')} ${item.name} ${item.quantity}u ${this.ux.colors.color(`${profitStr}`, profitColor)}`;
         sellingItems.push(line);
         sellIndex++;
       }
@@ -128,11 +139,20 @@ class TradeCenter {
     const maxRows = Math.max(buyingItems.length, cargoItems.length, sellingItems.length);
     
     for (let i = 0; i < maxRows; i++) {
-      const leftCol = (buyingItems[i] || '').padEnd(leftColWidth);
-      const rightCol = (cargoItems[i] || '').padEnd(rightColWidth);
-      const centerCol = sellingItems[i] || '';
+      const leftCol = (buyingItems[i] || '');
+      const centerCol = (cargoItems[i] || '');
+      const rightCol = (sellingItems[i] || '');
       
-      const row = leftCol + '  ' + rightCol + '  ' + centerCol;
+      // Truncate each column to fit its allocated width
+      const leftTruncated = this.truncateToWidth(leftCol, leftColWidth);
+      const centerTruncated = this.truncateToWidth(centerCol, rightColWidth);
+      const rightTruncated = this.truncateToWidth(rightCol, sellingColWidth);
+      
+      const row = leftTruncated.padEnd(leftColWidth) + 
+                  ' '.repeat(spacing) + 
+                  centerTruncated.padEnd(rightColWidth) + 
+                  ' '.repeat(spacing) + 
+                  rightTruncated;
       content.push(row);
     }
     
@@ -145,6 +165,16 @@ class TradeCenter {
     return content;
   }
 
+  truncateToWidth(text, maxWidth) {
+    // Handle colored text by using the colors utility to measure actual display width
+    const displayLength = this.ux.colors.length(text);
+    if (displayLength <= maxWidth) {
+      return text;
+    }
+    
+    // Simple truncation for now - could be improved to handle color codes better
+    return text.substring(0, maxWidth - 3) + '...';
+  }
 
   handleInput(input) {
     const upper = input.toUpperCase();

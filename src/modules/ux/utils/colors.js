@@ -64,7 +64,7 @@ const THEMES = {
     error: ANSI_CODES.fgBrightRed,
     info: ANSI_CODES.fgBrightWhite,
     muted: ANSI_CODES.fgGreen + ANSI_CODES.dim,
-    highlight: ANSI_CODES.fgBrightGreen + ANSI_CODES.blink,
+    highlight: ANSI_CODES.fgBrightGreen + ANSI_CODES.bright,
     border: ANSI_CODES.fgGreen,
     title: ANSI_CODES.fgBrightGreen + ANSI_CODES.bright
   },

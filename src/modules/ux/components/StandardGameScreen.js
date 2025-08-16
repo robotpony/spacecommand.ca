@@ -107,10 +107,11 @@ class StandardGameScreen extends UIComponent {
     
     const headerContent = leftTitle + '─'.repeat(fillLength) + rightTitle;
     
-    // Build the complete header line
-    let headerLine = colors.color('┌', this.rootWindowColor);
+    // Build the complete header line with border characters
+    const chars = require('../utils/ascii').BOX_DRAWING[this.rootWindowBorder];
+    let headerLine = colors.color(chars.topLeft, this.rootWindowColor);
     headerLine += colors.color(headerContent.substring(0, this.width - 2), this.headerColor);
-    headerLine += colors.color('┐', this.rootWindowColor);
+    headerLine += colors.color(chars.topRight, this.rootWindowColor);
     
     this.buffer[0] = headerLine;
   }

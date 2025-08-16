@@ -118,7 +118,7 @@ class Menu extends UIComponent {
     }
     
     if (keyDisplay) {
-      line += colors.color(keyDisplay, keyColor);
+      line += colors.ANSI_CODES.bright + colors.color(keyDisplay, keyColor) + colors.ANSI_CODES.reset;
       line += ' ';
     }
     

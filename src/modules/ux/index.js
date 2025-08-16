@@ -22,6 +22,7 @@ const { StyleEngine, StyledComponent, styled } = require('./rendering/StyleEngin
 const colors = require('./utils/colors');
 const ascii = require('./utils/ascii');
 const formatting = require('./utils/formatting');
+const textStyles = require('./utils/textStyles');
 const WindowManager = require('./utils/WindowManager');
 
 // High-level API for easy usage
@@ -30,6 +31,9 @@ class UX {
     this.windowManager = new WindowManager(options);
     this.styleEngine = this.windowManager.styleEngine;
     this.renderer = new Renderer();
+    
+    // Set up global text styles helper
+    textStyles.setGlobalStyleEngine(this.styleEngine);
     
     if (options.theme) {
       this.setTheme(options.theme);
@@ -210,6 +214,10 @@ class UX {
   get formatting() {
     return formatting;
   }
+
+  get textStyles() {
+    return textStyles;
+  }
 }
 
 // Create default instance
@@ -254,5 +262,6 @@ module.exports = {
   colors,
   ascii,
   formatting,
+  textStyles,
   WindowManager
 };

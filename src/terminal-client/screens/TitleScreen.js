@@ -53,10 +53,10 @@ class TitleScreen {
     
     lines.push('');
     
-    // Prompt
+    // Prompt - use bold instead of blink for interactive element
     const prompt = '[ Press ENTER to Continue ]';
     const promptPadding = ' '.repeat((this.width - prompt.length) / 2);
-    lines.push(ANSI_CODES.fgBrightGreen + ANSI_CODES.blink + promptPadding + prompt + ANSI_CODES.reset);
+    lines.push(ANSI_CODES.bright + colors.color(promptPadding + prompt, 'primary') + ANSI_CODES.reset);
     
     lines.push('');
     lines.push(border);
