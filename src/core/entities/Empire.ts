@@ -31,6 +31,12 @@ export interface DiplomaticRelation {
   lastInteraction: Date;
 }
 
+/**
+ * Central entity managing a player's galactic empire.
+ * Coordinates all empire operations including resource management, diplomacy, and turn processing.
+ * Acts as aggregate root for planets, fleets, and technologies within the empire.
+ * Emits domain events for major state changes (bankruptcy, tech breakthroughs, territorial changes).
+ */
 export class Empire {
   public readonly id: string;
   public name: string;
@@ -76,6 +82,13 @@ export class Empire {
     this.isAlive = true;
   }
 
+  /**
+   * Adds a planet to the empire's territory and colonizes it.
+   * @param {Planet} planet - The planet to add to the empire
+   * @throws {Error} If planet already belongs to empire
+   * @sideEffect Colonizes planet with initial population of 100,000
+   * @sideEffect Updates empire's planet collection
+   */
   public addPlanet(planet: Planet): void {
     if (this.planets.has(planet.id)) {
       throw new Error(`Planet ${planet.id} already belongs to empire`);
@@ -84,6 +97,12 @@ export class Empire {
     this.planets.set(planet.id, planet);
   }
 
+  /**
+   * Removes a planet from empire control (lost in war or bankruptcy).
+   * @param {string} planetId - UUID of the planet to remove
+   * @throws {Error} If planet doesn't belong to empire
+   * @sideEffect Removes planet from empire's collection
+   */
   public removePlanet(planetId: string): void {
     if (!this.planets.has(planetId)) {
       throw new Error(`Planet ${planetId} does not belong to empire`);
@@ -91,6 +110,12 @@ export class Empire {
     this.planets.delete(planetId);
   }
 
+  /**
+   * Adds a fleet to the empire's military forces.
+   * @param {Fleet} fleet - The fleet to add to the empire
+   * @throws {Error} If fleet already belongs to empire
+   * @sideEffect Updates empire's fleet collection
+   */
   public addFleet(fleet: Fleet): void {
     if (this.fleets.has(fleet.id)) {
       throw new Error(`Fleet ${fleet.id} already belongs to empire`);
@@ -98,6 +123,12 @@ export class Empire {
     this.fleets.set(fleet.id, fleet);
   }
 
+  /**
+   * Removes a fleet from empire control (destroyed or disbanded).
+   * @param {string} fleetId - UUID of the fleet to remove  
+   * @throws {Error} If fleet doesn't belong to empire
+   * @sideEffect Removes fleet from empire's collection
+   */
   public removeFleet(fleetId: string): void {
     if (!this.fleets.has(fleetId)) {
       throw new Error(`Fleet ${fleetId} does not belong to empire`);
@@ -105,6 +136,10 @@ export class Empire {
     this.fleets.delete(fleetId);
   }
 
+  /**
+   * Calculates total population across all empire planets.
+   * @returns {number} Combined population of all controlled planets
+   */
   public getTotalPopulation(): number {
     let total = 0;
     this.planets.forEach(planet => {
@@ -113,6 +148,10 @@ export class Empire {
     return total;
   }
 
+  /**
+   * Calculates combined military strength of all fleets.
+   * @returns {number} Total attack power including morale and experience modifiers
+   */
   public getTotalMilitaryPower(): number {
     let total = 0;
     this.fleets.forEach(fleet => {
@@ -121,6 +160,10 @@ export class Empire {
     return total;
   }
 
+  /**
+   * Aggregates resource production rates from all planets.
+   * @returns {Record<string, number>} Combined production rates for ore, crystals, energy, food
+   */
   public getTotalProduction(): Record<string, number> {
     const production: Record<string, number> = {
       ore: 0,
@@ -139,6 +182,10 @@ export class Empire {
     return production;
   }
 
+  /**
+   * Calculates total upkeep costs for all assets.
+   * @returns {number} Combined maintenance cost for planets and fleets
+   */
   public getTotalMaintenanceCost(): number {
     let cost = 0;
     
@@ -153,10 +200,21 @@ export class Empire {
     return cost;
   }
 
+  /**
+   * Checks if empire has sufficient credits for a transaction.
+   * @param {number} amount - Credits required
+   * @returns {boolean} True if empire has enough credits
+   */
   public canAfford(amount: number): boolean {
     return this.credits >= amount;
   }
 
+  /**
+   * Deducts credits from empire treasury.
+   * @param {number} amount - Credits to deduct
+   * @throws {Error} If insufficient credits available
+   * @sideEffect Reduces empire credit balance
+   */
   public deductCredits(amount: number): void {
     if (!this.canAfford(amount)) {
       throw new Error(`Insufficient credits. Required: ${amount}, Available: ${this.credits}`);
@@ -164,10 +222,21 @@ export class Empire {
     this.credits -= amount;
   }
 
+  /**
+   * Adds credits to empire treasury.
+   * @param {number} amount - Credits to add
+   * @sideEffect Increases empire credit balance
+   */
   public addCredits(amount: number): void {
     this.credits += amount;
   }
 
+  /**
+   * Consumes action points for empire actions.
+   * @param {number} amount - Action points to consume
+   * @throws {Error} If insufficient action points available
+   * @sideEffect Reduces available action points
+   */
   public useActionPoints(amount: number): void {
     if (this.actionPoints < amount) {
       throw new Error(`Insufficient action points. Required: ${amount}, Available: ${this.actionPoints}`);
@@ -175,10 +244,22 @@ export class Empire {
     this.actionPoints -= amount;
   }
 
+  /**
+   * Restores action points to maximum for new turn.
+   * @sideEffect Sets action points to max value
+   */
   public resetActionPoints(): void {
     this.actionPoints = this.maxActionPoints;
   }
 
+  /**
+   * Executes all turn-based empire operations.
+   * @sideEffect Produces resources on all planets
+   * @sideEffect Deducts maintenance costs or triggers bankruptcy
+   * @sideEffect Processes trade route income
+   * @sideEffect Resets action points and increments turn counter
+   * @sideEffect Updates empire score
+   */
   public processTurn(): void {
     // Process resource production
     this.planets.forEach(planet => {
@@ -204,6 +285,10 @@ export class Empire {
     this.updateScore();
   }
 
+  /**
+   * Processes income from active trade routes.
+   * @sideEffect Adds trade profits to empire treasury
+   */
   private processTradeRoutes(): void {
     for (const route of this.tradeRoutes) {
       if (route.isActive) {
@@ -212,6 +297,12 @@ export class Empire {
     }
   }
 
+  /**
+   * Implements corporate restructure mechanic for negative credits.
+   * @sideEffect Resets credits to 5000 if below -10000
+   * @sideEffect Reduces score by 50%
+   * @sideEffect May remove least valuable planet as penalty
+   */
   private handleBankruptcy(): void {
     if (this.credits < -10000) {
       // Corporate restructure
@@ -227,6 +318,10 @@ export class Empire {
     }
   }
 
+  /**
+   * Recalculates empire score based on various metrics.
+   * @sideEffect Updates empire score based on population, credits, territories, military, tech
+   */
   private updateScore(): void {
     const populationScore = this.getTotalPopulation() / 1000;
     const creditScore = this.credits / 100;
@@ -239,6 +334,13 @@ export class Empire {
     );
   }
 
+  /**
+   * Updates diplomatic relationship with another empire.
+   * @param {string} empireId - UUID of the other empire
+   * @param {DiplomaticStatus} status - New diplomatic status (allied/friendly/neutral/hostile/war)
+   * @sideEffect Updates diplomatic relations map
+   * @sideEffect Adjusts trust level based on status change
+   */
   public setDiplomaticStatus(empireId: string, status: DiplomaticStatus): void {
     const relation = this.diplomaticRelations.get(empireId) || {
       empireId,
@@ -270,6 +372,15 @@ export class Empire {
     this.diplomaticRelations.set(empireId, relation);
   }
 
+  /**
+   * Applies research points to a technology.
+   * @param {string} technologyId - UUID of technology to research
+   * @param {number} researchPoints - Research points to apply
+   * @throws {Error} If technology not found, already researched, or prerequisites not met
+   * @sideEffect Increases research progress
+   * @sideEffect Completes technology and applies effects when threshold reached
+   * @sideEffect May upgrade technology tier
+   */
   public researchTechnology(technologyId: string, researchPoints: number): void {
     const tech = this.technologies.get(technologyId);
     if (!tech) {
@@ -306,6 +417,11 @@ export class Empire {
     }
   }
 
+  /**
+   * Applies completed technology bonuses to empire.
+   * @param {Technology} technology - Completed technology with effects
+   * @sideEffect Applies credit bonuses, action point increases, and other tech effects
+   */
   private applyTechnologyEffects(technology: Technology): void {
     // Apply technology bonuses to empire
     if (technology.effects.creditBonus) {

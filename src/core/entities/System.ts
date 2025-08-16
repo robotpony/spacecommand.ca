@@ -16,6 +16,12 @@ export interface SystemConnection {
   isDangerous: boolean;
 }
 
+/**
+ * Represents a star system containing planets and market dynamics.
+ * Manages trade prices, travel connections, and territorial control.
+ * Implements dynamic market simulation based on supply and demand.
+ * Serves as navigation node and economic center for game universe.
+ */
 export class System {
   public readonly id: string;
   public name: string;
@@ -51,6 +57,10 @@ export class System {
     this.initializeMarket();
   }
 
+  /**
+   * Creates flavor text description for system.
+   * @returns {string} Random descriptive text for immersion
+   */
   private generateDescription(): string {
     const descriptions = [
       'A bustling trade hub at the crossroads of major shipping lanes',
@@ -65,6 +75,10 @@ export class System {
     return descriptions[Math.floor(Math.random() * descriptions.length)];
   }
 
+  /**
+   * Sets up initial market prices and supply/demand.
+   * @sideEffect Populates marketPrices map with all resource types
+   */
   private initializeMarket(): void {
     const resources: ResourceType[] = [
       'ore', 'crystals', 'energy', 'electronics', 
@@ -93,6 +107,11 @@ export class System {
     }
   }
 
+  /**
+   * Returns base price for resource type.
+   * @param {ResourceType} resource - Resource to price
+   * @returns {number} Base price in credits
+   */
   private getBasePrice(resource: ResourceType): number {
     const basePrices: Record<ResourceType, number> = {
       'ore': 10,
@@ -107,12 +126,22 @@ export class System {
     return basePrices[resource];
   }
 
+  /**
+   * Determines market trend from supply/demand ratio.
+   * @param {number} ratio - Supply divided by demand
+   * @returns {'rising' | 'falling' | 'stable'} Market trend indicator
+   */
   private calculateTrend(ratio: number): 'rising' | 'falling' | 'stable' {
     if (ratio < 0.8) return 'rising';
     if (ratio > 1.2) return 'falling';
     return 'stable';
   }
 
+  /**
+   * Adds travel route to another system.
+   * @param {SystemConnection} connection - Connection details
+   * @sideEffect Adds connection if not duplicate
+   */
   public addConnection(connection: SystemConnection): void {
     // Avoid duplicate connections
     const exists = this.connections.some(c => c.toSystemId === connection.toSystemId);
@@ -121,24 +150,49 @@ export class System {
     }
   }
 
+  /**
+   * Associates planet with this system.
+   * @param {string} planetId - UUID of planet to add
+   * @sideEffect Adds planet to system's planet list
+   */
   public addPlanet(planetId: string): void {
     if (!this.planetIds.includes(planetId)) {
       this.planetIds.push(planetId);
     }
   }
 
+  /**
+   * Records empire discovery of this system.
+   * @param {string} empireId - UUID of discovering empire
+   * @sideEffect Adds empire to discoveredBy set
+   */
   public discover(empireId: string): void {
     this.discoveredBy.add(empireId);
   }
 
+  /**
+   * Checks if empire has discovered this system.
+   * @param {string} empireId - UUID of empire to check
+   * @returns {boolean} True if empire has discovered system
+   */
   public isDiscoveredBy(empireId: string): boolean {
     return this.discoveredBy.has(empireId);
   }
 
+  /**
+   * Sets territorial control of system.
+   * @param {string | undefined} empireId - Controlling empire or undefined for neutral
+   * @sideEffect Updates controlledBy field
+   */
   public setController(empireId: string | undefined): void {
     this.controlledBy = empireId;
   }
 
+  /**
+   * Simulates market fluctuations for turn processing.
+   * @sideEffect Updates all resource prices based on supply/demand
+   * @sideEffect Adjusts supply and demand with random factors
+   */
   public updateMarketPrices(): void {
     this.marketPrices.forEach((price, resource) => {
       // Random market fluctuation
@@ -169,6 +223,11 @@ export class System {
     });
   }
 
+  /**
+   * Calculates 3D distance to target coordinates.
+   * @param {Coordinates} targetCoordinates - Target position
+   * @returns {number} Euclidean distance in game units
+   */
   public getDistanceTo(targetCoordinates: Coordinates): number {
     const dx = this.coordinates.x - targetCoordinates.x;
     const dy = this.coordinates.y - targetCoordinates.y;
@@ -176,6 +235,12 @@ export class System {
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
   }
 
+  /**
+   * Computes travel duration based on distance and danger.
+   * @param {number} distance - Distance to travel
+   * @param {number} fleetSpeed - Fleet movement speed
+   * @returns {number} Travel time in seconds (danger increases time)
+   */
   public calculateTravelTime(distance: number, fleetSpeed: number): number {
     // Base travel time in hours
     const baseTime = distance / fleetSpeed;
@@ -186,6 +251,13 @@ export class System {
     return Math.ceil(baseTime * dangerModifier * 3600); // Convert to seconds
   }
 
+  /**
+   * Validates if trade quantity is available.
+   * @param {ResourceType} resource - Resource to trade
+   * @param {number} quantity - Amount to trade
+   * @param {boolean} isBuying - True for buy, false for sell
+   * @returns {boolean} True if sufficient supply/demand exists
+   */
   public canTrade(resource: ResourceType, quantity: number, isBuying: boolean): boolean {
     const price = this.marketPrices.get(resource);
     if (!price) return false;
@@ -197,6 +269,15 @@ export class System {
     }
   }
 
+  /**
+   * Executes market trade and returns total cost.
+   * @param {ResourceType} resource - Resource to trade
+   * @param {number} quantity - Amount to trade
+   * @param {boolean} isBuying - True for buy, false for sell
+   * @returns {number} Total transaction cost in credits
+   * @throws {Error} If resource unavailable or insufficient supply/demand
+   * @sideEffect Updates market supply and demand
+   */
   public executeTrade(resource: ResourceType, quantity: number, isBuying: boolean): number {
     const price = this.marketPrices.get(resource);
     if (!price) {

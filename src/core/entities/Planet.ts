@@ -16,6 +16,12 @@ export interface PlanetResources {
   food: number;
 }
 
+/**
+ * Represents a colonizable world with resource production capabilities.
+ * Manages population, buildings, and resource generation based on specialization.
+ * Serves as primary economic unit for empires.
+ * Emits production events and colonization status changes.
+ */
 export class Planet {
   public readonly id: string;
   public name: string;
@@ -59,6 +65,10 @@ export class Planet {
     this.isColonized = false;
   }
 
+  /**
+   * Determines planet population capacity based on specialization.
+   * @returns {number} Maximum sustainable population
+   */
   private calculateMaxPopulation(): number {
     const basePopulation = 1000000;
     const modifiers: Record<PlanetSpecialization, number> = {
@@ -73,6 +83,10 @@ export class Planet {
     return Math.floor(basePopulation * modifiers[this.specialization]);
   }
 
+  /**
+   * Calculates base resource production rates by specialization.
+   * @returns {PlanetResources} Base production for ore, crystals, energy, food
+   */
   private calculateBaseProduction(): PlanetResources {
     const base = { ore: 10, crystals: 5, energy: 15, food: 20 };
     
@@ -94,6 +108,14 @@ export class Planet {
     }
   }
 
+  /**
+   * Establishes colony on unowned planet.
+   * @param {string} ownerId - Empire UUID claiming the planet
+   * @param {number} initialPopulation - Starting colonist count
+   * @throws {Error} If planet already colonized
+   * @sideEffect Sets ownership and initial development
+   * @sideEffect Establishes base defense rating
+   */
   public colonize(ownerId: string, initialPopulation: number): void {
     if (this.isColonized) {
       throw new Error(`Planet ${this.name} is already colonized`);
@@ -105,6 +127,13 @@ export class Planet {
     this.defenseRating = 10;
   }
 
+  /**
+   * Constructs new building on planet surface.
+   * @param {Building} building - Building to construct
+   * @throws {Error} If building capacity exceeded
+   * @sideEffect Adds building to planet infrastructure
+   * @sideEffect Recalculates production rates
+   */
   public addBuilding(building: Building): void {
     const maxBuildings = 10 + this.developmentLevel * 2;
     if (this.buildings.length >= maxBuildings) {
@@ -114,6 +143,14 @@ export class Planet {
     this.updateProductionRates();
   }
 
+  /**
+   * Upgrades existing building to next level.
+   * @param {string} buildingId - UUID of building to upgrade
+   * @throws {Error} If building not found
+   * @sideEffect Increases building level and production bonus
+   * @sideEffect Increases maintenance cost by 10%
+   * @sideEffect Recalculates production rates
+   */
   public upgradeBuilding(buildingId: string): void {
     const building = this.buildings.find(b => b.id === buildingId);
     if (!building) {
@@ -125,6 +162,10 @@ export class Planet {
     this.updateProductionRates();
   }
 
+  /**
+   * Recalculates production based on population and buildings.
+   * @sideEffect Updates production rates considering all modifiers
+   */
   private updateProductionRates(): void {
     const baseRates = this.calculateBaseProduction();
     const populationModifier = Math.min(1, this.population / (this.maxPopulation * 0.5));
@@ -144,6 +185,11 @@ export class Planet {
     };
   }
 
+  /**
+   * Generates resources for the current turn.
+   * @returns {PlanetResources} Resources produced this turn
+   * @sideEffect Adds produced resources to planet stockpile
+   */
   public produceResources(): PlanetResources {
     const produced = { ...this.productionRates };
     
@@ -155,6 +201,12 @@ export class Planet {
     return produced;
   }
 
+  /**
+   * Deducts resources from planet stockpile.
+   * @param {Partial<PlanetResources>} amount - Resources to consume
+   * @throws {Error} If insufficient resources available
+   * @sideEffect Reduces planet resource stockpiles
+   */
   public consumeResources(amount: Partial<PlanetResources>): void {
     if (amount.ore && this.resources.ore < amount.ore) {
       throw new Error(`Insufficient ore on ${this.name}`);
@@ -175,6 +227,10 @@ export class Planet {
     if (amount.food) this.resources.food -= amount.food;
   }
 
+  /**
+   * Calculates total upkeep for all operational buildings.
+   * @returns {number} Credits required per turn for maintenance
+   */
   public getMaintenanceCost(): number {
     return this.buildings.reduce((total, building) => {
       return total + (building.isOperational ? building.maintenanceCost : 0);

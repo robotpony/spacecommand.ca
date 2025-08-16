@@ -1,7 +1,25 @@
+/**
+ * Player faction affiliation determining starting bonuses and diplomatic modifiers.
+ * Terran Federation: Balanced diplomacy and trade
+ * Orion Syndicate: Combat and piracy bonuses
+ * Centauri Republic: Research and technology focus
+ * Independent: No faction bonuses or penalties
+ */
 export type Faction = 'terran_federation' | 'orion_syndicate' | 'centauri_republic' | 'independent';
 
+/**
+ * Technological advancement level affecting ship capabilities and research options.
+ * Progression: chemical → nuclear → antimatter → exotic
+ * Higher tiers unlock advanced ships, weapons, and production methods.
+ */
 export type TechnologyTier = 'chemical' | 'nuclear' | 'antimatter' | 'exotic';
 
+/**
+ * Tradeable resources in the game economy.
+ * Basic resources: ore, crystals, energy, food
+ * Manufactured goods: electronics, weapons
+ * Special commodities: luxury_goods, fuel
+ */
 export type ResourceType = 
   | 'ore'
   | 'crystals'
@@ -12,8 +30,20 @@ export type ResourceType =
   | 'luxury_goods'
   | 'fuel';
 
+/**
+ * Ship classifications determining role and capabilities.
+ * Courier: Fast scout/messenger ships
+ * Freighter: High cargo capacity traders
+ * Destroyer: Light combat vessels
+ * Battlecruiser: Heavy combat ships
+ * Dreadnought: Capital ships with maximum firepower
+ */
 export type ShipClass = 'courier' | 'freighter' | 'destroyer' | 'battlecruiser' | 'dreadnought';
 
+/**
+ * Planet economic focus affecting production and population.
+ * Each specialization provides unique production bonuses and penalties.
+ */
 export type PlanetSpecialization = 
   | 'mining'
   | 'agricultural'
@@ -23,6 +53,10 @@ export type PlanetSpecialization =
   | 'commercial'
   | 'balanced';
 
+/**
+ * Diplomatic relationship states between empires.
+ * Affects trade permissions, military access, and alliance mechanics.
+ */
 export type DiplomaticStatus = 
   | 'war'
   | 'hostile'
@@ -30,18 +64,28 @@ export type DiplomaticStatus =
   | 'friendly'
   | 'allied';
 
+/**
+ * Represents a tradeable commodity with market value.
+ */
 export type TradeGood = {
   type: ResourceType;
   quantity: number;
   basePrice: number;
 };
 
+/**
+ * 3D position in galactic space for systems, planets, and fleets.
+ */
 export type Coordinates = {
   x: number;
   y: number;
   z: number;
 };
 
+/**
+ * Random events that affect game state during turn processing.
+ * Events can impact markets, fleets, diplomacy, or provide opportunities.
+ */
 export type GameEvent = {
   id: string;
   type: 'market_fluctuation' | 'pirate_raid' | 'solar_flare' | 'diplomatic_summit' | 'alien_artifact';
