@@ -1,9 +1,9 @@
-const UIComponent = require('./UIComponent');
-const colors = require('../utils/colors');
-const ascii = require('../utils/ascii');
-const formatting = require('../utils/formatting');
+import { UIComponent } from './UIComponent';
+import * as colors from '../utils/colors';
+import * as ascii from '../utils/ascii';
+import * as formatting from '../utils/formatting';
 
-class Table extends UIComponent {
+export class Table extends UIComponent {
   constructor(options = {}) {
     super(options);
     this.headers = options.headers || [];
@@ -245,4 +245,4 @@ class Table extends UIComponent {
   }
 }
 
-module.exports = Table;
+export default Table;

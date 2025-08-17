@@ -1,4 +1,4 @@
-const UIComponent = require('./UIComponent');
+import { UIComponent } from './UIComponent';
 const { Window } = require('./Window');
 const StatusBar = require('./StatusBar');
 const colors = require('../utils/colors');
@@ -12,7 +12,7 @@ const colors = require('../utils/colors');
  * - Integrated status bar with player info and resources
  * - Proper content area sizing and positioning
  */
-class StandardGameScreen extends UIComponent {
+export class StandardGameScreen extends UIComponent {
   constructor(options = {}) {
     super(options);
     
@@ -228,4 +228,4 @@ class StandardGameScreen extends UIComponent {
   }
 }
 
-module.exports = StandardGameScreen;
+export default StandardGameScreen;

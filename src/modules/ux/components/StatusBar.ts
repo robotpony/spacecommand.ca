@@ -1,8 +1,8 @@
-const UIComponent = require('./UIComponent');
-const colors = require('../utils/colors');
-const ascii = require('../utils/ascii');
+import { UIComponent } from './UIComponent';
+import * as colors from '../utils/colors';
+import * as ascii from '../utils/ascii';
 
-class StatusBar extends UIComponent {
+export class StatusBar extends UIComponent {
   constructor(options = {}) {
     super(options);
     this.height = 3; // Header line, status line, separator
@@ -109,4 +109,4 @@ class StatusBar extends UIComponent {
   }
 }
 
-module.exports = StatusBar;
+export default StatusBar;

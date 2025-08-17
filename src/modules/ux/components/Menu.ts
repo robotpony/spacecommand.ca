@@ -1,7 +1,22 @@
-const UIComponent = require('./UIComponent');
-const { StyleEngine } = require('../rendering/StyleEngine');
+import { UIComponent } from './UIComponent';
+import { StyleEngine } from '../rendering/StyleEngine';
+import * as colors from '../utils/colors';
 
-class Menu extends UIComponent {
+export class Menu extends UIComponent {
+  items: any[];
+  title: string;
+  selectedIndex: number;
+  styleSelector: string;
+  keyStyle: string;
+  showKeys: boolean;
+  showDescriptions: boolean;
+  columns: number;
+  itemSpacing: number;
+  numbered: boolean;
+  breadcrumbs: string[];
+  footer: string;
+  styleEngine: any;
+
   constructor(options = {}) {
     super(options);
     this.items = options.items || [];
@@ -177,7 +192,6 @@ class Menu extends UIComponent {
   }
 
   padToWidth(text, width) {
-    const colors = require('../utils/colors');
     const textLength = colors.length(text);
     
     if (textLength >= width) {
@@ -293,9 +307,12 @@ class Menu extends UIComponent {
     this.footer = footer;
     this.emit('footer-changed', footer);
   }
+
 }
 
 class ContextMenu extends Menu {
+  separators: Set<number>;
+
   constructor(options = {}) {
     super({
       styleSelector: 'menu.compact',
@@ -357,4 +374,5 @@ class ContextMenu extends Menu {
   }
 }
 
-module.exports = { Menu, ContextMenu };
+export { ContextMenu };
+export default Menu;

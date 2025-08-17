@@ -69,7 +69,7 @@ function getSamplePlayerStatus() {
   };
 }
 
-module.exports = {
+export {
   getDefaultLogo,
   getCompactLogo,
   getSampleMenuItems,

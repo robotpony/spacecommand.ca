@@ -1,10 +1,12 @@
-// Note: Will need proper imports after full conversion
-const { createUX, Menu, ContextMenu, Decoration, TitleScreen, Window, Dialog } = require('../../index');
-const { getSampleMenuItems, getSamplePlayerStatus } = require('../../utils/branding');
+import { createUX } from '../../index';
+import { Menu, ContextMenu } from '../Menu';
+import { Decoration, TitleScreen } from '../Decoration';
+import { Window, Dialog } from '../Window';
+import { getSampleMenuItems, getSamplePlayerStatus } from '../../utils/branding';
 
 describe('UI Control Demo - Visual Tests', () => {
   let ux: any;
-  let capturedOutput: any[] = [];
+  let capturedOutput: string[] = [];
 
   beforeEach(() => {
     ux = createUX({ 
@@ -21,7 +23,7 @@ describe('UI Control Demo - Visual Tests', () => {
   });
 
   afterEach(() => {
-    console.log.mockRestore();
+    (console.log as jest.MockedFunction<typeof console.log>).mockRestore();
   });
 
   describe('Menu Component Demo', () => {
@@ -258,7 +260,7 @@ describe('UI Control Demo - Visual Tests', () => {
       expect(scene.length).toBeGreaterThan(0);
       
       console.log('\n=== Complete Scene Demo ===');
-      scene.forEach(line => console.log(line));
+      scene.forEach((line: string) => console.log(line));
     });
 
     it('should demonstrate theme switching', () => {
@@ -293,7 +295,7 @@ describe('UI Control Demo - Visual Tests', () => {
       });
 
       // Capture events
-      const events = [];
+      const events: string[] = [];
       menu.on('item-selected', (item) => events.push(`selected: ${item.label}`));
       menu.on('item-activated', (item) => events.push(`activated: ${item.label}`));
       menu.on('selection-changed', (index) => events.push(`selection: ${index}`));
@@ -351,7 +353,7 @@ describe('UI Control Demo - Visual Tests', () => {
         menu.handleInput(null);
         expect(false).toBe(true); // Should not reach here
       } catch (error) {
-        expect(error.message).toContain('toLowerCase');
+        expect((error as Error).message).toContain('toLowerCase');
       }
 
       // Test boundary conditions

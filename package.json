@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "terminal": "tsx src/terminal-client/main.ts",
+    "terminal": "tsx src/terminal-client/demo-bbs.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "lint": "eslint . --ext .ts",

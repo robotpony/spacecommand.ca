@@ -1,10 +1,11 @@
-const UIComponent = require('./UIComponent');
-const { Window } = require('./Window');
-const { StyleEngine } = require('../rendering/StyleEngine');
-const ascii = require('../utils/ascii');
-const { getDefaultLogo } = require('../utils/branding');
+import { UIComponent } from './UIComponent';
+import { Window } from './Window';
+import { StyleEngine } from '../rendering/StyleEngine';
+import * as ascii from '../utils/ascii';
+import { getDefaultLogo } from '../utils/branding';
+import * as colors from '../utils/colors';
 
-class Decoration extends UIComponent {
+export class Decoration extends UIComponent {
   constructor(options = {}) {
     super(options);
     this.type = options.type || 'text';
@@ -84,7 +85,6 @@ class Decoration extends UIComponent {
   }
 
   alignText(text) {
-    const colors = require('../utils/colors');
     const textLength = colors.length(text);
     
     switch (this.align) {
@@ -121,7 +121,7 @@ class Decoration extends UIComponent {
   }
 }
 
-class TitleScreen extends UIComponent {
+export class TitleScreen extends UIComponent {
   constructor(options = {}) {
     super(options);
     this.title = options.title || 'SPACE COMMAND';
@@ -170,7 +170,6 @@ class TitleScreen extends UIComponent {
   }
 
   alignText(text) {
-    const colors = require('../utils/colors');
     const textLength = colors.length(text);
     const padding = Math.max(0, this.width - textLength);
     const leftPad = Math.floor(padding / 2);
@@ -198,4 +197,4 @@ class TitleScreen extends UIComponent {
   }
 }
 
-module.exports = { Decoration, TitleScreen };
+export default Decoration;

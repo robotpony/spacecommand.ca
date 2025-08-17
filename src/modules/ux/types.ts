@@ -27,7 +27,27 @@ export interface UIComponentEvents {
   'focus-gained': void;
   'focus-lost': void;
   'update': any;
+  'content-changed': any;
+  'title-changed': string;
+  'border-changed': any;
+  'padding-changed': number;
+  'button-selection-changed': any;
+  'button-activated': any;
+  'dialog-cancelled': void;
   'clear': void;
+  'item-selected': any;
+  'item-activated': any;
+  'selection-changed': any;
+  'items-changed': any;
+  'item-added': any;
+  'item-removed': any;
+  'style-changed': any;
+  'style-engine-changed': any;
+  'breadcrumbs-changed': any;
+  'footer-changed': any;
+  'align-changed': any;
+  'subtitle-changed': any;
+  'version-changed': any;
 }
 
 export interface ContentArea {

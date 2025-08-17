@@ -1,8 +1,8 @@
-const UIComponent = require('./UIComponent');
-const colors = require('../utils/colors');
-const ascii = require('../utils/ascii');
+import { UIComponent } from './UIComponent';
+import * as colors from '../utils/colors';
+import * as ascii from '../utils/ascii';
 
-class Prompt extends UIComponent {
+export class Prompt extends UIComponent {
   constructor(options = {}) {
     super(options);
     this.text = options.text || 'Enter input:';
@@ -252,4 +252,4 @@ class Prompt extends UIComponent {
   }
 }
 
-module.exports = Prompt;
+export default Prompt;

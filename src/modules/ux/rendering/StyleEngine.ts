@@ -1,4 +1,4 @@
-const colors = require('../utils/colors');
+import * as colors from '../utils/colors';
 
 class StyleEngine {
   constructor() {
@@ -306,4 +306,4 @@ function styled(component, styleSelector) {
   return new StyledComponent(component, styleSelector);
 }
 
-module.exports = { StyleEngine, StyledComponent, styled };
+export { StyleEngine, StyledComponent, styled };

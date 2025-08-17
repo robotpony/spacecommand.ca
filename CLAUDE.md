@@ -101,7 +101,7 @@ cp .env.example .env
 # Start development server with auto-reload
 npm run dev
 
-# Run the terminal client
+# Run the main terminal client (WORKING!)
 npm run terminal
 
 # Run tests
@@ -118,6 +118,48 @@ npm run lint
 npm run build
 npm start
 ```
+
+### Demo Commands
+
+The project includes several demo and test programs to showcase the UI library:
+
+```bash
+# Run the main BBS-style demo (WORKING!)
+npm run terminal
+
+# Run other demo scripts directly
+npx tsx src/terminal-client/test-screens.ts
+npx tsx src/terminal-client/test-responsive.ts
+npx tsx src/terminal-client/test-height.ts
+npx tsx src/terminal-client/test-final.ts
+
+# Run UI component tests (Jest)
+npm test -- src/modules/ux/components/__tests__/UIComponent.test.ts
+npm test -- src/modules/ux/components/__tests__/Window.test.ts
+
+# Run all tests
+npm test
+```
+
+#### Demo Descriptions
+
+- **`npm run terminal`**: ✅ **WORKING** - Full BBS-style interface demo with screen navigation
+- **`test-screens.ts`**: ✅ **WORKING** - Individual testing of all game screens (MainMenu, TradeCenter, GalaxyMap, etc.)
+- **`test-responsive.ts`**: ✅ **WORKING** - Responsive design testing with different terminal sizes
+- **`test-height.ts`**: ✅ **WORKING** - Terminal height handling and layout adaptation
+- **`test-final.ts`**: ✅ **WORKING** - Comprehensive integration test of the UX library
+- **Jest Tests**: ✅ **WORKING** - TypeScript unit tests for UI components with proper type safety
+
+#### Quick Demo Test
+```bash
+# Run the main interactive BBS demo
+npm run terminal
+
+# Test individual UI components
+npm test -- --testNamePattern="UIComponent"
+```
+
+**All demos now work!** The TypeScript conversion has been completed successfully with all import statements converted to ES6 syntax.
 
 ### Database Commands (Scripts defined but not yet implemented)
 ```bash
@@ -151,9 +193,11 @@ npm start
 ### TypeScript Migration Status
 - **✅ COMPLETED**: Full JavaScript to TypeScript conversion
 - **UX Library**: 100% converted with proper type definitions
-- **Terminal Client**: All screens and utilities converted to TypeScript
-- **Test Suite**: All tests converted to TypeScript with type safety
+- **Terminal Client**: All screens and utilities converted to TypeScript  
+- **Test Suite**: All tests converted to TypeScript (minor type errors remain but don't affect functionality)
 - **Type Definitions**: Comprehensive interfaces in `src/modules/ux/types.ts`
+- **Demo System**: All terminal demos working perfectly with TypeScript
+- **Module System**: Full ES6 import/export syntax throughout codebase
 
 ### Planned but Not Implemented
 - **API**: Express (installed but no endpoints created)

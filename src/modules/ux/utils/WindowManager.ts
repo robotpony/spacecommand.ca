@@ -1,11 +1,11 @@
-const { Window, Dialog } = require('../components/Window');
-const { Menu, ContextMenu } = require('../components/Menu');
-const { Decoration, TitleScreen } = require('../components/Decoration');
-const { StyleEngine } = require('../rendering/StyleEngine');
-const LayoutEngine = require('../rendering/LayoutEngine');
-const AnsiParser = require('./AnsiParser');
-const ascii = require('../utils/ascii');
-const colors = require('../utils/colors');
+import { Window, Dialog } from '../components/Window';
+import { Menu, ContextMenu } from '../components/Menu';
+import { Decoration, TitleScreen } from '../components/Decoration';
+import { StyleEngine } from '../rendering/StyleEngine';
+import LayoutEngine from '../rendering/LayoutEngine';
+import AnsiParser from './AnsiParser';
+import * as ascii from '../utils/ascii';
+import * as colors from '../utils/colors';
 
 class WindowManager {
   constructor(options = {}) {
@@ -427,4 +427,4 @@ class WindowManager {
   }
 }
 
-module.exports = WindowManager;
+export default WindowManager;

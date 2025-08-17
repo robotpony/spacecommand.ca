@@ -1,5 +1,4 @@
-// Note: Will need proper imports after Menu.ts is converted
-const { Menu, ContextMenu } = require('../Menu');
+import { Menu, ContextMenu } from '../Menu';
 
 describe('Menu', () => {
   const testItems = [
@@ -355,7 +354,7 @@ describe('Menu', () => {
 });
 
 describe('ContextMenu', () => {
-  let contextMenu;
+  let contextMenu: ContextMenu;
   const testItems = [
     { label: 'Cut', shortcut: 'Ctrl+X' },
     { label: 'Copy', shortcut: 'Ctrl+C' },

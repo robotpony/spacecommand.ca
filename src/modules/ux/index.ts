@@ -18,12 +18,12 @@ const StatusBar = require('./components/StatusBar');
 const Table = require('./components/Table');
 const StandardGameScreen = require('./components/StandardGameScreen');
 const Prompt = require('./components/Prompt');
-const { Decoration, TitleScreen } = require('./components/Decoration');
-const { Menu, ContextMenu } = require('./components/Menu');
+import { Decoration, TitleScreen } from './components/Decoration';
+import { Menu, ContextMenu } from './components/Menu';
 const LayoutEngine = require('./rendering/LayoutEngine');
 const { StyleEngine, StyledComponent, styled } = require('./rendering/StyleEngine');
 const textStyles = require('./utils/textStyles');
-const WindowManager = require('./utils/WindowManager');
+import WindowManager from './utils/WindowManager';
 
 export interface UXOptions {
   theme?: string;
