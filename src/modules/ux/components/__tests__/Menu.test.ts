@@ -1,3 +1,4 @@
+// Note: Will need proper imports after Menu.ts is converted
 const { Menu, ContextMenu } = require('../Menu');
 
 describe('Menu', () => {

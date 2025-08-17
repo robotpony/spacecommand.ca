@@ -1,4 +1,27 @@
-const ANSI_CODES = {
+/**
+ * ANSI color codes and terminal color management utilities.
+ * Provides theming support and automatic color detection.
+ */
+
+export interface RGBColor {
+  r: number;
+  g: number;
+  b: number;
+}
+
+export interface AnsiCodes {
+  [key: string]: string;
+}
+
+export interface ColorTheme {
+  [colorName: string]: string;
+}
+
+export interface Themes {
+  [themeName: string]: ColorTheme;
+}
+
+export const ANSI_CODES: AnsiCodes = {
   reset: '\x1b[0m',
   bright: '\x1b[1m',
   dim: '\x1b[2m',
@@ -42,7 +65,7 @@ const ANSI_CODES = {
   bgBrightWhite: '\x1b[107m'
 };
 
-const THEMES = {
+export const THEMES: Themes = {
   default: {
     primary: ANSI_CODES.fgCyan,
     secondary: ANSI_CODES.fgBlue,
@@ -77,10 +100,15 @@ const THEMES = {
   }
 };
 
-let currentTheme = 'default';
-let colorsEnabled = null; // Auto-detect
+let currentTheme: string = 'default';
+let colorsEnabled: boolean | null = null; // Auto-detect
 
-function isColorSupported() {
+/**
+ * Detects if color output is supported in the current environment.
+ * 
+ * @returns True if colors are supported
+ */
+export function isColorSupported(): boolean {
   if (colorsEnabled !== null) {
     return colorsEnabled;
   }
@@ -114,21 +142,43 @@ function isColorSupported() {
   return false;
 }
 
-function setColorSupport(enabled) {
+/**
+ * Manually sets color support status.
+ * 
+ * @param enabled - Whether colors should be enabled
+ */
+export function setColorSupport(enabled: boolean): void {
   colorsEnabled = enabled;
 }
 
-function setTheme(themeName) {
+/**
+ * Sets the active color theme.
+ * 
+ * @param themeName - Name of the theme to activate
+ */
+export function setTheme(themeName: string): void {
   if (THEMES[themeName]) {
     currentTheme = themeName;
   }
 }
 
-function getTheme() {
+/**
+ * Gets the current color theme.
+ * 
+ * @returns The active color theme
+ */
+export function getTheme(): ColorTheme {
   return THEMES[currentTheme];
 }
 
-function color(text, colorName) {
+/**
+ * Applies color to text using theme colors or ANSI codes.
+ * 
+ * @param text - Text to colorize
+ * @param colorName - Color name from theme or ANSI codes
+ * @returns Colorized text
+ */
+export function color(text: string, colorName: string): string {
   if (!isColorSupported()) {
     return text;
   }
@@ -138,21 +188,45 @@ function color(text, colorName) {
   return colorCode + text + ANSI_CODES.reset;
 }
 
-function rgb(r, g, b) {
+/**
+ * Creates an RGB foreground color code.
+ * 
+ * @param r - Red component (0-255)
+ * @param g - Green component (0-255)
+ * @param b - Blue component (0-255)
+ * @returns ANSI RGB color code
+ */
+export function rgb(r: number, g: number, b: number): string {
   if (!isColorSupported()) {
     return '';
   }
   return `\x1b[38;2;${r};${g};${b}m`;
 }
 
-function bgRgb(r, g, b) {
+/**
+ * Creates an RGB background color code.
+ * 
+ * @param r - Red component (0-255)
+ * @param g - Green component (0-255)
+ * @param b - Blue component (0-255)
+ * @returns ANSI RGB background color code
+ */
+export function bgRgb(r: number, g: number, b: number): string {
   if (!isColorSupported()) {
     return '';
   }
   return `\x1b[48;2;${r};${g};${b}m`;
 }
 
-function gradient(text, startColor, endColor) {
+/**
+ * Creates a color gradient across text.
+ * 
+ * @param text - Text to apply gradient to
+ * @param startColor - Starting RGB color
+ * @param endColor - Ending RGB color
+ * @returns Text with gradient coloring
+ */
+export function gradient(text: string, startColor: RGBColor, endColor: RGBColor): string {
   if (!isColorSupported()) {
     return text;
   }
@@ -171,15 +245,28 @@ function gradient(text, startColor, endColor) {
   return result + ANSI_CODES.reset;
 }
 
-function strip(text) {
+/**
+ * Strips ANSI color codes from text.
+ * 
+ * @param text - Text containing ANSI codes
+ * @returns Text with ANSI codes removed
+ */
+export function strip(text: string): string {
   return text.replace(/\x1b\[[0-9;]*m/g, '');
 }
 
-function length(text) {
+/**
+ * Gets the display length of text excluding ANSI codes.
+ * 
+ * @param text - Text to measure
+ * @returns Display length of text
+ */
+export function length(text: string): number {
   return strip(text).length;
 }
 
-module.exports = {
+// Default export for CommonJS compatibility during transition
+export default {
   ANSI_CODES,
   THEMES,
   setTheme,

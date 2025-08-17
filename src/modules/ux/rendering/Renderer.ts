@@ -1,7 +1,17 @@
+import { Viewport, Cursor, TextStyle, BoxStyle, LineStyle, RenderableComponent, ColorName } from '../types';
+// Note: These imports will be updated when we convert the utility files
 const colors = require('../utils/colors');
 const formatting = require('../utils/formatting');
 
-class Renderer {
+/**
+ * Handles low-level rendering operations for the UX system.
+ * Manages a text buffer and provides drawing primitives for components.
+ */
+export class Renderer {
+  public viewport: Viewport;
+  public cursor: Cursor;
+  public buffer: string[];
+
   constructor() {
     this.viewport = {
       width: 80,
@@ -12,26 +22,47 @@ class Renderer {
     this.clearBuffer();
   }
 
-  setViewport(width, height) {
+  /**
+   * Sets the viewport size and clears the buffer.
+   * 
+   * @param width - New viewport width
+   * @param height - New viewport height
+   */
+  setViewport(width: number, height: number): void {
     this.viewport = { width, height };
     this.clearBuffer();
   }
 
-  clearBuffer() {
+  /**
+   * Clears the render buffer and fills it with empty space.
+   */
+  clearBuffer(): void {
     this.buffer = [];
     for (let i = 0; i < this.viewport.height; i++) {
       this.buffer.push(' '.repeat(this.viewport.width));
     }
   }
 
-  moveTo(x, y) {
+  /**
+   * Moves the cursor to the specified position.
+   * 
+   * @param x - X coordinate (clamped to viewport bounds)
+   * @param y - Y coordinate (clamped to viewport bounds)
+   */
+  moveTo(x: number, y: number): void {
     this.cursor = { 
       x: Math.max(0, Math.min(x, this.viewport.width - 1)),
       y: Math.max(0, Math.min(y, this.viewport.height - 1))
     };
   }
 
-  writeText(text, style = {}) {
+  /**
+   * Writes styled text at the current cursor position.
+   * 
+   * @param text - Text to write (may contain newlines)
+   * @param style - Text styling options
+   */
+  writeText(text: string, style: TextStyle = {}): void {
     const lines = text.split('\n');
     
     lines.forEach((line, lineIndex) => {
@@ -69,7 +100,16 @@ class Renderer {
     this.cursor.x += colors.length(lines[lines.length - 1]);
   }
 
-  drawBox(x, y, width, height, style = {}) {
+  /**
+   * Draws a box with optional border and fill styling.
+   * 
+   * @param x - Left edge X coordinate
+   * @param y - Top edge Y coordinate
+   * @param width - Box width
+   * @param height - Box height
+   * @param style - Box styling options
+   */
+  drawBox(x: number, y: number, width: number, height: number, style: BoxStyle = {}): void {
     const borderStyle = style.border || 'single';
     const borderColor = style.borderColor || 'border';
     const fillChar = style.fill || ' ';
@@ -130,7 +170,16 @@ class Renderer {
     }
   }
 
-  drawLine(x1, y1, x2, y2, style = {}) {
+  /**
+   * Draws a line between two points using Bresenham's line algorithm.
+   * 
+   * @param x1 - Start X coordinate
+   * @param y1 - Start Y coordinate
+   * @param x2 - End X coordinate
+   * @param y2 - End Y coordinate
+   * @param style - Line styling options
+   */
+  drawLine(x1: number, y1: number, x2: number, y2: number, style: LineStyle = {}): void {
     const char = style.char || '-';
     const color = style.color || 'border';
     
@@ -162,7 +211,15 @@ class Renderer {
     }
   }
 
-  drawPoint(x, y, char = '█', color = 'primary') {
+  /**
+   * Draws a single character at the specified position.
+   * 
+   * @param x - X coordinate
+   * @param y - Y coordinate
+   * @param char - Character to draw
+   * @param color - Color name for the character
+   */
+  drawPoint(x: number, y: number, char: string = '█', color: ColorName = 'primary'): void {
     if (x < 0 || x >= this.viewport.width || y < 0 || y >= this.viewport.height) {
       return;
     }
@@ -175,7 +232,17 @@ class Renderer {
     this.buffer[y] = beforePoint + styledChar + afterPoint;
   }
 
-  fillRect(x, y, width, height, char = ' ', color = null) {
+  /**
+   * Fills a rectangular area with the specified character and color.
+   * 
+   * @param x - Left edge X coordinate
+   * @param y - Top edge Y coordinate
+   * @param width - Rectangle width
+   * @param height - Rectangle height
+   * @param char - Fill character
+   * @param color - Fill color (optional)
+   */
+  fillRect(x: number, y: number, width: number, height: number, char: string = ' ', color: ColorName | null = null): void {
     for (let row = 0; row < height; row++) {
       for (let col = 0; col < width; col++) {
         const currentX = x + col;
@@ -195,7 +262,12 @@ class Renderer {
     }
   }
 
-  renderComponent(component) {
+  /**
+   * Renders a component to the buffer at its specified position.
+   * 
+   * @param component - Component to render
+   */
+  renderComponent(component: RenderableComponent): void {
     if (!component || !component.render) return;
     
     const originalCursor = { ...this.cursor };
@@ -227,26 +299,49 @@ class Renderer {
     this.cursor = originalCursor;
   }
 
-  renderToString() {
+  /**
+   * Converts the buffer to a single string.
+   * 
+   * @returns The rendered buffer as a string
+   */
+  renderToString(): string {
     return this.buffer.join('\n');
   }
 
-  renderToConsole() {
+  /**
+   * Clears the console and renders the buffer to it.
+   */
+  renderToConsole(): void {
     console.clear();
     console.log(this.renderToString());
   }
 
-  getBuffer() {
+  /**
+   * Gets a copy of the current buffer.
+   * 
+   * @returns Copy of the buffer array
+   */
+  getBuffer(): string[] {
     return [...this.buffer];
   }
 
-  getCursor() {
+  /**
+   * Gets a copy of the current cursor position.
+   * 
+   * @returns Copy of the cursor position
+   */
+  getCursor(): Cursor {
     return { ...this.cursor };
   }
 
-  getViewport() {
+  /**
+   * Gets a copy of the current viewport size.
+   * 
+   * @returns Copy of the viewport dimensions
+   */
+  getViewport(): Viewport {
     return { ...this.viewport };
   }
 }
 
-module.exports = Renderer;
+export default Renderer;

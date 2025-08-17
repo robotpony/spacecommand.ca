@@ -1,4 +1,27 @@
-const BOX_DRAWING = {
+/**
+ * ASCII art and box drawing character utilities.
+ * Provides various box drawing styles and decorative characters.
+ */
+
+export interface BoxDrawingChars {
+  horizontal: string;
+  vertical: string;
+  topLeft: string;
+  topRight: string;
+  bottomLeft: string;
+  bottomRight: string;
+  cross: string;
+  teeUp: string;
+  teeDown: string;
+  teeLeft: string;
+  teeRight: string;
+}
+
+export interface BoxDrawingSets {
+  [styleName: string]: BoxDrawingChars;
+}
+
+export const BOX_DRAWING: BoxDrawingSets = {
   single: {
     horizontal: '─',
     vertical: '│',
@@ -156,9 +179,9 @@ const SYMBOLS = {
   }
 };
 
-function box(width, height, style = 'single', content = null) {
+export function box(width: number, height: number, style: string = 'single', content: string[] | null = null): string[] {
   const chars = BOX_DRAWING[style] || BOX_DRAWING.single;
-  const lines = [];
+  const lines: string[] = [];
   
   const topLine = chars.topLeft + chars.horizontal.repeat(width - 2) + chars.topRight;
   lines.push(topLine);
@@ -183,7 +206,7 @@ function box(width, height, style = 'single', content = null) {
   return lines;
 }
 
-function progressBar(value, max, width, showPercentage = true) {
+export function progressBar(value: number, max: number, width: number, showPercentage: boolean = true): string {
   const percentage = Math.min(100, Math.max(0, (value / max) * 100));
   const filled = Math.round((percentage / 100) * width);
   const empty = width - filled;
@@ -198,8 +221,8 @@ function progressBar(value, max, width, showPercentage = true) {
   return bar;
 }
 
-function table(headers, rows, options = {}) {
-  const columnWidths = [];
+export function table(headers: string[], rows: any[][], options: any = {}): string[] {
+  const columnWidths: number[] = [];
   const separator = options.separator || ' │ ';
   const borderStyle = options.border || 'single';
   
@@ -213,7 +236,7 @@ function table(headers, rows, options = {}) {
     columnWidths.push(maxWidth);
   }
   
-  const lines = [];
+  const lines: string[] = [];
   const chars = BOX_DRAWING[borderStyle];
   
   const headerRow = headers.map((h, i) => h.padEnd(columnWidths[i])).join(separator);
@@ -233,7 +256,7 @@ function table(headers, rows, options = {}) {
   return lines;
 }
 
-function sparkline(values, width) {
+export function sparkline(values: number[], width: number): string {
   const sparks = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
   const min = Math.min(...values);
   const max = Math.max(...values);
@@ -253,7 +276,7 @@ function sparkline(values, width) {
   return samples.join('');
 }
 
-function banner(text, style = 'single') {
+export function banner(text: string, style: string = 'single'): string[] {
   const chars = BOX_DRAWING[style];
   const padding = 2;
   const width = text.length + padding * 2;
@@ -266,7 +289,8 @@ function banner(text, style = 'single') {
   return lines;
 }
 
-module.exports = {
+// Default export for CommonJS compatibility during transition
+export default {
   BOX_DRAWING,
   BLOCKS,
   ARROWS,

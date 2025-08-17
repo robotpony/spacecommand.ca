@@ -1,7 +1,7 @@
-const UIComponent = require('../UIComponent');
+import { UIComponent } from '../UIComponent';
 
 describe('UIComponent', () => {
-  let component;
+  let component: UIComponent;
 
   beforeEach(() => {
     component = new UIComponent({
@@ -112,7 +112,7 @@ describe('UIComponent', () => {
   });
 
   describe('child management', () => {
-    let child;
+    let child: UIComponent;
 
     beforeEach(() => {
       child = new UIComponent();

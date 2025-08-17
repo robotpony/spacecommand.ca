@@ -1,9 +1,10 @@
+// Note: Will need proper imports after full conversion
 const { createUX, Menu, ContextMenu, Decoration, TitleScreen, Window, Dialog } = require('../../index');
 const { getSampleMenuItems, getSamplePlayerStatus } = require('../../utils/branding');
 
 describe('UI Control Demo - Visual Tests', () => {
-  let ux;
-  let capturedOutput = [];
+  let ux: any;
+  let capturedOutput: any[] = [];
 
   beforeEach(() => {
     ux = createUX({ 
@@ -179,7 +180,7 @@ describe('UI Control Demo - Visual Tests', () => {
       const output = decoration.render();
       
       expect(output).toBeDefined();
-      expect(output.some(line => line.includes('SPACECOMMAND'))).toBe(true);
+      expect(output.some((line: string) => line.includes('SPACECOMMAND'))).toBe(true);
       
       console.log('\n=== Decoration Demo ===');
       output.forEach(line => console.log(line));

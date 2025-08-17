@@ -1,10 +1,30 @@
-const UIComponent = require('./UIComponent');
+import { UIComponent } from './UIComponent';
+import { 
+  WindowOptions, 
+  DialogOptions, 
+  ContentArea, 
+  BorderStyle, 
+  TitleAlign, 
+  ColorName, 
+  WindowContent, 
+  RenderableContent
+} from '../types';
+// Note: These imports will be updated when we convert the utility files
 const colors = require('../utils/colors');
 const ascii = require('../utils/ascii');
 const formatting = require('../utils/formatting');
 
-class Window extends UIComponent {
-  constructor(options = {}) {
+export class Window extends UIComponent {
+  public title: string;
+  public border: BorderStyle;
+  public padding: number;
+  public content: WindowContent;
+  public titleAlign: TitleAlign;
+  public borderColor: ColorName;
+  public titleColor: ColorName;
+  public contentArea: ContentArea;
+
+  constructor(options: WindowOptions = {}) {
     super(options);
     this.title = options.title || '';
     this.border = options.border || 'single';
@@ -21,7 +41,7 @@ class Window extends UIComponent {
     };
   }
 
-  render() {
+  render(): string[] {
     this.buffer = [];
     this.updateContentArea();
     
@@ -38,7 +58,7 @@ class Window extends UIComponent {
     return this.buffer;
   }
 
-  updateContentArea() {
+  updateContentArea(): void {
     const titleOffset = this.title ? 1 : 0;
     this.contentArea = {
       x: this.padding,
@@ -48,7 +68,7 @@ class Window extends UIComponent {
     };
   }
 
-  renderBorder() {
+  renderBorder(): void {
     const chars = ascii.BOX_DRAWING[this.border] || ascii.BOX_DRAWING.single;
     
     for (let y = 0; y < this.height; y++) {
@@ -84,12 +104,12 @@ class Window extends UIComponent {
     }
   }
 
-  renderTitle() {
+  renderTitle(): void {
     if (!this.title || this.height < 3) return;
     
     const titleText = ` ${this.title} `;
     const chars = ascii.BOX_DRAWING[this.border] || ascii.BOX_DRAWING.single;
-    let insertPos;
+    let insertPos: number;
     
     switch (this.titleAlign) {
       case 'left':
@@ -127,17 +147,17 @@ class Window extends UIComponent {
     this.buffer[0] = line;
   }
 
-  renderContent() {
+  renderContent(): void {
     if (!this.content) return;
     
-    let contentLines;
+    let contentLines: string[];
     
     if (typeof this.content === 'string') {
       contentLines = this.content.split('\n');
     } else if (Array.isArray(this.content)) {
       contentLines = this.content;
-    } else if (this.content.render && typeof this.content.render === 'function') {
-      this.content.setSize(this.contentArea.width, this.contentArea.height);
+    } else if (this.isRenderableContent(this.content)) {
+      this.content.setSize?.(this.contentArea.width, this.contentArea.height);
       contentLines = this.content.render();
     } else {
       contentLines = [this.content.toString()];
@@ -195,39 +215,43 @@ class Window extends UIComponent {
     }
   }
 
-  setContent(content) {
+  private isRenderableContent(content: any): content is RenderableContent {
+    return content && typeof content.render === 'function';
+  }
+
+  setContent(content: WindowContent): void {
     this.content = content;
-    if (content && content.parent !== undefined) {
+    if (content && typeof content === 'object' && 'parent' in content) {
       content.parent = this;
     }
     this.emit('content-changed', content);
   }
 
-  setTitle(title) {
+  setTitle(title: string): void {
     this.title = title;
     this.updateContentArea();
     this.emit('title-changed', title);
   }
 
-  setBorder(border) {
+  setBorder(border: BorderStyle): void {
     this.border = border;
     this.emit('border-changed', border);
   }
 
-  setPadding(padding) {
+  setPadding(padding: number): void {
     this.padding = padding;
     this.updateContentArea();
     this.emit('padding-changed', padding);
   }
 
-  getContentArea() {
+  getContentArea(): ContentArea {
     return { ...this.contentArea };
   }
 
-  fitContent() {
+  fitContent(): void {
     if (!this.content) return;
     
-    if (this.content.render && typeof this.content.render === 'function') {
+    if (this.isRenderableContent(this.content)) {
       const contentLines = this.content.render();
       const contentWidth = Math.max(...contentLines.map(line => colors.length(line)));
       const contentHeight = contentLines.length;
@@ -240,15 +264,21 @@ class Window extends UIComponent {
     }
   }
 
-  center(containerWidth, containerHeight) {
+  center(containerWidth: number, containerHeight: number): void {
     this.x = Math.floor((containerWidth - this.width) / 2);
     this.y = Math.floor((containerHeight - this.height) / 2);
     this.emit('position-changed', { x: this.x, y: this.y });
   }
+
+  // Window inherits standard EventEmitter methods from UIComponent
 }
 
-class Dialog extends Window {
-  constructor(options = {}) {
+export class Dialog extends Window {
+  public buttons: string[];
+  public selectedButton: number;
+  public buttonSpacing: number;
+
+  constructor(options: DialogOptions = {}) {
     super({
       border: 'double',
       padding: 2,
@@ -261,13 +291,13 @@ class Dialog extends Window {
     this.buttonSpacing = options.buttonSpacing || 4;
   }
 
-  render() {
-    const baseRender = super.render();
+  render(): string[] {
+    super.render();
     this.renderButtons();
     return this.buffer;
   }
 
-  renderButtons() {
+  renderButtons(): void {
     if (this.buttons.length === 0) return;
     
     const chars = ascii.BOX_DRAWING[this.border] || ascii.BOX_DRAWING.single;
@@ -315,23 +345,23 @@ class Dialog extends Window {
     }
   }
 
-  selectButton(index) {
+  selectButton(index: number): void {
     if (index >= 0 && index < this.buttons.length) {
       this.selectedButton = index;
-      this.emit('button-selection-changed', index, this.buttons[index]);
+      this.emit('button-selection-changed', { index, button: this.buttons[index] });
     }
   }
 
-  selectNextButton() {
+  selectNextButton(): void {
     this.selectButton((this.selectedButton + 1) % this.buttons.length);
   }
 
-  selectPreviousButton() {
+  selectPreviousButton(): void {
     const prevIndex = this.selectedButton === 0 ? this.buttons.length - 1 : this.selectedButton - 1;
     this.selectButton(prevIndex);
   }
 
-  handleInput(input) {
+  handleInput(input: string): boolean {
     switch (input.toLowerCase()) {
       case 'arrowleft':
       case 'a':
@@ -345,7 +375,7 @@ class Dialog extends Window {
         
       case 'enter':
       case ' ':
-        this.emit('button-activated', this.selectedButton, this.buttons[this.selectedButton]);
+        this.emit('button-activated', { index: this.selectedButton, button: this.buttons[this.selectedButton] });
         return true;
         
       case 'escape':
@@ -356,6 +386,6 @@ class Dialog extends Window {
         return false;
     }
   }
-}
 
-module.exports = { Window, Dialog };
+  // Dialog inherits event methods from Window class
+}
