@@ -1,5 +1,4 @@
-
-
+import { createUX } from '../../modules/ux';
 
 export class GalaxyMap {
   constructor(ux, gameState = {}) {

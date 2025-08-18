@@ -72,6 +72,42 @@ The project is currently in early development after a reset (branch: recombobula
 - Redis session management
 - Actual database operations (migrations and seeding scripts exist but need implementation)
 
+## Next Steps - Priority Order
+
+### 1. Complete Database Layer (IMMEDIATE)
+```bash
+# Files to implement:
+src/infrastructure/database/connection.ts  # Database connection manager
+src/infrastructure/database/migrate.ts     # Migration runner
+src/infrastructure/database/seed.ts        # Test data seeder
+src/infrastructure/repositories/           # Repository pattern for entities
+```
+
+### 2. Turn Processing Engine (NEXT)
+```bash
+# Core turn processing:
+src/core/simulation/TurnProcessor.ts       # Main turn processing engine
+src/core/simulation/ActionQueue.ts         # Action queue management
+src/core/simulation/ActionValidator.ts     # Action validation
+src/core/entities/Turn.ts                  # Turn entity model
+src/core/entities/Action.ts                # Action entity model
+```
+
+### 3. Connect UI to Real Data
+```bash
+# Update screens to use repositories:
+src/terminal-client/screens/*.ts           # Replace mock data with DB queries
+src/terminal-client/services/              # Create service layer for API calls
+```
+
+### 4. Implement Basic Economy
+```bash
+# Economic simulation:
+src/core/economy/Market.ts                 # Market price calculations
+src/core/economy/Trade.ts                  # Trade mechanics
+src/core/economy/Supply.ts                 # Supply/demand simulation
+```
+
 ## Game Design Philosophy
 
 - **Golden age sci-fi atmosphere**: Asimov/Heinlein inspired with factions like Terran Federation, Orion Syndicate
@@ -79,6 +115,39 @@ The project is currently in early development after a reset (branch: recombobula
 - **Multiple victory paths**: Economic dominance, military conquest, technological supremacy, or collaboration
 - **Bankruptcy protection**: "Corporate restructure" rather than game over
 - **Alliance mechanics**: Resource sharing, mutual defense, economic integration
+
+## Database Setup (PostgreSQL)
+
+### Local Development Setup
+```bash
+# Install PostgreSQL (macOS)
+brew install postgresql
+brew services start postgresql
+
+# Create database
+createdb spacecommand_dev
+createdb spacecommand_test
+
+# Configure .env file
+cp .env.example .env
+# Edit .env with:
+# DATABASE_URL=postgresql://localhost/spacecommand_dev
+# TEST_DATABASE_URL=postgresql://localhost/spacecommand_test
+```
+
+### Docker Alternative
+```bash
+# Use Docker for PostgreSQL
+docker run -d \
+  --name spacecommand-postgres \
+  -e POSTGRES_DB=spacecommand_dev \
+  -e POSTGRES_PASSWORD=development \
+  -p 5432:5432 \
+  postgres:15
+
+# Then in .env:
+# DATABASE_URL=postgresql://postgres:development@localhost/spacecommand_dev
+```
 
 ## Common Development Tasks
 
@@ -164,10 +233,15 @@ npm test -- --testNamePattern="UIComponent"
 ### Database Commands (Scripts defined but not yet implemented)
 ```bash
 # These commands are defined in package.json but the underlying scripts need implementation:
-# npm run db:migrate       # Requires src/infrastructure/database/migrate.ts
-# npm run db:migrate reset # Requires migrate.ts with reset functionality
-# npm run db:seed          # Requires src/infrastructure/database/seed.ts
-# npm run db:seed clear    # Requires seed.ts with clear functionality
+# npm run db:migrate       # TODO: Implement src/infrastructure/database/migrate.ts
+# npm run db:migrate reset # TODO: Add reset functionality to migrate.ts
+# npm run db:seed          # TODO: Implement src/infrastructure/database/seed.ts
+# npm run db:seed clear    # TODO: Add clear functionality to seed.ts
+
+# Implementation templates needed:
+# - migrate.ts should use pg driver to run SQL files in order
+# - seed.ts should populate test data for development
+# - Both should handle command line arguments
 ```
 
 ### Game Management (Scripts defined but not yet implemented)
@@ -204,6 +278,21 @@ npm test -- --testNamePattern="UIComponent"
 - **Web Client**: React or similar (not yet started)
 - **Session Management**: Redis sessions (Redis installed but not configured)
 - **Real-time Updates**: WebSockets (not yet implemented)
+
+## Testing Status
+
+### What's Tested
+- ✅ UI Components (Window, Menu, Table, etc.) - Jest tests
+- ✅ Terminal client demo screens - Manual testing via `npm run terminal`
+- ✅ TypeScript compilation - `npm run typecheck`
+
+### What Needs Testing
+- ❌ Database operations (repositories, queries)
+- ❌ Turn processing logic
+- ❌ Economic simulation
+- ❌ Game state management
+- ❌ API endpoints
+- ❌ WebSocket connections
 
 ## Important Notes
 
@@ -305,6 +394,26 @@ async executeTrade(playerId, order) { }
   3. Internal modules (absolute paths)
   4. Relative imports
   5. Type imports
+
+## Known Issues & Technical Debt
+
+### High Priority
+- Database connection and operations not implemented
+- No actual game logic (all screens show mock data)
+- Turn processing system missing
+- No authentication or session management
+
+### Medium Priority
+- Some TypeScript type warnings in tests
+- Mock data hardcoded in screen files
+- No error boundaries in UI components
+- Missing loading states in screens
+
+### Low Priority
+- ASCII art could be more varied
+- Color schemes could be configurable
+- Terminal resize handling could be smoother
+- Menu navigation could support vim keys
 
 ### TypeScript Guidelines
 

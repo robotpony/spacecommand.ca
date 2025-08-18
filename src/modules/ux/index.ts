@@ -15,8 +15,8 @@ import * as formatting from './utils/formatting';
 
 // Note: These require statements will be updated as we complete the conversion
 const StatusBar = require('./components/StatusBar');
-const Table = require('./components/Table');
-const StandardGameScreen = require('./components/StandardGameScreen');
+import { Table } from './components/Table';
+import { StandardGameScreen } from './components/StandardGameScreen';
 const Prompt = require('./components/Prompt');
 import { Decoration, TitleScreen } from './components/Decoration';
 import { Menu, ContextMenu } from './components/Menu';
@@ -124,7 +124,7 @@ export class UX {
     });
   }
 
-  table(options: any = {}): any {
+  table(options: any = {}): Table {
     return new Table(options);
   }
 

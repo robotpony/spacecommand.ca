@@ -22,10 +22,15 @@ class BBSClient {
     // Clear log file
     logger.clear();
     
-    // Check if we can use raw mode
-    if (!process.stdin.setRawMode) {
-      logger.error('Raw mode not available, falling back to readline');
-      this.startReadlineMode();
+    // Check terminal capabilities
+    const hasRawMode = !!process.stdin.setRawMode;
+    const isInteractive = process.stdin.isTTY && process.stdout.isTTY;
+    
+    logger.info(`Terminal check: hasRawMode=${hasRawMode}, isInteractive=${isInteractive}`);
+    
+    if (!hasRawMode || !isInteractive) {
+      logger.info('Interactive mode not available, starting demo slideshow');
+      this.startDemoMode();
       return;
     }
 
@@ -113,34 +118,50 @@ class BBSClient {
     }
   }
 
-  startReadlineMode() {
-    // Fallback for environments without raw mode
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-
-    this.render();
-
-    rl.on('line', (input) => {
-      const trimmed = input.trim().toUpperCase();
-      
-      if (trimmed === 'Q' || trimmed === 'QUIT') {
+  startDemoMode() {
+    logger.info('Starting automatic demo slideshow');
+    
+    const screens = [
+      { name: 'title', duration: 3000, description: 'Title Screen' },
+      { name: 'main-menu', duration: 5000, description: 'Main Menu' },
+      { name: 'trade-center', duration: 5000, description: 'Trade Center' },
+      { name: 'market-overview', duration: 4000, description: 'Market Overview' },
+      { name: 'fleet-overview', duration: 4000, description: 'Fleet Overview' },
+      { name: 'galaxy-map', duration: 4000, description: 'Galaxy Map' },
+      { name: 'daily-news', duration: 4000, description: 'Daily News' },
+      { name: 'action-queue', duration: 3000, description: 'Action Queue' }
+    ];
+    
+    let currentIndex = 0;
+    
+    const showNextScreen = () => {
+      if (!this.running || currentIndex >= screens.length) {
+        logger.info('Demo slideshow completed');
         this.quit();
         return;
       }
-
-      const mappedInput = trimmed === '' ? '\r' : trimmed;
-      const result = this.screenManager.handleInput(mappedInput);
-
-      if (result === 'quit') {
-        this.quit();
-      } else if (result === 'refresh' || result) {
-        this.render();
-      }
-    });
-
-    rl.on('close', () => this.quit());
+      
+      const screen = screens[currentIndex];
+      logger.info(`Showing ${screen.description} (${currentIndex + 1}/${screens.length})`);
+      
+      // Navigate to screen
+      this.screenManager.setScreen(screen.name);
+      
+      // Render the screen
+      this.render();
+      
+      // Show progress info
+      console.log(`\n=== Demo: ${screen.description} (${currentIndex + 1}/${screens.length}) ===`);
+      console.log(`Showing for ${screen.duration / 1000} seconds...`);
+      
+      currentIndex++;
+      
+      // Schedule next screen
+      setTimeout(showNextScreen, screen.duration);
+    };
+    
+    // Start the demo
+    showNextScreen();
   }
 
   quit() {
@@ -159,6 +180,9 @@ class BBSClient {
   cleanup() {
     if (process.stdin.setRawMode) {
       process.stdin.setRawMode(false);
+    }
+    if (this.rl) {
+      this.rl.close();
     }
   }
 }

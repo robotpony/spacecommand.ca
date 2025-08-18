@@ -1,5 +1,4 @@
-
-
+import { createUX } from '../../modules/ux';
 
 export class TradeCenter {
   constructor(ux, gameState = {}) {
@@ -101,12 +100,11 @@ export class TradeCenter {
     
     // Create a menu with prompt for trade actions
     
-    const tradeMenu = new Menu({
-      items: [
+    const tradeMenu = this.ux.menu([
         { key: 'Q', label: 'Quick Sell All', description: 'Sell all cargo at current prices' },
         { key: 'W', label: 'Optimal Buy', description: 'Buy recommended items' },
         { key: 'ESC', label: 'Back to Menu', description: 'Return to main menu' }
-      ],
+      ], {
       title: 'Quick Actions:',
       showKeys: true,
       showDescriptions: true,
@@ -136,7 +134,7 @@ export class TradeCenter {
       `(${good.available})`
     ]);
     
-    return new Table({
+    return this.ux.table({
       headers,
       rows,
       columnAligns: ['left', 'left', 'right', 'right'],
@@ -165,7 +163,7 @@ export class TradeCenter {
       `Est. Value: ₡${totalValue.toLocaleString()}`
     ];
     
-    return new Window({
+    return this.ux.window({
       title: 'CARGO BAY',
       content: cargoContent,
       height: cargoContent.length + 4,
@@ -202,7 +200,7 @@ export class TradeCenter {
       }
     });
     
-    return new Table({
+    return this.ux.table({
       headers,
       rows,
       columnAligns: ['left', 'left', 'right'],
