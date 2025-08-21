@@ -91,7 +91,7 @@ export class Migrator {
     }
   }
 
-  public async down(steps: number = 1): Promise<void> {
+  public async down(_steps: number = 1): Promise<void> {
     // This would implement rollback logic
     // For now, we'll keep it simple
     throw new Error('Rollback not implemented yet');

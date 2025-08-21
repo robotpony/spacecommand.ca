@@ -1,4 +1,4 @@
-import { PlanetSpecialization, ResourceType, Coordinates } from '@shared/types';
+import { PlanetSpecialization, Coordinates } from '@shared/types';
 
 export interface Building {
   id: string;

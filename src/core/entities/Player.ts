@@ -104,10 +104,10 @@ export class Player {
 
   /**
    * Bans player from game access.
-   * @param {string} reason - Reason for ban (stored for admin records)
+   * @param {string} _reason - Reason for ban (stored for admin records)
    * @sideEffect Sets banned flag and deactivates account
    */
-  public ban(reason: string): void {
+  public ban(_reason: string): void {
     this.isBanned = true;
     this.isActive = false;
   }
