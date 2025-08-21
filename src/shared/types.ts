@@ -94,3 +94,54 @@ export type GameEvent = {
   description: string;
   effects: Record<string, any>;
 };
+
+/**
+ * Turn processing phases in chronological order.
+ * Each phase has specific responsibilities and timing constraints.
+ */
+export type TurnPhase = 
+  | 'collecting'      // Accepting player actions during turn window
+  | 'validating'      // Checking action validity against game state
+  | 'processing'      // Executing actions in priority order
+  | 'resolving'       // Calculating results and updating state
+  | 'distributing'    // Sending results to players
+  | 'completed';      // Turn fully processed
+
+/**
+ * Player action types that can be submitted during turn collection.
+ * Actions are processed in priority order during turn execution.
+ */
+export type ActionType =
+  | 'move_fleet'      // Fleet movement between systems
+  | 'trade'           // Buy/sell resources at stations
+  | 'attack'          // Initiate combat with another fleet
+  | 'colonize'        // Establish colony on uninhabited planet
+  | 'research'        // Advance technology tree
+  | 'build_ships'     // Construct new ships at shipyards
+  | 'diplomacy'       // Send diplomatic messages/proposals
+  | 'mine'            // Extract resources from planets
+  | 'transfer'        // Transfer resources between fleets/colonies
+  | 'repair';         // Repair damaged ships
+
+/**
+ * Result status for processed actions.
+ * Determines if action was executed successfully or failed.
+ */
+export type ActionResult = 
+  | 'success'         // Action completed successfully
+  | 'failed'          // Action failed validation or execution
+  | 'partial'         // Action partially completed
+  | 'queued'          // Action queued for next turn
+  | 'cancelled';      // Action cancelled by player or system
+
+/**
+ * Turn status indicating current processing state.
+ * Used for tracking turn lifecycle and player information.
+ */
+export type TurnStatus = 
+  | 'scheduled'       // Turn scheduled but not started
+  | 'active'          // Turn accepting player actions
+  | 'processing'      // Turn being processed by system
+  | 'completed'       // Turn completed and results distributed
+  | 'failed'          // Turn processing failed, requires intervention
+  | 'cancelled';      // Turn cancelled (emergency stop)
